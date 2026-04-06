@@ -1,0 +1,172 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ contract.reference }} — Contract{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+      <a href="{% url 'contracts:contract_list' %}" class="hover:text-nova-700">Contracts</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+      <span class="font-medium text-slate-900">{{ contract.reference }}</span>
+    </nav>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ contract.reference }}</h1>
+    <p class="mt-1 text-sm text-slate-500">{{ contract.organization.name }}</p>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold
+      {% if contract.status == 'active' %}bg-emerald-50 text-emerald-700
+      {% elif contract.status == 'draft' %}bg-slate-100 text-slate-600
+      {% elif contract.status == 'expired' %}bg-amber-50 text-amber-700
+      {% else %}bg-red-50 text-red-700{% endif %}">
+      {{ contract.get_status_display }}
+    </span>
+    <a href="{% url 'contracts:contract_update' pk=contract.pk %}"
+       class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+      <i class="fa-solid fa-pen text-xs" aria-hidden="true"></i>
+      Edit
+    </a>
+  </div>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+
+  {# Left sidebar #}
+  <aside class="space-y-5 lg:col-span-1">
+
+    {# Contract info #}
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Contract details</h2>
+      <dl class="mt-4 divide-y divide-slate-100 text-sm">
+        <div class="flex justify-between gap-4 py-2.5">
+          <dt class="text-slate-500">Template</dt>
+          <dd class="text-right font-medium text-slate-900">
+            <a href="{{ contract.template.get_absolute_url }}" class="hover:text-nova-700 hover:underline">{{ contract.template.name }}</a>
+          </dd>
+        </div>
+        <div class="flex justify-between gap-4 py-2.5">
+          <dt class="text-slate-500">Customer</dt>
+          <dd class="text-right font-medium text-slate-900">
+            <a href="{{ contract.organization.get_absolute_url }}" class="hover:text-nova-700 hover:underline">{{ contract.organization.name }}</a>
+          </dd>
+        </div>
+        {% if contract.start_date %}
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-slate-500">Start date</dt>
+            <dd class="font-medium text-slate-900">{{ contract.start_date|date:"d M Y" }}</dd>
+          </div>
+        {% endif %}
+        {% if contract.end_date %}
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-slate-500">End date</dt>
+            <dd class="font-medium text-slate-900">{{ contract.end_date|date:"d M Y" }}</dd>
+          </div>
+        {% endif %}
+        {% if contract.duration_years is not None %}
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-slate-500">Duration</dt>
+            <dd class="font-medium text-slate-900">{{ contract.duration_years|floatformat:1 }} years</dd>
+          </div>
+        {% endif %}
+        {% if contract.quote %}
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-slate-500">Quote</dt>
+            <dd class="font-mono text-xs text-nova-700">
+              <a href="{{ contract.quote.get_absolute_url }}" class="hover:underline">{{ contract.quote.reference }}</a>
+            </dd>
+          </div>
+        {% endif %}
+        {% if contract.sales_order %}
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-slate-500">Sales order</dt>
+            <dd class="font-mono text-xs text-nova-700">
+              <a href="{{ contract.sales_order.get_absolute_url }}" class="hover:underline">{{ contract.sales_order.reference }}</a>
+            </dd>
+          </div>
+        {% endif %}
+        {% if contract.asset %}
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-slate-500">Asset</dt>
+            <dd class="text-right font-medium text-slate-900">
+              <a href="{{ contract.asset.get_absolute_url }}" class="hover:text-nova-700 hover:underline">{{ contract.asset.display_name }}</a>
+            </dd>
+          </div>
+        {% endif %}
+      </dl>
+    </section>
+
+    {% if contract.notes %}
+      <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Notes</h2>
+        <p class="mt-2 text-sm leading-relaxed text-slate-600 whitespace-pre-wrap">{{ contract.notes }}</p>
+      </section>
+    {% endif %}
+
+  </aside>
+
+  {# Main: formula breakdown + result #}
+  <div class="space-y-6 lg:col-span-2">
+
+    {# Computed result banner #}
+    {% if compute_error %}
+      <div class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5">
+        <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-500" aria-hidden="true"></i>
+        <div>
+          <p class="font-semibold text-amber-800">Cannot compute result</p>
+          <p class="mt-0.5 text-sm text-amber-700">{{ compute_error }}</p>
+        </div>
+      </div>
+    {% else %}
+      <div class="rounded-xl border border-nova-200 bg-nova-50 p-5">
+        <p class="text-sm font-medium text-nova-700">{{ contract.template.result_label }}</p>
+        <p class="mt-1 text-4xl font-bold tracking-tight text-nova-700">
+          {{ computed_result|floatformat:2 }}
+        </p>
+        {% if contract.computed_at %}
+          <p class="mt-1 text-xs text-nova-500">Computed {{ contract.computed_at|date:"d M Y, H:i" }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {# Formula + variable breakdown #}
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-100 px-5 py-4">
+        <h2 class="font-semibold text-slate-900">Formula breakdown</h2>
+        <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 whitespace-pre-wrap">{{ contract.template.formula }}</pre>
+      </div>
+
+      {% if variable_rows %}
+        <table class="min-w-full divide-y divide-slate-100 text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-3 text-left">Variable</th>
+              <th class="px-5 py-3 text-left">Label</th>
+              <th class="px-5 py-3 text-left hidden md:table-cell">Source</th>
+              <th class="px-5 py-3 text-right">Value</th>
+              <th class="px-5 py-3 text-left hidden md:table-cell">Unit</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for row in variable_rows %}
+              <tr class="hover:bg-slate-50 transition-colors {% if row.missing %}bg-amber-50{% endif %}">
+                <td class="px-5 py-3 font-mono text-xs text-nova-700">{{ row.name }}</td>
+                <td class="px-5 py-3 text-slate-900">{{ row.label }}</td>
+                <td class="px-5 py-3 text-xs text-slate-500 hidden md:table-cell">{{ row.source }}</td>
+                <td class="px-5 py-3 text-right font-mono text-xs">
+                  {% if row.missing %}
+                    <span class="rounded bg-amber-100 px-1.5 py-0.5 text-amber-700 font-medium">missing</span>
+                  {% else %}
+                    <span class="font-semibold text-slate-900">{{ row.value|floatformat:4 }}</span>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-3 text-xs text-slate-400 hidden md:table-cell">{{ row.unit|default:"" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </section>
+
+  </div>
+</div>
+{% endblock %}

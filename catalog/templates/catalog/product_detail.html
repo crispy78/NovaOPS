@@ -1,0 +1,556 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<nav class="mb-6 text-sm text-slate-500" aria-label="Breadcrumb">
+  <ol class="flex flex-wrap items-center gap-1">
+    <li><a href="{% url 'catalog:index' %}" class="hover:text-nova-700">Catalog</a></li>
+    <li aria-hidden="true" class="mx-1">/</li>
+    <li><a href="{% url 'catalog:index' %}?category={{ product.category.slug }}" class="hover:text-nova-700">{{ product.category.name }}</a></li>
+    <li aria-hidden="true" class="mx-1">/</li>
+    <li class="text-slate-900">{{ product.name }}</li>
+  </ol>
+</nav>
+
+<div class="grid gap-8 lg:grid-cols-2 lg:gap-12">
+
+  {# ── Left column: image gallery ── #}
+  <div>
+    {# Main image #}
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {% with imgs=product.images.all %}
+        {% if imgs and user.is_authenticated %}
+          <img id="main-product-image"
+               src="{{ imgs.0.image.url }}"
+               alt="{{ imgs.0.alt_text|default:product.name }}"
+               class="aspect-square w-full bg-slate-50 object-contain p-4">
+        {% else %}
+          <div class="flex aspect-square w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400">
+            <i class="fa-regular fa-image text-4xl" aria-hidden="true"></i>
+            <span class="text-sm">{% if user.is_authenticated %}No image{% else %}Log in to view images{% endif %}</span>
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    {# Thumbnail strip (click to swap) #}
+    {% if product.images.all|length > 1 and user.is_authenticated %}
+      <ul class="mt-3 grid grid-cols-5 gap-2" role="list">
+        {% for im in product.images.all %}
+          <li>
+            <button type="button"
+                    onclick="document.getElementById('main-product-image').src='{{ im.image.url }}'"
+                    class="block w-full overflow-hidden rounded-lg border border-slate-200 ring-offset-1 focus:outline-none focus:ring-2 focus:ring-nova-500 hover:border-nova-300"
+                    aria-label="View image {{ forloop.counter }}">
+              <img src="{{ im.image.url }}" alt="" class="aspect-square w-full object-cover" loading="lazy">
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {# Admin: image upload / delete #}
+    {% if image_upload_form %}
+      <section class="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-sm font-semibold text-slate-900">Images</h2>
+          <a href="{% url 'catalog:image_library' %}" class="text-sm font-semibold text-nova-700 hover:text-nova-800">Open library</a>
+        </div>
+        <form method="post" action="{% url 'catalog:product_image_add' pk=product.pk %}" enctype="multipart/form-data" class="mt-4 grid gap-3">
+          {% csrf_token %}
+          <div>
+            <label class="block text-xs font-medium uppercase text-slate-500">File</label>
+            {{ image_upload_form.image }}
+            {% if image_upload_form.image.errors %}<p class="mt-1 text-sm text-red-700">{{ image_upload_form.image.errors|striptags }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="block text-xs font-medium uppercase text-slate-500">Alt text</label>
+            {{ image_upload_form.alt_text }}
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label class="block text-xs font-medium uppercase text-slate-500">Sort order</label>
+              {{ image_upload_form.sort_order }}
+            </div>
+            <div class="flex items-center gap-2 pt-6">
+              {{ image_upload_form.is_primary }}
+              <label class="text-sm text-slate-700">Set as primary</label>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button type="submit" class="rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+              Upload image
+            </button>
+            <p class="text-xs text-slate-500">Images are stored under a UUID filename.</p>
+          </div>
+        </form>
+
+        {% if user.is_authenticated and perms.catalog.delete_productimage and product.images.all %}
+          <div class="mt-4 border-t border-slate-100 pt-4">
+            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Manage</h3>
+            <ul class="mt-2 divide-y divide-slate-100 text-sm">
+              {% for im in product.images.all %}
+                <li class="flex items-center justify-between gap-3 py-2">
+                  <span class="truncate font-mono text-xs text-slate-500">{{ im.id }}</span>
+                  <form method="post" action="{% url 'catalog:product_image_delete' pk=product.pk image_pk=im.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">
+                      Delete
+                    </button>
+                  </form>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </section>
+    {% endif %}
+  </div>
+
+  {# ── Right column: details + buy ── #}
+  <div class="flex flex-col gap-5">
+
+    {# Status badges + brand + title + SKU #}
+    <div>
+      <div class="mb-2 flex flex-wrap items-center gap-2">
+        <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold
+          {% if product.status == 'active' %}bg-emerald-100 text-emerald-800
+          {% elif product.status == 'draft' %}bg-slate-200 text-slate-800
+          {% elif product.status == 'end_of_life' %}bg-amber-100 text-amber-900
+          {% else %}bg-red-100 text-red-800{% endif %}">
+          {{ product.get_status_display }}
+        </span>
+        {% if product.brand %}
+          <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ product.brand }}</span>
+        {% endif %}
+      </div>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900">{{ product.name }}</h1>
+      <p class="mt-1.5 font-mono text-sm text-slate-400">SKU {{ product.sku }}</p>
+      {% if product.short_description %}
+        <p class="mt-3 text-base leading-relaxed text-slate-600">{{ product.short_description }}</p>
+      {% endif %}
+    </div>
+
+    {# Price card #}
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">List price</p>
+      <p class="mt-1 text-3xl font-bold text-slate-900">
+        {% if product.list_price is not None %}
+          {{ product.currency }} {{ product.list_price|floatformat:2 }}
+        {% else %}
+          <span class="text-lg font-medium text-slate-500">On request</span>
+        {% endif %}
+      </p>
+      {% if product.msrp %}
+        <p class="mt-1.5 text-sm text-slate-500">MSRP {{ product.currency }} {{ product.msrp|floatformat:2 }}</p>
+      {% endif %}
+      {% if product.minimum_order_quantity > 1 or product.lead_time_days or product.lead_time_text %}
+        <div class="mt-3 flex flex-wrap gap-3 border-t border-slate-100 pt-3 text-sm text-slate-600">
+          {% if product.minimum_order_quantity > 1 %}
+            <span>MOQ: <strong class="text-slate-800">{{ product.minimum_order_quantity }}</strong></span>
+          {% endif %}
+          {% if product.lead_time_days %}
+            <span>Lead time: <strong class="text-slate-800">{{ product.lead_time_days }} days</strong></span>
+          {% elif product.lead_time_text %}
+            <span>Lead time: <strong class="text-slate-800">{{ product.lead_time_text }}</strong></span>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    {# Add-to-cart / login prompt #}
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'sales:cart_add' product_pk=product.pk %}"
+            class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        {% csrf_token %}
+        <label for="id_quantity" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Quantity</label>
+        <div class="mt-2 flex items-center gap-3">
+          <div class="flex items-center overflow-hidden rounded-lg border border-slate-300 shadow-sm">
+            <button type="button"
+                    onclick="var i=this.parentElement.querySelector('.qty-stepper-input');i.value=Math.max(1,parseInt(i.value||1)-1)"
+                    class="flex h-10 w-10 items-center justify-center text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-nova-500"
+                    aria-label="Decrease quantity">
+              <i class="fa-solid fa-minus text-xs" aria-hidden="true"></i>
+            </button>
+            {{ add_to_cart_form.quantity }}
+            <button type="button"
+                    onclick="var i=this.parentElement.querySelector('.qty-stepper-input');i.value=parseInt(i.value||1)+1"
+                    class="flex h-10 w-10 items-center justify-center text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-nova-500"
+                    aria-label="Increase quantity">
+              <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+            </button>
+          </div>
+          <button type="submit"
+                  class="flex-1 rounded-lg bg-nova-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
+            <i class="fa-solid fa-cart-plus mr-1.5" aria-hidden="true"></i>Add to cart
+          </button>
+        </div>
+        <a href="{% url 'sales:cart' %}" class="mt-2 block text-center text-xs font-medium text-nova-600 hover:text-nova-700 hover:underline">View cart</a>
+      </form>
+    {% else %}
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-700">
+        <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="font-semibold text-nova-700 hover:underline">Log in</a>
+        to add this product to your cart and view images.
+      </div>
+    {% endif %}
+
+    {# Edit product button (admin) #}
+    {% if product_page_permissions.can_edit_product %}
+      <div class="flex justify-end">
+        <a href="{{ product.get_edit_url }}"
+           class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+          <i class="fa-solid fa-pen-to-square text-slate-400" aria-hidden="true"></i>
+          Edit product
+        </a>
+      </div>
+    {% endif %}
+
+    {# Long description #}
+    {% if product.long_description %}
+      <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-base font-semibold text-slate-900">Description</h2>
+        <div class="mt-3 leading-relaxed text-slate-700">{{ product.long_description|linebreaks }}</div>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{# ── Specs grid ── #}
+<div class="mt-12 grid gap-6 lg:grid-cols-2">
+  <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Identification</h2>
+    <dl class="mt-4 divide-y divide-slate-100 text-sm">
+      {% include "catalog/_dl_row.html" with label="EAN / GTIN" value=product.ean_gtin %}
+      {% include "catalog/_dl_row.html" with label="MPN" value=product.mpn %}
+      {% include "catalog/_dl_row.html" with label="UPC / ISBN" value=product.upc_isbn %}
+    </dl>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Physical</h2>
+    <dl class="mt-4 divide-y divide-slate-100 text-sm">
+      {% if product.length or product.width or product.height %}
+        <div class="flex justify-between gap-4 py-2">
+          <dt class="text-slate-500">L × W × H</dt>
+          <dd class="text-right font-medium text-slate-900">
+            {{ product.length|default:"—" }} × {{ product.width|default:"—" }} × {{ product.height|default:"—" }}
+            {% if product.dimension_unit %}<span class="text-slate-500"> {{ product.dimension_unit }}</span>{% endif %}
+          </dd>
+        </div>
+      {% endif %}
+      {% include "catalog/_dl_row.html" with label="Net weight" value=product.weight_net %}
+      {% include "catalog/_dl_row.html" with label="Gross weight" value=product.weight_gross %}
+      {% if product.weight_unit %}
+        <div class="flex justify-between gap-4 py-2">
+          <dt class="text-slate-500">Weight unit</dt>
+          <dd class="text-right font-medium text-slate-900">{{ product.weight_unit }}</dd>
+        </div>
+      {% endif %}
+      {% include "catalog/_dl_row.html" with label="Color" value=product.color %}
+      {% include "catalog/_dl_row.html" with label="Material" value=product.material %}
+      {% include "catalog/_dl_row.html" with label="Size / volume" value=product.size_or_volume %}
+    </dl>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Financial</h2>
+    <dl class="mt-4 divide-y divide-slate-100 text-sm">
+      {% if product_page_permissions.can_view_purchase_price and product.purchase_price is not None %}
+        <div class="flex justify-between gap-4 py-2">
+          <dt class="text-slate-500">Purchase price</dt>
+          <dd class="text-right font-medium text-slate-900">{{ product.currency }} {{ product.purchase_price|floatformat:2 }}</dd>
+        </div>
+      {% endif %}
+      {% if product.tax_rate %}
+        <div class="flex justify-between gap-4 py-2">
+          <dt class="text-slate-500">Tax rate</dt>
+          <dd class="text-right font-medium text-slate-900">{{ product.tax_rate }}</dd>
+        </div>
+      {% endif %}
+      {% if product.discount_group %}
+        <div class="flex justify-between gap-4 py-2">
+          <dt class="text-slate-500">Discount group</dt>
+          <dd class="text-right font-medium text-slate-900">{{ product.discount_group.name }}</dd>
+        </div>
+      {% endif %}
+      {% include "catalog/_dl_row.html" with label="Currency" value=product.currency %}
+    </dl>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Logistics &amp; stock</h2>
+    <dl class="mt-4 divide-y divide-slate-100 text-sm">
+      {% include "catalog/_dl_row.html" with label="Unit of measure" value=product.unit_of_measure %}
+      <div class="flex justify-between gap-4 py-2">
+        <dt class="text-slate-500">MOQ</dt>
+        <dd class="text-right font-medium text-slate-900">{{ product.minimum_order_quantity }}</dd>
+      </div>
+      {% include "catalog/_dl_row.html" with label="Lead time (days)" value=product.lead_time_days %}
+      {% include "catalog/_dl_row.html" with label="Lead time (text)" value=product.lead_time_text %}
+      {% include "catalog/_dl_row.html" with label="Warehouse location" value=product.warehouse_location %}
+      <div class="flex justify-between gap-4 py-2">
+        <dt class="text-slate-500">Inventory tracked</dt>
+        <dd class="text-right font-medium text-slate-900">{% if product.inventory_tracked %}Yes{% else %}No{% endif %}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+    <h2 class="text-lg font-semibold text-slate-900">Asset &amp; service</h2>
+    <dl class="mt-4 grid gap-0 divide-y divide-slate-100 text-sm sm:grid-cols-2 sm:divide-y-0 sm:gap-4">
+      <div class="flex justify-between gap-4 py-2 sm:block sm:py-0">
+        <dt class="text-slate-500">Serial number required</dt>
+        <dd class="font-medium text-slate-900 sm:mt-1">{% if product.serial_number_required %}Yes{% else %}No{% endif %}</dd>
+      </div>
+      {% include "catalog/_dl_row.html" with label="Warranty (months)" value=product.warranty_months %}
+      {% include "catalog/_dl_row.html" with label="Maintenance interval" value=product.maintenance_interval %}
+      {% include "catalog/_dl_row.html" with label="Depreciation (months)" value=product.depreciation_months %}
+      {% if product.asset_type %}
+        <div class="flex justify-between gap-4 py-2 sm:block sm:py-0">
+          <dt class="text-slate-500">Asset type</dt>
+          <dd class="font-medium text-slate-900 sm:mt-1">{{ product.get_asset_type_display }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+  </section>
+</div>
+
+{# ── Price tiers ── #}
+{% if product.price_tiers.all %}
+  <section class="mt-12 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-6 py-4">
+      <h2 class="text-lg font-semibold text-slate-900">Price tiers</h2>
+      <p class="text-sm text-slate-500">Quantity breaks in {{ product.currency }}</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="px-6 py-3">Min qty</th>
+            <th class="px-6 py-3">Max qty</th>
+            <th class="px-6 py-3">Unit price</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for tier in product.price_tiers.all %}
+            <tr>
+              <td class="px-6 py-3 font-mono">{{ tier.min_quantity }}</td>
+              <td class="px-6 py-3 font-mono">{% if tier.max_quantity %}{{ tier.max_quantity }}{% else %}—{% endif %}</td>
+              <td class="px-6 py-3 font-medium">{{ product.currency }} {{ tier.unit_price|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endif %}
+
+{# ── Bundle BOM ── #}
+{% if product.bundle_components.all %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Bundle contents (BOM)</h2>
+    <ul class="mt-4 divide-y divide-slate-100">
+      {% for line in product.bundle_components.all %}
+        <li class="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+          <span class="font-mono text-slate-500">{{ line.quantity }}×</span>
+          <a href="{{ line.component_product.get_absolute_url }}" class="flex-1 font-medium text-nova-700 hover:text-nova-800">
+            {{ line.component_product.name }}
+          </a>
+          <span class="font-mono text-xs text-slate-400">{{ line.component_product.sku }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
+{# ── Related products ── #}
+{% regroup product.relations_from.all by relation_type as relation_groups %}
+{% if relation_groups %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Related products</h2>
+    <div class="mt-6 space-y-8">
+      {% for group in relation_groups %}
+        <div>
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">{{ group.list.0.get_relation_type_display }}</h3>
+          <ul class="mt-3 flex flex-wrap gap-2">
+            {% for rel in group.list %}
+              <li>
+                <a href="{{ rel.to_product.get_absolute_url }}"
+                   class="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-800 hover:border-nova-300 hover:bg-white">
+                  {{ rel.to_product.name }}
+                  <span class="ml-2 font-mono text-xs text-slate-400">{{ rel.to_product.sku }}</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{# ── Documents ── #}
+{% if product.documents.all %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Documents</h2>
+    <ul class="mt-4 divide-y divide-slate-100">
+      {% for doc in product.documents.all %}
+        <li class="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+          <div>
+            <span class="font-medium text-slate-900">{{ doc.title|default:doc.file.name }}</span>
+            <span class="ml-2 text-xs text-slate-500">{{ doc.get_document_type_display }}</span>
+          </div>
+          <a href="{{ doc.file.url }}" class="text-sm font-semibold text-nova-700 hover:text-nova-800" download>Download</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
+{# ── Tech specs ── #}
+{% if it_spec %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">IT specifications</h2>
+    <dl class="mt-4 divide-y divide-slate-100 text-sm">
+      {% include "catalog/_dl_row.html" with label="Operating system" value=it_spec.operating_system %}
+      {% include "catalog/_dl_row.html" with label="Processor" value=it_spec.cpu %}
+      {% include "catalog/_dl_row.html" with label="RAM" value=it_spec.ram %}
+      {% include "catalog/_dl_row.html" with label="Storage" value=it_spec.storage %}
+    </dl>
+  </section>
+{% endif %}
+
+{% if connectivity_spec %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Connectivity</h2>
+    {% if connectivity_spec.io_ports %}
+      <div class="mt-4">
+        <h3 class="text-xs font-semibold uppercase text-slate-500">I/O ports</h3>
+        <p class="mt-2 whitespace-pre-wrap text-sm text-slate-700">{{ connectivity_spec.io_ports }}</p>
+      </div>
+    {% endif %}
+    {% if connectivity_spec.wireless %}
+      <div class="mt-4">
+        <h3 class="text-xs font-semibold uppercase text-slate-500">Wireless</h3>
+        <p class="mt-2 whitespace-pre-wrap text-sm text-slate-700">{{ connectivity_spec.wireless }}</p>
+      </div>
+    {% endif %}
+  </section>
+{% endif %}
+
+{% if scanner_spec %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Scanner / terminal</h2>
+    <dl class="mt-4 divide-y divide-slate-100 text-sm">
+      {% include "catalog/_dl_row.html" with label="Scan engine" value=scanner_spec.scan_engine %}
+      {% include "catalog/_dl_row.html" with label="Drop spec" value=scanner_spec.drop_spec %}
+      {% include "catalog/_dl_row.html" with label="IP rating" value=scanner_spec.ip_rating %}
+      {% include "catalog/_dl_row.html" with label="Battery (mAh)" value=scanner_spec.battery_mah %}
+      {% include "catalog/_dl_row.html" with label="Battery life (hours)" value=scanner_spec.battery_hours %}
+    </dl>
+  </section>
+{% endif %}
+
+{% if printer_spec %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Printer</h2>
+    <dl class="mt-4 divide-y divide-slate-100 text-sm">
+      {% include "catalog/_dl_row.html" with label="Print technology" value=printer_spec.print_technology %}
+      {% include "catalog/_dl_row.html" with label="Print resolution" value=printer_spec.print_resolution %}
+      {% include "catalog/_dl_row.html" with label="Print width / media" value=printer_spec.print_width %}
+      {% include "catalog/_dl_row.html" with label="Cutter / tear bar" value=printer_spec.cutter_type %}
+    </dl>
+  </section>
+{% endif %}
+
+{% if display_spec %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Display</h2>
+    <dl class="mt-4 divide-y divide-slate-100 text-sm">
+      {% include "catalog/_dl_row.html" with label="Diagonal" value=display_spec.diagonal %}
+      {% include "catalog/_dl_row.html" with label="Resolution" value=display_spec.resolution %}
+      {% include "catalog/_dl_row.html" with label="Touchscreen" value=display_spec.get_touchscreen_type_display %}
+    </dl>
+  </section>
+{% endif %}
+
+{# ── Replacement products ── #}
+{% if replacement_links or replacement_form %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Replacement products (EOL / discontinued)</h2>
+    <p class="mt-1 text-sm text-slate-500">Formal successor SKUs when this item is no longer sold.</p>
+    {% if replacement_links %}
+      <ul class="mt-4 divide-y divide-slate-100">
+        {% for rel in replacement_links %}
+          <li class="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+            <a href="{{ rel.to_product.get_absolute_url }}" class="font-medium text-nova-700 hover:text-nova-800">{{ rel.to_product.name }}</a>
+            <span class="font-mono text-xs text-slate-400">{{ rel.to_product.sku }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% if replacement_form %}
+      <form method="post" action="{% url 'catalog:product_replacement_add' pk=product.pk %}" class="mt-4 flex flex-wrap items-end gap-3">
+        {% csrf_token %}
+        <div class="min-w-[16rem] flex-1">
+          <label class="block text-xs font-medium uppercase text-slate-500">Add replacement</label>
+          {{ replacement_form.replacement_product }}
+        </div>
+        <button type="submit" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
+          Save replacement
+        </button>
+      </form>
+    {% endif %}
+  </section>
+{% endif %}
+
+{# ── Activity log ── #}
+{% if product_events %}
+  <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Activity</h2>
+    <p class="mt-1 text-sm text-slate-500">Recent catalog events and field changes.</p>
+    <ul class="mt-4 max-h-80 overflow-y-auto divide-y divide-slate-100 text-sm">
+      {% for item in product_events %}
+        <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2.5">
+          <span class="font-medium text-slate-800">{{ item.label }}</span>
+          <span class="shrink-0 text-xs text-slate-400">
+            {{ item.ev.created_at|date:"Y-m-d H:i" }}
+            {% if item.ev.actor %}&nbsp;· {{ item.ev.actor }}{% endif %}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
+<p class="mt-12 text-center">
+  <a href="{% url 'catalog:index' %}" class="text-sm font-semibold text-nova-700 hover:text-nova-800">
+    <i class="fa-solid fa-arrow-left mr-1 text-xs" aria-hidden="true"></i>Back to catalog
+  </a>
+</p>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+  /* Qty stepper: remove default number-input chrome so the ±/input looks unified */
+  .qty-stepper-input {
+    border: none;
+    width: 3rem;
+    height: 2.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    outline: none;
+    appearance: textfield;
+    -moz-appearance: textfield;
+    background: transparent;
+  }
+  .qty-stepper-input::-webkit-inner-spin-button,
+  .qty-stepper-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+</style>
+{% endblock %}

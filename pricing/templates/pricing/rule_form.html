@@ -1,0 +1,249 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if object.pk %}Edit {{ object.name }}{% else %}New pricing rule{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+      <a href="{% url 'pricing:rule_list' %}" class="hover:text-nova-700">Pricing rules</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+      {% if object.pk %}
+        <a href="{% url 'pricing:rule_detail' pk=object.pk %}" class="hover:text-nova-700">{{ object.name }}</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <span class="font-medium text-slate-700">Edit</span>
+      {% else %}
+        <span class="font-medium text-slate-700">New rule</span>
+      {% endif %}
+    </nav>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      {% if object.pk %}Edit pricing rule{% else %}New pricing rule{% endif %}
+    </h1>
+  </div>
+  {% if object.pk %}
+    <a href="{% url 'pricing:rule_detail' pk=object.pk %}" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Back
+    </a>
+  {% else %}
+    <a href="{% url 'pricing:rule_list' %}" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Back
+    </a>
+  {% endif %}
+</div>
+
+<form method="post" class="space-y-6">
+  {% csrf_token %}
+
+  {# ── Rule definition ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="font-semibold text-slate-900">Rule definition</h2>
+      <p class="mt-0.5 text-sm text-slate-500">Choose a pricing method and the value that drives the calculation.</p>
+    </div>
+    {% if form.non_field_errors %}
+      <div class="mx-5 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="p-5 grid gap-5 md:grid-cols-2">
+      <div class="md:col-span-2">
+        <label for="{{ form.name.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Name <span class="text-red-500">*</span>
+        </label>
+        {{ form.name }}
+        {% if form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.name.errors|striptags }}</p>{% endif %}
+      </div>
+      <div class="md:col-span-2">
+        <label for="{{ form.description.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Description</label>
+        {{ form.description }}
+      </div>
+      <div>
+        <label for="{{ form.method.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Method <span class="text-red-500">*</span>
+        </label>
+        {{ form.method }}
+        {% if form.method.errors %}<p class="mt-1 text-xs text-red-600">{{ form.method.errors|striptags }}</p>{% endif %}
+        <p class="mt-1 text-xs text-slate-400">How the price is computed from the source field.</p>
+      </div>
+      <div>
+        <label for="{{ form.value.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Value <span class="text-red-500">*</span>
+        </label>
+        {{ form.value }}
+        {% if form.value.errors %}<p class="mt-1 text-xs text-red-600">{{ form.value.errors|striptags }}</p>{% endif %}
+        <p class="mt-1 text-xs text-slate-400" id="value-hint">
+          Enter % for markup/margin/discount, or the factor for multiplier (e.g. 1.35).
+        </p>
+      </div>
+      <div>
+        <label for="{{ form.rounding.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Rounding</label>
+        {{ form.rounding }}
+        {% if form.rounding.errors %}<p class="mt-1 text-xs text-red-600">{{ form.rounding.errors|striptags }}</p>{% endif %}
+      </div>
+      <div id="rounding-increment-row" class="{% if form.rounding.value != 'custom' %}hidden{% endif %}">
+        <label for="{{ form.rounding_increment.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Custom increment <span class="text-red-500">*</span>
+        </label>
+        {{ form.rounding_increment }}
+        {% if form.rounding_increment.errors %}<p class="mt-1 text-xs text-red-600">{{ form.rounding_increment.errors|striptags }}</p>{% endif %}
+        <p class="mt-1 text-xs text-slate-400">e.g. 0.05 or 2.50</p>
+      </div>
+      <div class="flex items-center gap-2.5">
+        {{ form.is_active }}
+        <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-slate-700 cursor-pointer">Active</label>
+      </div>
+      <div class="md:col-span-2">
+        <label for="{{ form.notes.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Internal notes</label>
+        {{ form.notes }}
+      </div>
+    </div>
+  </section>
+
+  {# ── Assignments ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="font-semibold text-slate-900">Assignments</h2>
+        <p class="text-sm text-slate-500">Assign this rule to products or categories. Set <em>either</em> a product or a category per row — not both.</p>
+      </div>
+      <button type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-formset-add="#assignment-formset">
+        <i class="fa-solid fa-plus text-xs text-slate-400" aria-hidden="true"></i>
+        Add assignment
+      </button>
+    </div>
+
+    <div id="assignment-formset" class="divide-y divide-slate-100">
+      {{ assignment_formset.management_form }}
+      {% if assignment_formset.non_form_errors %}
+        <div class="px-5 py-3 text-sm text-red-700">{{ assignment_formset.non_form_errors|striptags }}</div>
+      {% endif %}
+      {% for af in assignment_formset %}
+        <div class="formset-row p-5">
+          {% for hidden in af.hidden_fields %}{{ hidden }}{% endfor %}
+          {% if af.non_field_errors %}
+            <p class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{{ af.non_field_errors|striptags }}</p>
+          {% endif %}
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Product</label>
+              {{ af.product }}
+              {% if af.product.errors %}<p class="mt-1 text-xs text-red-600">{{ af.product.errors|striptags }}</p>{% endif %}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Category</label>
+              {{ af.category }}
+              {% if af.category.errors %}<p class="mt-1 text-xs text-red-600">{{ af.category.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="flex items-center gap-2">
+              {{ af.include_subcategories }}
+              <label class="text-sm text-slate-700 cursor-pointer">Include subcategories</label>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Priority <span class="font-normal text-slate-400">(lower = higher)</span></label>
+              {{ af.priority }}
+              {% if af.priority.errors %}<p class="mt-1 text-xs text-red-600">{{ af.priority.errors|striptags }}</p>{% endif %}
+            </div>
+            {% if af.DELETE %}
+              <div class="md:col-span-2 flex justify-end">
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
+                  {{ af.DELETE }}
+                  <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                  Remove
+                </label>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Save ── #}
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+      <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+      Save
+    </button>
+    {% if object.pk %}
+      <a href="{% url 'pricing:rule_detail' pk=object.pk %}" class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% else %}
+      <a href="{% url 'pricing:rule_list' %}" class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+
+<style>
+  label input[type="checkbox"][name$="-DELETE"] { display: none; }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Show/hide custom rounding increment
+  var roundingSelect = document.getElementById('id_rounding');
+  var incrementRow   = document.getElementById('rounding-increment-row');
+  if (roundingSelect) {
+    roundingSelect.addEventListener('change', function () {
+      incrementRow.classList.toggle('hidden', this.value !== 'custom');
+    });
+  }
+
+  // Value hint per method
+  var methodSelect = document.getElementById('id_method');
+  var valueHint    = document.getElementById('value-hint');
+  var hints = {
+    'cost_markup':      'Enter markup % — e.g. 35 means cost + 35%.',
+    'gross_margin':     'Enter target gross margin % — e.g. 40 means 40% margin.',
+    'msrp_discount':    'Enter discount off MSRP % — e.g. 10 means MSRP − 10%.',
+    'list_discount':    'Enter discount off list price % — e.g. 5 means list − 5%.',
+    'fixed_multiplier': 'Enter multiplier factor — e.g. 1.35 means cost × 1.35.',
+  };
+  function updateHint() {
+    if (methodSelect && valueHint) {
+      valueHint.textContent = hints[methodSelect.value] || '';
+    }
+  }
+  if (methodSelect) {
+    methodSelect.addEventListener('change', updateHint);
+    updateHint();
+  }
+
+  // "Add assignment" formset helper
+  (function () {
+    function addForm(container) {
+      var mgmt = container.querySelector('input[name$="-TOTAL_FORMS"]');
+      if (!mgmt) return;
+      var total = parseInt(mgmt.value || '0', 10);
+      var forms = container.querySelectorAll(':scope > .formset-row');
+      var last  = forms[forms.length - 1];
+      if (!last) return;
+      var clone = last.cloneNode(true);
+      var re = new RegExp('(\\b\\w+-)(\\d+)(-)');
+      clone.querySelectorAll('input, select, textarea, label').forEach(function (el) {
+        if (el.name)    el.name    = el.name.replace(re, '$1' + total + '$3');
+        if (el.id)      el.id      = el.id.replace(re, '$1' + total + '$3');
+        if (el.htmlFor) el.htmlFor = el.htmlFor.replace(re, '$1' + total + '$3');
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          if (el.type === 'checkbox') el.checked = false;
+          else if (el.type === 'hidden') { if (/-\d+-id$/.test(el.name)) el.value = ''; }
+          else el.value = '';
+        }
+        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+      });
+      clone.querySelectorAll('input[name$="-DELETE"]').forEach(function (cb) { cb.checked = false; });
+      // Clear any inline error messages
+      clone.querySelectorAll('p.text-red-600, p.text-red-700').forEach(function (el) { el.remove(); });
+      container.appendChild(clone);
+      mgmt.value = String(total + 1);
+    }
+
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-formset-add]');
+      if (!btn) return;
+      var container = document.querySelector(btn.getAttribute('data-formset-add'));
+      if (container) addForm(container);
+    });
+  }());
+</script>
+{% endblock %}

@@ -1,0 +1,399 @@
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Case, F, IntegerField, Value, When
+from django.db.models import Prefetch, Q
+from django.shortcuts import get_object_or_404, redirect
+from django.views import View
+from django.views.generic import DetailView, ListView, UpdateView
+
+from audit.models import EventLog
+
+from .forms import ProductForm, ProductImageUploadForm
+from .models import (
+    Product,
+    ProductBOMLine,
+    ProductCategory,
+    ProductImage,
+    ProductRelation,
+    ProductRelationType,
+    ProductStatus,
+)
+from .permissions import get_product_page_permissions
+
+
+class ProductListView(LoginRequiredMixin, ListView):
+    model = Product
+    context_object_name = 'products'
+    template_name = 'catalog/product_list.html'
+    paginate_by = 24
+
+    _SORT_OPTIONS = {
+        'name': ('category__name', 'name'),
+        'price_asc': (F('list_price').asc(nulls_last=True), 'name'),
+        'price_desc': (F('list_price').desc(nulls_last=True), 'name'),
+        'sku': ('sku',),
+    }
+    _DEFAULT_SORT = 'name'
+
+    def get_queryset(self):
+        qs = (
+            Product.objects.select_related('category')
+            .prefetch_related(
+                Prefetch(
+                    'images',
+                    queryset=ProductImage.objects.order_by('-is_primary', 'sort_order', 'pk'),
+                ),
+            )
+        )
+        if not self.request.user.has_perm('catalog.change_product'):
+            qs = qs.filter(is_archived=False)
+
+        status = self.request.GET.get('status')
+        if status == '__all__':
+            pass
+        elif status in ProductStatus.values:
+            qs = qs.filter(status=status)
+        else:
+            qs = qs.exclude(status=ProductStatus.DRAFT)
+
+        category_slug = self.request.GET.get('category')
+        if category_slug:
+            qs = qs.filter(category__slug=category_slug)
+
+        q = (self.request.GET.get('q') or '').strip()
+        if q:
+            qs = qs.filter(
+                Q(name__icontains=q)
+                | Q(sku__icontains=q)
+                | Q(short_description__icontains=q)
+                | Q(brand__icontains=q)
+                | Q(mpn__icontains=q)
+                | Q(ean_gtin__icontains=q),
+            )
+
+        sort_key = self.request.GET.get('sort') or self._DEFAULT_SORT
+        if sort_key not in self._SORT_OPTIONS:
+            sort_key = self._DEFAULT_SORT
+        qs = qs.order_by(*self._SORT_OPTIONS[sort_key])
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['categories'] = ProductCategory.objects.order_by('name')
+        ctx['status_choices'] = ProductStatus.choices
+        ctx['current_category'] = self.request.GET.get('category') or ''
+        ctx['current_status'] = self.request.GET.get('status') or ''
+        ctx['search_query'] = (self.request.GET.get('q') or '').strip()
+        sort_key = self.request.GET.get('sort') or self._DEFAULT_SORT
+        ctx['current_sort'] = sort_key if sort_key in self._SORT_OPTIONS else self._DEFAULT_SORT
+        ctx['product_page_permissions'] = get_product_page_permissions(self.request.user)
+        return ctx
+
+
+class ProductDetailView(LoginRequiredMixin, DetailView):
+    """Public detail URL uses the product UUID (primary key), not guessable business codes like SKU."""
+
+    model = Product
+    context_object_name = 'product'
+    template_name = 'catalog/product_detail.html'
+
+    def get_queryset(self):
+        return (
+            Product.objects.select_related(
+                'category',
+                'tax_rate',
+                'discount_group',
+                'it_spec',
+                'connectivity_spec',
+                'scanner_spec',
+                'printer_spec',
+                'display_spec',
+            )
+            .prefetch_related(
+                Prefetch(
+                    'images',
+                    queryset=ProductImage.objects.order_by('-is_primary', 'sort_order', 'pk'),
+                ),
+                'price_tiers',
+                Prefetch(
+                    'bundle_components',
+                    queryset=ProductBOMLine.objects.select_related('component_product'),
+                ),
+                Prefetch(
+                    'relations_from',
+                    queryset=ProductRelation.objects.select_related('to_product').order_by(
+                        'relation_type',
+                        'sort_order',
+                        'pk',
+                    ),
+                ),
+                'documents',
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        product = ctx['product']
+        ctx['product_page_permissions'] = get_product_page_permissions(
+            self.request.user,
+            product,
+        )
+        for attr in (
+            'it_spec',
+            'connectivity_spec',
+            'scanner_spec',
+            'printer_spec',
+            'display_spec',
+        ):
+            try:
+                ctx[attr] = getattr(product, attr)
+            except ObjectDoesNotExist:
+                ctx[attr] = None
+
+        if self.request.user.is_authenticated:
+            from sales.forms import AddToCartForm, ReplacementPickForm
+
+            ctx['add_to_cart_form'] = AddToCartForm()
+            if self.request.user.has_perm('catalog.change_product'):
+                existing = list(
+                    product.relations_from.filter(relation_type=ProductRelationType.REPLACEMENT).values_list(
+                        'to_product_id',
+                        flat=True,
+                    ),
+                )
+                ctx['replacement_form'] = ReplacementPickForm(
+                    exclude_product_ids=[product.pk, *existing],
+                )
+                ctx['image_upload_form'] = ProductImageUploadForm()
+        ctx['replacement_links'] = (
+            product.relations_from.filter(relation_type=ProductRelationType.REPLACEMENT)
+            .select_related('to_product')
+            .order_by('sort_order', 'pk')
+        )
+        _action_labels = {
+            'product.updated': 'Updated',
+            'product.image_uploaded': 'Image uploaded',
+            'product.image_deleted': 'Image deleted',
+            'product.replacement_assigned': 'Replacement assigned',
+            'product.created': 'Created',
+        }
+        raw_events = EventLog.objects.filter(
+            entity_type='Product',
+            entity_id=product.id,
+        ).order_by('-created_at')[:50]
+        ctx['product_events'] = [
+            {
+                'ev': ev,
+                'label': _action_labels.get(ev.action, ev.action.replace('.', ' › ').replace('_', ' ').title()),
+            }
+            for ev in raw_events
+        ]
+        return ctx
+
+
+class ProductImageAddView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'catalog.change_product'
+
+    def post(self, request, pk, *args, **kwargs):
+        product = get_object_or_404(Product, pk=pk)
+        form = ProductImageUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            im: ProductImage = form.save(commit=False)
+            im.product = product
+            im.save()
+            if im.is_primary:
+                ProductImage.objects.filter(product=product).exclude(pk=im.pk).update(is_primary=False)
+            from audit.services import log_event
+
+            log_event(
+                action='product.image_uploaded',
+                entity_type='Product',
+                entity_id=product.id,
+                request=request,
+                metadata={
+                    'sku': product.sku,
+                    'product_image_id': str(im.id),
+                },
+            )
+            messages.success(request, 'Image uploaded.')
+        else:
+            messages.error(request, 'Please choose a valid image file.')
+        return redirect(product.get_absolute_url())
+
+
+class ProductImageDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'catalog.delete_productimage'
+
+    def post(self, request, pk, image_pk, *args, **kwargs):
+        product = get_object_or_404(Product, pk=pk)
+        im = get_object_or_404(ProductImage, pk=image_pk, product=product)
+        from audit.services import log_event
+
+        log_event(
+            action='product.image_deleted',
+            entity_type='Product',
+            entity_id=product.id,
+            request=request,
+            metadata={
+                'sku': product.sku,
+                'product_image_id': str(im.id),
+                'file': im.image.name,
+            },
+        )
+        im.image.delete(save=False)
+        im.delete()
+        messages.success(request, 'Image deleted.')
+        return redirect(product.get_absolute_url())
+
+
+class ImageLibraryView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = ProductImage
+    template_name = 'catalog/image_library.html'
+    context_object_name = 'images'
+    paginate_by = 48
+    permission_required = 'catalog.view_productimage'
+
+    def get_queryset(self):
+        qs = ProductImage.objects.select_related('product')
+        q = (self.request.GET.get('q') or '').strip()
+        if q:
+            qs = qs.filter(Q(product__sku__icontains=q) | Q(product__name__icontains=q) | Q(alt_text__icontains=q))
+
+        used = (self.request.GET.get('used') or '').strip().lower()
+        if used in {'yes', 'true', '1'}:
+            qs = qs.filter(product__isnull=False)
+        elif used in {'no', 'false', '0'}:
+            qs = qs.filter(product__isnull=True)
+
+        sort = (self.request.GET.get('sort') or 'uploaded').strip().lower()
+        direction = (self.request.GET.get('dir') or 'desc').strip().lower()
+        desc = direction != 'asc'
+
+        if sort == 'name':
+            order = '-original_filename' if desc else 'original_filename'
+            qs = qs.order_by(order, '-uploaded_at', 'pk')
+        elif sort == 'size':
+            order = '-file_size' if desc else 'file_size'
+            qs = qs.order_by(order, '-uploaded_at', 'pk')
+        elif sort == 'used':
+            # used_first=1 when product is set; 0 otherwise
+            qs = qs.annotate(
+                used_first=Case(
+                    When(product__isnull=False, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+            )
+            order = '-used_first' if desc else 'used_first'
+            qs = qs.order_by(order, '-uploaded_at', 'pk')
+        else:  # uploaded
+            order = '-uploaded_at' if desc else 'uploaded_at'
+            qs = qs.order_by(order, 'pk')
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['sort'] = (self.request.GET.get('sort') or 'uploaded').strip().lower()
+        ctx['dir'] = (self.request.GET.get('dir') or 'desc').strip().lower()
+        ctx['used'] = (self.request.GET.get('used') or '').strip().lower()
+        return ctx
+
+
+class ProductReplacementAddView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'catalog.change_product'
+
+    def post(self, request, pk, *args, **kwargs):
+        from sales.forms import ReplacementPickForm
+
+        product = get_object_or_404(Product, pk=pk)
+        existing = list(
+            product.relations_from.filter(relation_type=ProductRelationType.REPLACEMENT).values_list(
+                'to_product_id',
+                flat=True,
+            ),
+        )
+        form = ReplacementPickForm(
+            request.POST,
+            exclude_product_ids=[product.pk, *existing],
+        )
+        if form.is_valid():
+            to_p = form.cleaned_data['replacement_product']
+            ProductRelation.objects.update_or_create(
+                from_product=product,
+                to_product=to_p,
+                relation_type=ProductRelationType.REPLACEMENT,
+                defaults={'sort_order': 0},
+            )
+            from audit.services import log_event
+
+            log_event(
+                action='product.replacement_assigned',
+                entity_type='Product',
+                entity_id=product.id,
+                request=request,
+                metadata={
+                    'sku': product.sku,
+                    'replacement_sku': to_p.sku,
+                    'replacement_id': str(to_p.id),
+                },
+            )
+            messages.success(
+                request,
+                f'Replacement set to {to_p.name} ({to_p.sku}).',
+            )
+        else:
+            messages.error(request, 'Choose a valid replacement product.')
+        return redirect(product.get_absolute_url())
+
+
+class ProductUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    """Edit product master data from the catalog UI (RBAC-ready via Django permissions)."""
+
+    model = Product
+    form_class = ProductForm
+    template_name = 'catalog/product_form.html'
+    permission_required = 'catalog.change_product'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_queryset(self):
+        return Product.objects.select_related('category', 'tax_rate', 'discount_group')
+
+    def form_valid(self, form):
+        changed = list(form.changed_data)
+        before = {k: getattr(self.object, k) for k in changed}
+        response = super().form_valid(form)
+        if changed:
+            from audit.services import log_event
+
+            after = {k: getattr(self.object, k) for k in changed}
+            log_event(
+                action='product.updated',
+                entity_type='Product',
+                entity_id=self.object.pk,
+                request=self.request,
+                metadata={
+                    'sku': self.object.sku,
+                    'fields': {
+                        k: {'before': str(before[k]), 'after': str(after[k])} for k in changed
+                    },
+                },
+            )
+        messages.success(self.request, 'Product saved successfully.')
+        return response
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['product_page_permissions'] = get_product_page_permissions(
+            self.request.user,
+            self.object,
+        )
+        return ctx

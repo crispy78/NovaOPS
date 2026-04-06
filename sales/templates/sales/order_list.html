@@ -1,0 +1,89 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Orders{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Sales orders</h1>
+    <p class="mt-1 text-sm text-slate-500">Confirmed orders from quotes or directly from the cart. From here you create fulfillment orders and invoices.</p>
+  </div>
+  <a href="{% url 'sales:cart' %}" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Cart
+  </a>
+</div>
+
+{% include "sales/partials/list_filters.html" %}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Reference</th>
+        <th class="px-4 py-3">Account</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3">Quote</th>
+        <th class="px-4 py-3">Created</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for o in orders %}
+        <tr class="hover:bg-slate-50/80">
+          <td class="px-4 py-3 font-semibold">
+            <a href="{{ o.get_absolute_url }}" class="text-nova-700 hover:underline">{{ o.reference }}</a>
+          </td>
+          <td class="px-4 py-3">
+            {% if o.relation_organization %}
+              <a href="{% url 'relations:organization_detail' pk=o.relation_organization.pk %}" class="font-medium text-nova-700 hover:underline">{{ o.relation_organization.name }}</a>
+            {% else %}
+              <span class="text-slate-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+              {% if o.status == 'confirmed' %}bg-emerald-100 text-emerald-900
+              {% elif o.status == 'draft' %}bg-slate-100 text-slate-800
+              {% elif o.status == 'cancelled' %}bg-red-100 text-red-900
+              {% elif o.status == 'fulfilled' %}bg-sky-100 text-sky-900
+              {% else %}bg-slate-100 text-slate-800{% endif %}">
+              {{ o.get_status_display }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-slate-500">
+            {% if o.quote %}
+              <a href="{{ o.quote.get_absolute_url }}" class="text-nova-700 hover:underline">{{ o.quote.reference }}</a>
+            {% else %}
+              <span class="text-slate-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-slate-500">{{ o.created_at|date:"Y-m-d" }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td class="px-4 py-12 text-center" colspan="5">
+            <i class="fa-solid fa-clipboard-list text-3xl text-slate-300" aria-hidden="true"></i>
+            <p class="mt-3 font-semibold text-slate-700">No orders yet</p>
+            <p class="mt-1 text-sm text-slate-500">Create one from the cart or convert an accepted quote.</p>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-6 flex items-center justify-center gap-2 text-sm" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
+        <i class="fa-solid fa-chevron-left text-xs mr-1" aria-hidden="true"></i>Previous
+      </a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
+        Next<i class="fa-solid fa-chevron-right text-xs ml-1" aria-hidden="true"></i>
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

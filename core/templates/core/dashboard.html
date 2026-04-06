@@ -1,0 +1,156 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Dashboard — NovaOPS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
+  <p class="mt-1 text-sm text-slate-500">Overview for {{ today|date:"l, j F Y" }}</p>
+</div>
+
+{# ── Quick-stat cards ──────────────────────────────────────────────────── #}
+<div class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+  <a href="{% url 'sales:order_list' %}?status=draft&status=confirmed"
+     class="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-nova-300 hover:shadow-md">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-nova-50 text-nova-600 group-hover:bg-nova-100">
+      <i class="fa-solid fa-cart-shopping text-xl" aria-hidden="true"></i>
+    </span>
+    <div>
+      <p class="text-2xl font-bold text-slate-900">{{ open_orders_count }}</p>
+      <p class="text-sm text-slate-500">Open orders</p>
+    </div>
+  </a>
+
+  <a href="{% url 'sales:quote_list' %}?status=draft&status=sent"
+     class="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-nova-300 hover:shadow-md">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 group-hover:bg-sky-100">
+      <i class="fa-solid fa-file-signature text-xl" aria-hidden="true"></i>
+    </span>
+    <div>
+      <p class="text-2xl font-bold text-slate-900">{{ active_quotes_count }}</p>
+      <p class="text-sm text-slate-500">Active quotes</p>
+    </div>
+  </a>
+
+  <a href="{% url 'sales:invoice_list' %}?status=issued"
+     class="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-nova-300 hover:shadow-md">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+      <i class="fa-solid fa-file-invoice-dollar text-xl" aria-hidden="true"></i>
+    </span>
+    <div>
+      <p class="text-2xl font-bold text-slate-900">{{ unpaid_invoices_count }}</p>
+      <p class="text-sm text-slate-500">Unpaid invoices</p>
+    </div>
+  </a>
+
+  <div class="flex items-center gap-4 rounded-xl border p-5 shadow-sm
+    {% if expiring_quotes_count > 0 %}border-amber-200 bg-amber-50{% else %}border-slate-200 bg-white{% endif %}">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl
+      {% if expiring_quotes_count > 0 %}bg-amber-100 text-amber-600{% else %}bg-slate-100 text-slate-400{% endif %}">
+      <i class="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
+    </span>
+    <div>
+      <p class="text-2xl font-bold {% if expiring_quotes_count > 0 %}text-amber-900{% else %}text-slate-900{% endif %}">{{ expiring_quotes_count }}</p>
+      <p class="text-sm {% if expiring_quotes_count > 0 %}text-amber-700{% else %}text-slate-500{% endif %}">Expired quotes</p>
+    </div>
+  </div>
+
+</div>
+
+{# ── Three-column activity ─────────────────────────────────────────────── #}
+<div class="grid gap-6 lg:grid-cols-3">
+
+  {# Open orders #}
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Open orders</h2>
+      <a href="{% url 'sales:order_list' %}" class="text-xs font-medium text-nova-600 hover:underline">View all</a>
+    </div>
+    {% if recent_orders %}
+      <ul class="divide-y divide-slate-100">
+        {% for order in recent_orders %}
+          <li class="px-5 py-3 text-sm">
+            <div class="flex items-center justify-between gap-2">
+              <a href="{{ order.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ order.reference }}</a>
+              <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+                {% if order.status == 'confirmed' %}bg-emerald-100 text-emerald-900
+                {% else %}bg-slate-100 text-slate-800{% endif %}">
+                {{ order.get_status_display }}
+              </span>
+            </div>
+            {% if order.relation_organization %}
+              <p class="mt-0.5 truncate text-slate-500">{{ order.relation_organization.name }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="px-5 py-8 text-center text-sm text-slate-400">No open orders.</p>
+    {% endif %}
+  </div>
+
+  {# Active quotes #}
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Active quotes</h2>
+      <a href="{% url 'sales:quote_list' %}" class="text-xs font-medium text-nova-600 hover:underline">View all</a>
+    </div>
+    {% if recent_quotes %}
+      <ul class="divide-y divide-slate-100">
+        {% for quote in recent_quotes %}
+          <li class="px-5 py-3 text-sm">
+            <div class="flex items-center justify-between gap-2">
+              <a href="{{ quote.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ quote.reference }}</a>
+              <div class="flex items-center gap-1.5">
+                {% if quote.valid_until and quote.valid_until < today %}
+                  <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Expired</span>
+                {% elif quote.valid_until %}
+                  <span class="text-xs text-slate-400">until {{ quote.valid_until|date:"d M" }}</span>
+                {% endif %}
+                <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ quote.get_status_display }}</span>
+              </div>
+            </div>
+            {% if quote.relation_organization %}
+              <p class="mt-0.5 truncate text-slate-500">{{ quote.relation_organization.name }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="px-5 py-8 text-center text-sm text-slate-400">No active quotes.</p>
+    {% endif %}
+  </div>
+
+  {# Unpaid invoices #}
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Unpaid invoices</h2>
+      <a href="{% url 'sales:invoice_list' %}" class="text-xs font-medium text-nova-600 hover:underline">View all</a>
+    </div>
+    {% if recent_unpaid_invoices %}
+      <ul class="divide-y divide-slate-100">
+        {% for inv in recent_unpaid_invoices %}
+          <li class="px-5 py-3 text-sm">
+            <div class="flex items-center justify-between gap-2">
+              <a href="{{ inv.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ inv.reference }}</a>
+              <span class="font-mono text-xs font-semibold text-slate-900">{{ inv.currency }} {{ inv.inv_balance|floatformat:2 }}</span>
+            </div>
+            {% if inv.relation_organization %}
+              <p class="mt-0.5 truncate text-slate-500">{{ inv.relation_organization.name }}</p>
+            {% endif %}
+            {% if inv.due_date %}
+              <p class="mt-0.5 text-xs {% if inv.due_date < today %}text-red-600 font-semibold{% else %}text-slate-400{% endif %}">
+                Due {{ inv.due_date|date:"d M Y" }}{% if inv.due_date < today %} — overdue{% endif %}
+              </p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="px-5 py-8 text-center text-sm text-slate-400">No unpaid invoices.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Assets{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Assets</h1>
+    <p class="mt-1 max-w-2xl text-sm text-slate-500">
+      Installed equipment tracked per customer — lifespan, repairs, recalls, and replacement advice.
+      Use <a href="{% url 'assets:mjop_list' %}" class="font-medium text-nova-700 hover:underline">maintenance plans</a>
+      for long-range schedules and
+      <a href="{% url 'assets:recall_list' %}" class="font-medium text-nova-700 hover:underline">recalls</a>
+      to notify customers of defects or EOL changes.
+    </p>
+  </div>
+  <a href="{% url 'assets:asset_create' %}" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+    <i class="fa-solid fa-plus" aria-hidden="true"></i>Register asset
+  </a>
+</div>
+
+<form method="get" class="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm">
+  <div class="min-w-[12rem] flex-1">
+    <label for="a-org" class="mb-1 block text-xs font-medium text-slate-600">Customer account</label>
+    <select id="a-org" name="org" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">All</option>
+      {% for o in filter_organizations %}
+        <option value="{{ o.pk }}" {% if filter_org == o.pk|stringformat:"s" %}selected{% endif %}>{{ o.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <label class="flex cursor-pointer items-center gap-2 pb-2 text-sm text-slate-700">
+    <input type="checkbox" name="include_children" value="1" class="h-4 w-4 rounded border-slate-300 text-nova-600" {% if filter_include_children %}checked{% endif %}>
+    <span>Include subsidiaries</span>
+  </label>
+  <div class="min-w-[12rem] flex-1">
+    <label for="a-person" class="mb-1 block text-xs font-medium text-slate-600">Contact on asset</label>
+    <select id="a-person" name="person" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">Any</option>
+      {% for p in filter_people %}
+        <option value="{{ p.pk }}" {% if filter_person == p.pk|stringformat:"s" %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="min-w-[10rem] flex-1">
+    <label for="a-product" class="mb-1 block text-xs font-medium text-slate-600">Product</label>
+    <select id="a-product" name="product" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">All</option>
+      {% for pr in products %}
+        <option value="{{ pr.pk }}" {% if filter_product == pr.pk|stringformat:"s" %}selected{% endif %}>{{ pr.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="min-w-[9rem]">
+    <label for="a-status" class="mb-1 block text-xs font-medium text-slate-600">Status</label>
+    <select id="a-status" name="status" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">All</option>
+      {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if filter_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="flex gap-2 pb-0.5">
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">Filter</button>
+    <a href="{% url 'assets:asset_list' %}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Clear</a>
+  </div>
+</form>
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Asset</th>
+        <th class="px-4 py-3">Customer</th>
+        <th class="px-4 py-3">SKU / serial</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3">EOL target</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in assets %}
+        <tr class="hover:bg-slate-50/80">
+          <td class="px-4 py-3 font-semibold">
+            <a href="{{ a.get_absolute_url }}" class="text-nova-700 hover:underline">{{ a.display_name }}</a>
+          </td>
+          <td class="px-4 py-3">
+            <a href="{% url 'relations:organization_detail' pk=a.organization.pk %}" class="text-nova-700 hover:underline">{{ a.organization.name }}</a>
+          </td>
+          <td class="px-4 py-3 font-mono text-xs text-slate-600">
+            {% if a.product %}{{ a.product.sku }}{% else %}—{% endif %}
+            {% if a.serial_number %}<span class="text-slate-400"> · {{ a.serial_number }}</span>{% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-slate-700">{{ a.get_status_display }}</span>
+          </td>
+          <td class="px-4 py-3 text-slate-500">
+            {% if a.expected_end_of_life_date %}{{ a.expected_end_of_life_date|date:"Y-m-d" }}{% else %}—{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td class="px-4 py-12 text-center" colspan="5">
+            <i class="fa-solid fa-screwdriver-wrench text-3xl text-slate-300" aria-hidden="true"></i>
+            <p class="mt-3 font-semibold text-slate-700">No assets registered</p>
+            <p class="mt-1 text-sm text-slate-500">Register installed equipment to track its lifecycle, maintenance, and recalls.</p>
+            <a href="{% url 'assets:asset_create' %}" class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>Register first asset
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-6 flex items-center justify-center gap-2 text-sm" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
+        <i class="fa-solid fa-chevron-left text-xs mr-1" aria-hidden="true"></i>Previous
+      </a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
+        Next<i class="fa-solid fa-chevron-right text-xs ml-1" aria-hidden="true"></i>
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

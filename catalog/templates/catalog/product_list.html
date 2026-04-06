@@ -1,0 +1,192 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Product catalog{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Product catalog</h1>
+    <p class="mt-1 text-sm text-slate-500">
+      {% if page_obj %}
+        {{ page_obj.paginator.count }} product{{ page_obj.paginator.count|pluralize }}
+        {% if search_query or current_category or current_status %} matching your filters{% endif %}
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<form method="get" id="catalog-filter-form" class="mb-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end">
+  <div class="min-w-[12rem] flex-1">
+    <label for="q" class="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Search</label>
+    <input type="search" name="q" id="q" value="{{ search_query }}"
+           placeholder="Name, SKU, brand, MPN…"
+           autocomplete="off"
+           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+  </div>
+  <div class="w-full sm:w-48">
+    <label for="category" class="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Category</label>
+    <select name="category" id="category" onchange="this.form.submit()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">All categories</option>
+      {% for c in categories %}
+        <option value="{{ c.slug }}" {% if current_category == c.slug %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="w-full sm:w-44">
+    <label for="status" class="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Status</label>
+    <select name="status" id="status" onchange="this.form.submit()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">Active &amp; visible</option>
+      <option value="__all__" {% if current_status == '__all__' %}selected{% endif %}>All statuses</option>
+      {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="w-full sm:w-40">
+    <label for="sort" class="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Sort</label>
+    <select name="sort" id="sort" onchange="this.form.submit()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name A–Z</option>
+      <option value="sku" {% if current_sort == 'sku' %}selected{% endif %}>SKU A–Z</option>
+      <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Price low–high</option>
+      <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Price high–low</option>
+    </select>
+  </div>
+  <div class="flex gap-2">
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">Search</button>
+    {% if search_query or current_category or current_status or current_sort != 'name' %}
+      <a href="{% url 'catalog:index' %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Clear all</a>
+    {% endif %}
+  </div>
+</form>
+<script>
+  (function () {
+    var t;
+    document.getElementById('q').addEventListener('input', function () {
+      clearTimeout(t);
+      t = setTimeout(function () { document.getElementById('catalog-filter-form').submit(); }, 500);
+    });
+  })();
+</script>
+
+{% if search_query or current_category or current_status %}
+  <div class="mb-6 flex flex-wrap items-center gap-2">
+    <span class="text-xs font-medium uppercase tracking-wide text-slate-400">Filters:</span>
+    {% if search_query %}
+      <a href="?{% if current_category %}category={{ current_category|urlencode }}&{% endif %}{% if current_status %}status={{ current_status|urlencode }}&{% endif %}{% if current_sort != 'name' %}sort={{ current_sort|urlencode }}{% endif %}"
+         class="inline-flex items-center gap-1.5 rounded-full border border-nova-200 bg-nova-50 px-3 py-1 text-xs font-semibold text-nova-800 hover:bg-nova-100">
+        <i class="fa-solid fa-magnifying-glass text-nova-500" aria-hidden="true"></i>
+        {{ search_query }}
+        <i class="fa-solid fa-xmark ml-0.5 text-nova-400" aria-hidden="true"></i>
+      </a>
+    {% endif %}
+    {% if current_category %}
+      {% for c in categories %}{% if c.slug == current_category %}
+        <a href="?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}{% if current_status %}status={{ current_status|urlencode }}&{% endif %}{% if current_sort != 'name' %}sort={{ current_sort|urlencode }}{% endif %}"
+           class="inline-flex items-center gap-1.5 rounded-full border border-nova-200 bg-nova-50 px-3 py-1 text-xs font-semibold text-nova-800 hover:bg-nova-100">
+          <i class="fa-solid fa-tag text-nova-500" aria-hidden="true"></i>
+          {{ c.name }}
+          <i class="fa-solid fa-xmark ml-0.5 text-nova-400" aria-hidden="true"></i>
+        </a>
+      {% endif %}{% endfor %}
+    {% endif %}
+    {% if current_status %}
+      {% for value, label in status_choices %}{% if value == current_status %}
+        <a href="?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}{% if current_category %}category={{ current_category|urlencode }}&{% endif %}{% if current_sort != 'name' %}sort={{ current_sort|urlencode }}{% endif %}"
+           class="inline-flex items-center gap-1.5 rounded-full border border-nova-200 bg-nova-50 px-3 py-1 text-xs font-semibold text-nova-800 hover:bg-nova-100">
+          <i class="fa-solid fa-circle-dot text-nova-500" aria-hidden="true"></i>
+          {{ label }}
+          <i class="fa-solid fa-xmark ml-0.5 text-nova-400" aria-hidden="true"></i>
+        </a>
+      {% endif %}{% endfor %}
+      {% if current_status == '__all__' %}
+        <a href="?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}{% if current_category %}category={{ current_category|urlencode }}&{% endif %}{% if current_sort != 'name' %}sort={{ current_sort|urlencode }}{% endif %}"
+           class="inline-flex items-center gap-1.5 rounded-full border border-nova-200 bg-nova-50 px-3 py-1 text-xs font-semibold text-nova-800 hover:bg-nova-100">
+          <i class="fa-solid fa-circle-dot text-nova-500" aria-hidden="true"></i>
+          All statuses
+          <i class="fa-solid fa-xmark ml-0.5 text-nova-400" aria-hidden="true"></i>
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if products %}
+  <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    {% for product in products %}
+      <li>
+        <a href="{{ product.get_absolute_url }}" class="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-nova-300 hover:shadow-md">
+          <div class="relative aspect-[4/3] bg-slate-100">
+            {% with img=product.images.all.0 %}
+              {% if img %}
+                <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" class="h-full w-full object-cover" loading="lazy">
+              {% else %}
+                <div class="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-100 to-slate-200 text-slate-300">
+                  <i class="fa-regular fa-image text-3xl" aria-hidden="true"></i>
+                  <span class="text-xs font-medium text-slate-400">No image</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+            {% if product.status == 'end_of_life' %}
+              <span class="absolute left-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">EOL</span>
+            {% elif product.status == 'unavailable' %}
+              <span class="absolute left-2 top-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">Unavailable</span>
+            {% elif product.status == 'draft' %}
+              <span class="absolute left-2 top-2 rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-700">Draft</span>
+            {% endif %}
+          </div>
+          <div class="flex flex-1 flex-col p-4">
+            {% if product.brand %}
+              <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">{{ product.brand }}</p>
+            {% endif %}
+            <h2 class="font-semibold leading-snug text-slate-900 group-hover:text-nova-700">{{ product.name }}</h2>
+            <p class="mt-1 font-mono text-xs text-slate-400">{{ product.sku }}</p>
+            {% if product.short_description %}
+              <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-500">{{ product.short_description }}</p>
+            {% endif %}
+            <div class="mt-auto flex items-end justify-between gap-2 pt-4">
+              <div>
+                <p class="text-base font-bold text-slate-900">
+                  {% if product.list_price is not None %}
+                    {{ product.currency }} {{ product.list_price|floatformat:2 }}
+                  {% else %}
+                    <span class="text-sm font-normal text-slate-400">On request</span>
+                  {% endif %}
+                </p>
+                <p class="mt-0.5 text-xs text-slate-400">{{ product.category.name }}</p>
+              </div>
+              {% if product.minimum_order_quantity > 1 %}
+                <span class="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-500">MOQ {{ product.minimum_order_quantity }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% if is_paginated %}
+    <nav class="mt-10 flex items-center justify-center gap-2" aria-label="Pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_category %}&category={{ current_category|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}{% if current_sort != 'name' %}&sort={{ current_sort|urlencode }}{% endif %}"
+           class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <i class="fa-solid fa-chevron-left text-xs" aria-hidden="true"></i> Previous
+        </a>
+      {% endif %}
+      <span class="px-3 py-2 text-sm text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_category %}&category={{ current_category|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}{% if current_sort != 'name' %}&sort={{ current_sort|urlencode }}{% endif %}"
+           class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          Next <i class="fa-solid fa-chevron-right text-xs" aria-hidden="true"></i>
+        </a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <div class="rounded-xl border border-dashed border-slate-300 bg-white p-14 text-center">
+    <i class="fa-regular fa-circle-xmark text-4xl text-slate-300" aria-hidden="true"></i>
+    <p class="mt-4 font-semibold text-slate-700">No products match your filters</p>
+    <p class="mt-1 text-sm text-slate-500">Try adjusting the search or removing a filter.</p>
+    <a href="{% url 'catalog:index' %}" class="mt-5 inline-block rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Clear all filters</a>
+  </div>
+{% endif %}
+{% endblock %}

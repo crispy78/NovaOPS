@@ -1,0 +1,252 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if object.pk %}Edit {{ object.name }}{% else %}New contract template{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+      <a href="{% url 'contracts:template_list' %}" class="hover:text-nova-700">Contract templates</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+      {% if object.pk %}
+        <a href="{{ object.get_absolute_url }}" class="hover:text-nova-700">{{ object.name }}</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <span class="font-medium text-slate-700">Edit</span>
+      {% else %}
+        <span class="font-medium text-slate-700">New template</span>
+      {% endif %}
+    </nav>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      {% if object.pk %}Edit contract template{% else %}New contract template{% endif %}
+    </h1>
+  </div>
+  {% if object.pk %}
+    <a href="{{ object.get_absolute_url }}"
+       class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Back
+    </a>
+  {% else %}
+    <a href="{% url 'contracts:template_list' %}"
+       class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Back
+    </a>
+  {% endif %}
+</div>
+
+<form method="post" class="space-y-6">
+  {% csrf_token %}
+
+  {# Template definition #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="font-semibold text-slate-900">Template definition</h2>
+      <p class="mt-0.5 text-sm text-slate-500">Define the name and the arithmetic formula for computing the contract result.</p>
+    </div>
+    {% if form.non_field_errors %}
+      <div class="mx-5 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="p-5 grid gap-5 md:grid-cols-2">
+      <div class="md:col-span-2">
+        <label for="{{ form.name.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Name <span class="text-red-500">*</span>
+        </label>
+        {{ form.name }}
+        {% if form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.name.errors|striptags }}</p>{% endif %}
+      </div>
+      <div class="md:col-span-2">
+        <label for="{{ form.description.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Description</label>
+        {{ form.description }}
+      </div>
+      <div class="md:col-span-2">
+        <label for="{{ form.formula.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Formula <span class="text-red-500">*</span>
+        </label>
+        {{ form.formula }}
+        {% if form.formula.errors %}<p class="mt-1 text-xs text-red-600">{{ form.formula.errors|striptags }}</p>{% endif %}
+        <p class="mt-1 text-xs text-slate-400">
+          Use +, −, *, /, ( ) and the variable names defined below.
+          Built-in: <code class="rounded bg-slate-100 px-1">duration_years</code>
+          <code class="rounded bg-slate-100 px-1">duration_months</code>
+          <code class="rounded bg-slate-100 px-1">quote_total</code>
+          <code class="rounded bg-slate-100 px-1">order_total</code>
+          <code class="rounded bg-slate-100 px-1">asset_purchase_price</code>.
+        </p>
+      </div>
+      <div>
+        <label for="{{ form.result_label.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Result label</label>
+        {{ form.result_label }}
+        <p class="mt-1 text-xs text-slate-400">Shown next to the computed result, e.g. "Annual cost".</p>
+      </div>
+      <div>
+        <div class="flex items-center gap-2.5 mt-6">
+          {{ form.is_active }}
+          <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-slate-700 cursor-pointer">Active</label>
+        </div>
+      </div>
+      <div class="md:col-span-2">
+        <label for="{{ form.notes.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</label>
+        {{ form.notes }}
+      </div>
+    </div>
+  </section>
+
+  {# Variables formset #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="font-semibold text-slate-900">Variables</h2>
+        <p class="text-sm text-slate-500">Define every variable name that appears in the formula above.</p>
+      </div>
+      <button type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-formset-add="#variable-formset">
+        <i class="fa-solid fa-plus text-xs text-slate-400" aria-hidden="true"></i>
+        Add variable
+      </button>
+    </div>
+
+    <div id="variable-formset" class="divide-y divide-slate-100">
+      {{ variable_formset.management_form }}
+      {% if variable_formset.non_form_errors %}
+        <div class="px-5 py-3 text-sm text-red-700">{{ variable_formset.non_form_errors|striptags }}</div>
+      {% endif %}
+      {% for vf in variable_formset %}
+        <div class="formset-row p-5">
+          {% for hidden in vf.hidden_fields %}{{ hidden }}{% endfor %}
+          {% if vf.non_field_errors %}
+            <p class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{{ vf.non_field_errors|striptags }}</p>
+          {% endif %}
+          <div class="grid gap-4 md:grid-cols-3">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Name <span class="text-red-500">*</span>
+              </label>
+              {{ vf.name }}
+              {% if vf.name.errors %}<p class="mt-1 text-xs text-red-600">{{ vf.name.errors|striptags }}</p>{% endif %}
+              <p class="mt-0.5 text-[11px] text-slate-400">Python identifier — used in formula</p>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Label <span class="text-red-500">*</span></label>
+              {{ vf.label }}
+              {% if vf.label.errors %}<p class="mt-1 text-xs text-red-600">{{ vf.label.errors|striptags }}</p>{% endif %}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Type <span class="text-red-500">*</span></label>
+              {{ vf.variable_type }}
+              {% if vf.variable_type.errors %}<p class="mt-1 text-xs text-red-600">{{ vf.variable_type.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="rate-field-row">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Service rate</label>
+              {{ vf.service_rate }}
+              {% if vf.service_rate.errors %}<p class="mt-1 text-xs text-red-600">{{ vf.service_rate.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="constant-field-row">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Constant value</label>
+              {{ vf.constant_value }}
+              {% if vf.constant_value.errors %}<p class="mt-1 text-xs text-red-600">{{ vf.constant_value.errors|striptags }}</p>{% endif %}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Default value</label>
+              {{ vf.default_value }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Unit</label>
+              {{ vf.unit }}
+              <p class="mt-0.5 text-[11px] text-slate-400">e.g. hours, %, EUR</p>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort order</label>
+              {{ vf.sort_order }}
+            </div>
+            {% if vf.DELETE %}
+              <div class="md:col-span-3 flex justify-end">
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
+                  {{ vf.DELETE }}
+                  <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                  Remove
+                </label>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="submit"
+            class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+      <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+      Save
+    </button>
+    {% if object.pk %}
+      <a href="{{ object.get_absolute_url }}"
+         class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% else %}
+      <a href="{% url 'contracts:template_list' %}"
+         class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+
+<style>
+  label input[type="checkbox"][name$="-DELETE"] { display: none; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // Show/hide service_rate and constant_value fields based on variable_type
+  function updateVarRow(row) {
+    var typeSelect = row.querySelector('.var-type-select');
+    if (!typeSelect) return;
+    var val = typeSelect.value;
+    var rateRow     = row.querySelector('.rate-field-row');
+    var constantRow = row.querySelector('.constant-field-row');
+    if (rateRow)     rateRow.style.display     = (val === 'service_rate') ? '' : 'none';
+    if (constantRow) constantRow.style.display = (val === 'constant')     ? '' : 'none';
+  }
+
+  function initRow(row) {
+    updateVarRow(row);
+    var sel = row.querySelector('.var-type-select');
+    if (sel) sel.addEventListener('change', function () { updateVarRow(row); });
+  }
+
+  document.querySelectorAll('#variable-formset .formset-row').forEach(initRow);
+
+  // Formset add
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-formset-add]');
+    if (!btn) return;
+    var container = document.querySelector(btn.getAttribute('data-formset-add'));
+    if (!container) return;
+    var mgmt = container.querySelector('input[name$="-TOTAL_FORMS"]');
+    if (!mgmt) return;
+    var total = parseInt(mgmt.value || '0', 10);
+    var forms = container.querySelectorAll(':scope > .formset-row');
+    var last  = forms[forms.length - 1];
+    if (!last) return;
+    var clone = last.cloneNode(true);
+    var re = new RegExp('(\\b\\w+-)(' + (total - 1) + ')(-)');
+    clone.querySelectorAll('input, select, textarea, label').forEach(function (el) {
+      if (el.name)    el.name    = el.name.replace(re, '$1' + total + '$3');
+      if (el.id)      el.id      = el.id.replace(re, '$1' + total + '$3');
+      if (el.htmlFor) el.htmlFor = el.htmlFor.replace(re, '$1' + total + '$3');
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        if (el.type === 'checkbox') el.checked = false;
+        else if (el.type === 'hidden' && /-\d+-id$/.test(el.name)) el.value = '';
+        else el.value = '';
+      }
+      if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    });
+    clone.querySelectorAll('input[name$="-DELETE"]').forEach(function (cb) { cb.checked = false; });
+    clone.querySelectorAll('p.text-red-600, p.text-red-700').forEach(function (el) { el.remove(); });
+    container.appendChild(clone);
+    mgmt.value = String(total + 1);
+    initRow(clone);
+  });
+}());
+</script>
+{% endblock %}

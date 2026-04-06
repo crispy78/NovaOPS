@@ -1,0 +1,190 @@
+{% extends "catalog/base.html" %}
+{% load relations_tags %}
+
+{% block title %}Accounts{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Accounts</h1>
+    <p class="mt-1 text-sm text-slate-500">Customers, prospects, suppliers, partners — all organisations you interact with.</p>
+  </div>
+  <a href="{% url 'relations:organization_create' %}" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+    <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+    New account
+  </a>
+</div>
+
+{# Filters #}
+<div class="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+  <form method="get" class="flex flex-wrap items-end gap-3">
+    <div class="flex-1 min-w-[10rem]">
+      <label for="q-org" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search</label>
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" aria-hidden="true"></i>
+        <input id="q-org" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Name or legal name…"
+               class="w-full rounded-lg border border-slate-300 pl-8 pr-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      </div>
+    </div>
+    <div>
+      <label for="flt-unit" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+      <select id="flt-unit" name="unit" class="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+        <option value="">All types</option>
+        {% for value, label in organization_unit_kinds %}
+          <option value="{{ value }}" {% if request.GET.unit == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="flt-arch" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
+      <select id="flt-arch" name="archived" class="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+        <option value="active" {% if filter_archived == 'active' %}selected{% endif %}>Active only</option>
+        <option value="all" {% if filter_archived == 'all' %}selected{% endif %}>All (incl. archived)</option>
+        <option value="archived" {% if filter_archived == 'archived' %}selected{% endif %}>Archived only</option>
+      </select>
+    </div>
+    <div>
+      <label for="flt-par" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Parent</label>
+      <select id="flt-par" name="parent" class="max-w-[13rem] rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+        <option value="">Any parent</option>
+        {% for po in filter_parent_organizations %}
+          <option value="{{ po.pk }}" {% if filter_parent == po.pk|stringformat:"s" %}selected{% endif %}>{{ po.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">Apply</button>
+      {% if request.GET.q or request.GET.unit or request.GET.archived or filter_parent %}
+        <a href="{% url 'relations:organization_list' %}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Clear</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+{# Active filter chips #}
+{% if request.GET.cat or request.GET.unit or filter_parent %}
+  <div class="mb-3 flex flex-wrap gap-1.5">
+    {% if request.GET.cat %}
+      <span class="inline-flex items-center gap-1 rounded-full bg-nova-50 px-2.5 py-1 text-xs font-semibold text-nova-700">
+        Category: {{ request.GET.cat }}
+        <a href="{% url 'relations:organization_list' %}{% if request.GET.q %}?q={{ request.GET.q|urlencode }}{% endif %}{% if request.GET.unit %}&unit={{ request.GET.unit|urlencode }}{% endif %}" class="ml-0.5 text-nova-500 hover:text-nova-800"><i class="fa-solid fa-xmark text-[10px]"></i></a>
+      </span>
+    {% endif %}
+    {% if request.GET.unit %}
+      <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+        Type: {{ request.GET.unit }}
+      </span>
+    {% endif %}
+    {% if filter_parent %}
+      <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+        Parent filter active
+      </span>
+    {% endif %}
+  </div>
+{% endif %}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  {% if organizations %}
+    <div class="border-b border-slate-100 px-4 py-2.5 text-xs text-slate-500">
+      {{ page_obj.paginator.count }} account{{ page_obj.paginator.count|pluralize }} found
+      {% if is_paginated %} &mdash; page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}{% endif %}
+    </div>
+  {% endif %}
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Account</th>
+        <th class="px-4 py-3 hidden md:table-cell">Type</th>
+        <th class="px-4 py-3 hidden lg:table-cell">Parent</th>
+        <th class="px-4 py-3 hidden xl:table-cell">Categories</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for org in organizations %}
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-nova-50 text-nova-700">
+                <i class="fa-solid fa-building text-xs" aria-hidden="true"></i>
+              </div>
+              <div class="min-w-0">
+                <a href="{% url 'relations:organization_detail' pk=org.pk %}" class="font-semibold text-slate-900 hover:text-nova-700 hover:underline">{{ org.name }}</a>
+                {% if org.legal_name and org.legal_name != org.name %}
+                  <div class="text-xs text-slate-400 truncate">{{ org.legal_name }}</div>
+                {% endif %}
+                {% if org.is_archived %}
+                  <span class="mt-0.5 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">Archived</span>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 hidden md:table-cell">
+            <span class="text-slate-600">{{ org.get_unit_kind_display }}</span>
+          </td>
+          <td class="px-4 py-3 hidden lg:table-cell">
+            {% if org.parent %}
+              <a href="{% url 'relations:organization_detail' pk=org.parent.pk %}" class="text-nova-700 hover:underline">{{ org.parent.name }}</a>
+            {% else %}
+              <span class="text-slate-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 hidden xl:table-cell">
+            {% with pairs=org.category_pairs %}
+              {% if pairs %}
+                <div class="flex flex-wrap gap-1">
+                  {% for code, lab in pairs %}
+                    <a href="{% url 'relations:organization_list' %}?cat={{ code|urlencode }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if request.GET.unit %}&unit={{ request.GET.unit|urlencode }}{% endif %}"
+                       class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:border-nova-300 hover:bg-nova-50 hover:text-nova-700">
+                      {{ lab }}
+                    </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <span class="text-slate-400">—</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4" class="px-4 py-16 text-center">
+            <div class="flex flex-col items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                <i class="fa-solid fa-building text-slate-400 text-xl" aria-hidden="true"></i>
+              </div>
+              <div>
+                <p class="font-medium text-slate-600">No accounts found</p>
+                {% if request.GET.q or request.GET.unit or request.GET.archived or filter_parent %}
+                  <p class="mt-1 text-sm text-slate-400">Try adjusting your filters or <a href="{% url 'relations:organization_list' %}" class="text-nova-700 hover:underline">clear them</a>.</p>
+                {% else %}
+                  <p class="mt-1 text-sm text-slate-400">Get started by <a href="{% url 'relations:organization_create' %}" class="text-nova-700 hover:underline">adding your first account</a>.</p>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-4 flex items-center justify-between text-sm" aria-label="Pagination">
+    <span class="text-slate-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="flex gap-2">
+      {% if page_obj.has_previous %}
+        <a class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50"
+           href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
+          <i class="fa-solid fa-chevron-left text-xs"></i> Previous
+        </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50"
+           href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
+          Next <i class="fa-solid fa-chevron-right text-xs"></i>
+        </a>
+      {% endif %}
+    </div>
+  </nav>
+{% endif %}
+{% endblock %}

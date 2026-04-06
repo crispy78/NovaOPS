@@ -1,0 +1,196 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ rule.name }} — Pricing{% endblock %}
+
+{% block content %}
+{# Breadcrumb + header #}
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+      <a href="{% url 'pricing:rule_list' %}" class="hover:text-nova-700">Pricing rules</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+      <span class="font-medium text-slate-900">{{ rule.name }}</span>
+    </nav>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ rule.name }}</h1>
+    {% if rule.description %}
+      <p class="mt-1 text-sm text-slate-500">{{ rule.description }}</p>
+    {% endif %}
+  </div>
+  <div class="flex items-center gap-3">
+    {% if rule.is_active %}
+      <span class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Active</span>
+    {% else %}
+      <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Inactive</span>
+    {% endif %}
+    {% if perms.pricing.change_pricingrule %}
+      <a href="{% url 'pricing:rule_update' pk=rule.pk %}"
+         class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+        <i class="fa-solid fa-pen text-xs" aria-hidden="true"></i>
+        Edit
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+
+  {# ── Left sidebar ── #}
+  <aside class="space-y-5 lg:col-span-1">
+
+    {# Rule configuration card #}
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Configuration</h2>
+      <dl class="mt-4 divide-y divide-slate-100 text-sm">
+        <div class="flex justify-between gap-4 py-2.5">
+          <dt class="text-slate-500">Method</dt>
+          <dd class="text-right font-medium text-slate-900">{{ rule.get_method_display }}</dd>
+        </div>
+        <div class="flex justify-between gap-4 py-2.5">
+          <dt class="text-slate-500">Value</dt>
+          <dd class="font-mono font-semibold text-nova-700">
+            {% if rule.method == 'fixed_multiplier' %}
+              × {{ rule.value|floatformat:4 }}
+            {% else %}
+              {{ rule.value|floatformat:2 }}%
+            {% endif %}
+          </dd>
+        </div>
+        <div class="flex justify-between gap-4 py-2.5">
+          <dt class="text-slate-500">Formula</dt>
+          <dd class="text-right text-xs text-slate-600">{{ rule.method_value_display }}</dd>
+        </div>
+        <div class="flex justify-between gap-4 py-2.5">
+          <dt class="text-slate-500">Rounding</dt>
+          <dd class="text-right font-medium text-slate-900">{{ rule.get_rounding_display }}</dd>
+        </div>
+        {% if rule.rounding_increment %}
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-slate-500">Increment</dt>
+            <dd class="font-mono font-medium text-slate-900">{{ rule.rounding_increment }}</dd>
+          </div>
+        {% endif %}
+      </dl>
+    </section>
+
+    {# Assignments card #}
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Assignments</h2>
+        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{{ rule.assignments.count }}</span>
+      </div>
+      {% if rule.assignments.all %}
+        <ul class="mt-4 divide-y divide-slate-100 text-sm">
+          {% for a in rule.assignments.all %}
+            <li class="flex items-start justify-between gap-3 py-2.5">
+              <div class="min-w-0">
+                {% if a.product %}
+                  <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-box text-[10px] text-slate-400 shrink-0" aria-hidden="true"></i>
+                    <a href="{{ a.product.get_absolute_url }}" class="font-medium text-slate-900 hover:text-nova-700 hover:underline truncate">{{ a.product.name }}</a>
+                  </div>
+                  <p class="mt-0.5 font-mono text-[11px] text-slate-400 ml-4">{{ a.product.sku }}</p>
+                {% elif a.category %}
+                  <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-folder text-[10px] text-slate-400 shrink-0" aria-hidden="true"></i>
+                    <span class="font-medium text-slate-900">{{ a.category.name }}</span>
+                  </div>
+                  {% if a.include_subcategories %}
+                    <p class="mt-0.5 text-[11px] text-slate-400 ml-4">+ subcategories</p>
+                  {% endif %}
+                {% endif %}
+              </div>
+              <span class="shrink-0 rounded-full border border-slate-200 px-2 py-0.5 text-[11px] text-slate-500">
+                pri {{ a.priority }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-3 text-sm text-slate-400">No assignments yet. <a href="{% url 'pricing:rule_update' pk=rule.pk %}" class="text-nova-700 hover:underline">Add some</a>.</p>
+      {% endif %}
+    </section>
+
+    {% if rule.notes %}
+      <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Notes</h2>
+        <p class="mt-2 text-sm leading-relaxed text-slate-600 whitespace-pre-wrap">{{ rule.notes }}</p>
+      </section>
+    {% endif %}
+
+  </aside>
+
+  {# ── Product preview ── #}
+  <div class="lg:col-span-2">
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-100 px-5 py-4">
+        <h2 class="font-semibold text-slate-900">Covered products — price preview</h2>
+        <p class="mt-0.5 text-xs text-slate-500">
+          All products reached by this rule's assignments.
+          <span class="rounded bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700">N/A</span>
+          means the required source price is not set on that product.
+        </p>
+      </div>
+      {% if preview %}
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-100 text-sm">
+            <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th class="px-5 py-3 text-left">Product</th>
+                <th class="px-5 py-3 text-right hidden md:table-cell">Cost</th>
+                <th class="px-5 py-3 text-right hidden md:table-cell">Current list</th>
+                <th class="px-5 py-3 text-right">Computed price</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for row in preview %}
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="px-5 py-3">
+                    <a href="{{ row.product.get_absolute_url }}"
+                       class="font-medium text-slate-900 hover:text-nova-700 hover:underline">{{ row.product.name }}</a>
+                    <p class="mt-0.5 font-mono text-[11px] text-slate-400">{{ row.product.sku }}</p>
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono text-xs text-slate-500 hidden md:table-cell">
+                    {% if row.product.purchase_price is not None %}
+                      {{ row.product.currency }} {{ row.product.purchase_price|floatformat:2 }}
+                    {% else %}
+                      <span class="text-slate-300">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono text-xs text-slate-500 hidden md:table-cell">
+                    {% if row.product.list_price is not None %}
+                      {{ row.product.currency }} {{ row.product.list_price|floatformat:2 }}
+                    {% else %}
+                      <span class="text-slate-300">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    {% if row.computed_price is not None %}
+                      <span class="font-semibold text-nova-700">
+                        {{ row.product.currency }} {{ row.computed_price|floatformat:2 }}
+                      </span>
+                    {% else %}
+                      <span class="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700">N/A</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="p-12 text-center">
+          <i class="fa-solid fa-table-list text-3xl text-slate-300" aria-hidden="true"></i>
+          <p class="mt-3 text-sm text-slate-500">No products are covered by the current assignments.</p>
+          {% if perms.pricing.change_pricingrule %}
+            <a href="{% url 'pricing:rule_update' pk=rule.pk %}"
+               class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-nova-700 hover:underline">
+              Add assignments <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+</div>
+{% endblock %}

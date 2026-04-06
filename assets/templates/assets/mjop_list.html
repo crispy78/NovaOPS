@@ -1,0 +1,60 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Multi-year maintenance plans (MJOP){% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="text-sm text-slate-500">Asset management</p>
+    <h1 class="text-2xl font-bold text-slate-900">Multi-year maintenance plans (MJOP)</h1>
+    <p class="mt-1 max-w-2xl text-sm text-slate-600">Multi-year maintenance and replacement outlook per customer. Promote key lines for customer-facing summaries and sales.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'assets:asset_list' %}" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">Assets</a>
+    <a href="{% url 'assets:mjop_create' %}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">New plan</a>
+  </div>
+</div>
+
+{% if filter_organization_id %}
+  <p class="mb-4 text-sm text-slate-600">Filtered by organization. <a href="{% url 'assets:mjop_list' %}" class="font-medium text-nova-700 hover:underline">Clear</a></p>
+{% endif %}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Reference</th>
+        <th class="px-4 py-3">Name</th>
+        <th class="px-4 py-3">Customer</th>
+        <th class="px-4 py-3">Period</th>
+        <th class="px-4 py-3">Status</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for p in plans %}
+        <tr class="hover:bg-slate-50/80">
+          <td class="px-4 py-3 font-semibold"><a href="{{ p.get_absolute_url }}" class="text-nova-700 hover:underline">{{ p.reference }}</a></td>
+          <td class="px-4 py-3">{{ p.name }}</td>
+          <td class="px-4 py-3"><a href="{% url 'relations:organization_detail' pk=p.organization.pk %}" class="text-nova-700 hover:underline">{{ p.organization.name }}</a></td>
+          <td class="px-4 py-3 text-slate-600">{{ p.valid_from|date:"Y-m-d" }}{% if p.valid_until %} — {{ p.valid_until|date:"Y-m-d" }}{% endif %}</td>
+          <td class="px-4 py-3">{{ p.get_status_display }}</td>
+        </tr>
+      {% empty %}
+        <tr><td class="px-4 py-10 text-center text-slate-600" colspan="5">No maintenance plans yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-6 flex justify-center gap-2 text-sm">
+    {% if page_obj.has_previous %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5" href="?page={{ page_obj.previous_page_number }}{% if filter_organization_id %}&organization={{ filter_organization_id }}{% endif %}">Previous</a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-slate-600">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5" href="?page={{ page_obj.next_page_number }}{% if filter_organization_id %}&organization={{ filter_organization_id }}{% endif %}">Next</a>
+    {% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

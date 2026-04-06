@@ -1,0 +1,208 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ quote.reference }} — Quote{% endblock %}
+
+{% block content %}
+<nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+  <a href="{% url 'sales:quote_list' %}" class="hover:text-nova-700">Quotes</a>
+  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+  <span class="font-medium text-slate-900">{{ quote.reference }}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">{{ quote.reference }}</h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+      <span>Status: {{ quote.get_status_display }} · Created {{ quote.created_at|date:"Y-m-d H:i" }}</span>
+      {% if quote.is_locked %}
+        <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">Locked</span>
+      {% endif %}
+    </p>
+    {% if quote.relation_organization %}
+      <p class="mt-2 text-sm text-slate-600">
+        For:
+        <a href="{% url 'relations:organization_detail' pk=quote.relation_organization.pk %}" class="font-semibold text-nova-700 hover:underline">{{ quote.relation_organization.name }}</a>
+      </p>
+    {% endif %}
+    {% if quote.internal_reference or quote.external_reference %}
+      <p class="mt-1 text-sm text-slate-600">
+        {% if quote.internal_reference %}<span class="mr-3">Internal ID: <span class="font-mono text-slate-800">{{ quote.internal_reference }}</span></span>{% endif %}
+        {% if quote.external_reference %}<span>External ID: <span class="font-mono text-slate-800">{{ quote.external_reference }}</span></span>{% endif %}
+      </p>
+    {% endif %}
+    {% if quote.is_locked and primary_order %}
+      <p class="mt-3 text-sm text-slate-700">
+        This quote was converted to order
+        <a href="{{ primary_order.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ primary_order.reference }}</a>.
+        Line items and pricing cannot be changed here.
+      </p>
+    {% endif %}
+  </div>
+  {% if not quote.is_locked %}
+    <form method="post" action="{% url 'sales:quote_refresh_prices' pk=quote.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
+        Refresh prices from catalog
+      </button>
+    </form>
+  {% endif %}
+</div>
+
+{% if quote.valid_until and quote.valid_until < today and not quote.is_locked %}
+  <div class="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0 text-amber-500" aria-hidden="true"></i>
+    <span>This quote expired on <strong>{{ quote.valid_until|date:"Y-m-d" }}</strong>. Update the expiry date before sending it to the customer.</span>
+  </div>
+{% endif %}
+
+{% if quote.is_locked %}
+  <section class="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Quote details</h2>
+    <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+      <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Customer / prospect</dt><dd class="mt-0.5 text-slate-800">{% if quote.relation_organization %}{{ quote.relation_organization.name }}{% else %}—{% endif %}</dd></div>
+      <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Status</dt><dd class="mt-0.5">{{ quote.get_status_display }}</dd></div>
+      <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Valid until</dt><dd class="mt-0.5">{% if quote.valid_until %}{{ quote.valid_until|date:"Y-m-d" }}{% else %}—{% endif %}</dd></div>
+      <div class="sm:col-span-2"><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Notes</dt><dd class="mt-0.5 whitespace-pre-wrap text-slate-800">{{ quote.notes|default:"—" }}</dd></div>
+    </dl>
+  </section>
+
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-4 py-3">
+      <h2 class="text-lg font-semibold text-slate-900">Line items</h2>
+    </div>
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Product</th>
+          <th class="px-4 py-3">SKU</th>
+          <th class="px-4 py-3">Qty</th>
+          <th class="px-4 py-3">Unit price</th>
+          <th class="px-4 py-3">Currency</th>
+          <th class="px-4 py-3">Line total</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for line in quote.lines.all %}
+          <tr>
+            <td class="px-4 py-3 font-medium">{{ line.product_name }}</td>
+            <td class="px-4 py-3 font-mono text-xs">{{ line.sku }}</td>
+            <td class="px-4 py-3">{{ line.quantity }}</td>
+            <td class="px-4 py-3">{{ line.unit_price|floatformat:2 }}</td>
+            <td class="px-4 py-3">{{ line.currency }}</td>
+            <td class="px-4 py-3 font-medium">{{ line.line_total|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="border-t-2 border-slate-200 bg-slate-50">
+        <tr>
+          <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Quote total</td>
+          <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ quote_total|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+{% else %}
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-lg font-semibold text-slate-900">Quote details</h2>
+      <p class="mt-1 text-sm text-slate-600">Customer or prospect organization, status, dates, references, and notes.</p>
+      {% if header_form.non_field_errors %}
+        <div class="mt-3 text-sm text-red-600">{{ header_form.non_field_errors }}</div>
+      {% endif %}
+      <div class="mt-4 space-y-4">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="{{ header_form.relation_organization.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ header_form.relation_organization.label }}</label>
+            {{ header_form.relation_organization }}
+            {% if header_form.relation_organization.help_text %}<p class="mt-1 text-xs text-slate-500">{{ header_form.relation_organization.help_text }}</p>{% endif %}
+            {% for err in header_form.relation_organization.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+          </div>
+          <div>
+            <label for="{{ header_form.status.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ header_form.status.label }}</label>
+            {{ header_form.status }}
+            {% for err in header_form.status.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+          </div>
+        </div>
+        <div class="max-w-md">
+          <label for="{{ header_form.valid_until.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ header_form.valid_until.label }}</label>
+          {{ header_form.valid_until }}
+          {% for err in header_form.valid_until.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="{{ header_form.internal_reference.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ header_form.internal_reference.label }}</label>
+            {{ header_form.internal_reference }}
+            {% for err in header_form.internal_reference.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+          </div>
+          <div>
+            <label for="{{ header_form.external_reference.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ header_form.external_reference.label }}</label>
+            {{ header_form.external_reference }}
+            {% for err in header_form.external_reference.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+          </div>
+        </div>
+        <div>
+          <label for="{{ header_form.notes.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ header_form.notes.label }}</label>
+          {{ header_form.notes }}
+          {% for err in header_form.notes.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+        </div>
+      </div>
+    </section>
+
+    {{ formset.management_form }}
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-4 py-3">
+        <h2 class="text-lg font-semibold text-slate-900">Line items</h2>
+      </div>
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Product</th>
+            <th class="px-4 py-3">SKU</th>
+            <th class="px-4 py-3">Qty</th>
+            <th class="px-4 py-3">Unit price</th>
+            <th class="px-4 py-3">Currency</th>
+            <th class="px-4 py-3">Line total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for f in formset %}
+            <tr>
+              {{ f.id }}
+              <td class="px-4 py-3">{{ f.instance.product_name }}</td>
+              <td class="px-4 py-3 font-mono text-xs">{{ f.instance.sku }}</td>
+              <td class="px-4 py-3">{{ f.quantity }}</td>
+              <td class="px-4 py-3">{{ f.unit_price }}</td>
+              <td class="px-4 py-3">{{ f.currency }}</td>
+              <td class="px-4 py-3 font-medium">{{ f.instance.line_total|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="border-t-2 border-slate-200 bg-slate-50">
+          <tr>
+            <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Quote total</td>
+            <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ quote_total|floatformat:2 }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% if formset.non_form_errors %}
+      <div class="text-sm text-red-600">{{ formset.non_form_errors }}</div>
+    {% endif %}
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+      Save quote
+    </button>
+  </form>
+
+  {% if can_create_order %}
+    <form method="post" action="{% url 'sales:quote_create_order' pk=quote.pk %}" class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 shadow-sm">
+      {% csrf_token %}
+      <p class="text-sm text-emerald-900">Ready to fulfil? Create a sales order from this quote. The quote will be locked and marked accepted.</p>
+      <button type="submit" class="mt-3 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+        Create order from quote
+      </button>
+    </form>
+  {% endif %}
+{% endif %}
+{% endblock %}

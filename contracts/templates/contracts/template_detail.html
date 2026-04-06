@@ -1,0 +1,168 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ tmpl.name }} — Contract template{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+      <a href="{% url 'contracts:template_list' %}" class="hover:text-nova-700">Contract templates</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+      <span class="font-medium text-slate-900">{{ tmpl.name }}</span>
+    </nav>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ tmpl.name }}</h1>
+    {% if tmpl.description %}
+      <p class="mt-1 text-sm text-slate-500">{{ tmpl.description }}</p>
+    {% endif %}
+  </div>
+  <div class="flex items-center gap-3">
+    {% if tmpl.is_active %}
+      <span class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Active</span>
+    {% else %}
+      <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Inactive</span>
+    {% endif %}
+    <a href="{% url 'contracts:template_update' pk=tmpl.pk %}"
+       class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+      <i class="fa-solid fa-pen text-xs" aria-hidden="true"></i>
+      Edit
+    </a>
+  </div>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+
+  {# Left sidebar #}
+  <aside class="space-y-5 lg:col-span-1">
+
+    {# Formula card #}
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Formula</h2>
+      <p class="mt-1 text-xs text-slate-400">Result label: <span class="font-medium text-slate-600">{{ tmpl.result_label }}</span></p>
+      <pre class="mt-3 overflow-x-auto rounded-lg bg-slate-50 px-4 py-3 font-mono text-xs text-slate-800 whitespace-pre-wrap">{{ tmpl.formula }}</pre>
+    </section>
+
+    {# Built-in variables hint #}
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Built-in variables</h2>
+      <dl class="mt-3 space-y-1.5 text-xs">
+        <div class="flex gap-2"><dt class="font-mono text-nova-700 shrink-0">duration_years</dt><dd class="text-slate-500">Years between start and end date</dd></div>
+        <div class="flex gap-2"><dt class="font-mono text-nova-700 shrink-0">duration_months</dt><dd class="text-slate-500">Months between start and end date</dd></div>
+        <div class="flex gap-2"><dt class="font-mono text-nova-700 shrink-0">quote_total</dt><dd class="text-slate-500">Sum of linked quote lines</dd></div>
+        <div class="flex gap-2"><dt class="font-mono text-nova-700 shrink-0">order_total</dt><dd class="text-slate-500">Sum of linked order lines</dd></div>
+        <div class="flex gap-2"><dt class="font-mono text-nova-700 shrink-0">asset_purchase_price</dt><dd class="text-slate-500">Purchase price of linked asset</dd></div>
+      </dl>
+    </section>
+
+    {% if tmpl.notes %}
+      <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Notes</h2>
+        <p class="mt-2 text-sm leading-relaxed text-slate-600 whitespace-pre-wrap">{{ tmpl.notes }}</p>
+      </section>
+    {% endif %}
+
+  </aside>
+
+  {# Main content #}
+  <div class="space-y-6 lg:col-span-2">
+
+    {# Variables #}
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <h2 class="font-semibold text-slate-900">Variables</h2>
+        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{{ variables|length }}</span>
+      </div>
+      {% if variables %}
+        <table class="min-w-full divide-y divide-slate-100 text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-3 text-left">#</th>
+              <th class="px-5 py-3 text-left">Name</th>
+              <th class="px-5 py-3 text-left">Label</th>
+              <th class="px-5 py-3 text-left">Type</th>
+              <th class="px-5 py-3 text-right">Value / source</th>
+              <th class="px-5 py-3 text-left hidden md:table-cell">Unit</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for var in variables %}
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-5 py-3 text-slate-400 text-xs">{{ var.sort_order }}</td>
+                <td class="px-5 py-3 font-mono text-xs text-nova-700">{{ var.name }}</td>
+                <td class="px-5 py-3 text-slate-900">{{ var.label }}</td>
+                <td class="px-5 py-3">
+                  <span class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium
+                    {% if var.variable_type == 'user_input' %}bg-sky-50 text-sky-700
+                    {% elif var.variable_type == 'service_rate' %}bg-violet-50 text-violet-700
+                    {% else %}bg-amber-50 text-amber-700{% endif %}">
+                    {{ var.get_variable_type_display }}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-right font-mono text-xs text-slate-600">
+                  {% if var.variable_type == 'service_rate' and var.service_rate %}
+                    {{ var.service_rate.name }}<br>
+                    <span class="text-nova-700">{{ var.service_rate.currency }} {{ var.service_rate.rate_per_hour|floatformat:2 }}/h</span>
+                  {% elif var.variable_type == 'constant' %}
+                    {{ var.constant_value }}
+                  {% elif var.default_value is not None %}
+                    default: {{ var.default_value }}
+                  {% else %}
+                    <span class="text-slate-300">—</span>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-3 text-xs text-slate-500 hidden md:table-cell">{{ var.unit|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="p-5 text-sm text-slate-400">No variables defined yet. <a href="{% url 'contracts:template_update' pk=tmpl.pk %}" class="text-nova-700 hover:underline">Add some</a>.</p>
+      {% endif %}
+    </section>
+
+    {# Recent contracts #}
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <h2 class="font-semibold text-slate-900">Contracts using this template</h2>
+        <a href="{% url 'contracts:contract_list' %}" class="text-xs text-nova-700 hover:underline">View all</a>
+      </div>
+      {% if contracts %}
+        <table class="min-w-full divide-y divide-slate-100 text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-3 text-left">Reference</th>
+              <th class="px-5 py-3 text-left">Customer</th>
+              <th class="px-5 py-3 text-left">Status</th>
+              <th class="px-5 py-3 text-right">Result</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for c in contracts %}
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-5 py-3 font-mono text-xs">
+                  <a href="{{ c.get_absolute_url }}" class="text-nova-700 hover:underline">{{ c.reference }}</a>
+                </td>
+                <td class="px-5 py-3 text-slate-900">{{ c.organization.name }}</td>
+                <td class="px-5 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold
+                    {% if c.status == 'active' %}bg-emerald-50 text-emerald-700
+                    {% elif c.status == 'draft' %}bg-slate-100 text-slate-600
+                    {% elif c.status == 'expired' %}bg-amber-50 text-amber-700
+                    {% else %}bg-red-50 text-red-700{% endif %}">
+                    {{ c.get_status_display }}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-right font-mono text-xs text-nova-700">
+                  {% if c.computed_result is not None %}{{ c.computed_result|floatformat:2 }}{% else %}<span class="text-slate-300">—</span>{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="p-5 text-sm text-slate-400">No contracts yet.</p>
+      {% endif %}
+    </section>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Team directory{% endblock %}
+
+{% block content %}
+<nav class="mb-4 text-sm text-slate-500">
+  <a href="{% url 'accounts:profile' %}" class="hover:text-nova-700">Profile</a>
+  <span class="mx-2">/</span>
+  <span class="text-slate-900">Team</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Team directory</h1>
+    <p class="mt-1 text-sm text-slate-600">Active login accounts for this application.</p>
+  </div>
+</div>
+
+<form method="get" class="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm">
+  <div class="min-w-[14rem] flex-1">
+    <label for="ud-q" class="mb-1 block text-xs font-medium text-slate-600">Search</label>
+    <input id="ud-q" type="search" name="q" value="{{ filter_q }}" placeholder="Name or email…"
+           class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+  </div>
+  <div>
+    <label for="ud-staff" class="mb-1 block text-xs font-medium text-slate-600">Role</label>
+    <select id="ud-staff" name="staff" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">All users</option>
+      <option value="1" {% if filter_staff %}selected{% endif %}>Staff only</option>
+      <option value="0" {% if filter_staff_non %}selected{% endif %}>Non-staff only</option>
+    </select>
+  </div>
+  <div class="flex gap-2">
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">Filter</button>
+    <a href="{% url 'accounts:user_directory' %}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Clear</a>
+  </div>
+</form>
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Name</th>
+        <th class="px-4 py-3">Email</th>
+        <th class="px-4 py-3">Staff</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for u in directory_users %}
+        <tr class="hover:bg-slate-50/80">
+          <td class="px-4 py-3 font-medium text-slate-900">{{ u.get_full_name|default:"—" }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ u.email|default:u.username }}</td>
+          <td class="px-4 py-3">{% if u.is_staff %}<span class="text-emerald-700">Yes</span>{% else %}<span class="text-slate-400">No</span>{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td class="px-4 py-8 text-center text-slate-600" colspan="3">No users match your filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-6 flex justify-center gap-2 text-sm" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-slate-600">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

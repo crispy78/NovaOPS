@@ -1,0 +1,209 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ order.reference }} — Order{% endblock %}
+
+{% block content %}
+<nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+  <a href="{% url 'sales:order_list' %}" class="hover:text-nova-700">Orders</a>
+  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+  <span class="font-medium text-slate-900">{{ order.reference }}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">{{ order.reference }}</h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+      <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+        {% if order.status == 'confirmed' %}bg-emerald-100 text-emerald-900
+        {% elif order.status == 'draft' %}bg-slate-100 text-slate-800
+        {% elif order.status == 'cancelled' %}bg-red-100 text-red-900
+        {% elif order.status == 'fulfilled' %}bg-sky-100 text-sky-900
+        {% else %}bg-slate-100 text-slate-800{% endif %}">
+        {{ order.get_status_display }}
+      </span>
+      <span>Created {{ order.created_at|date:"Y-m-d H:i" }}</span>
+    </p>
+    {% if order.relation_organization %}
+      <p class="mt-2 text-sm text-slate-600">
+        Customer / prospect:
+        <a href="{% url 'relations:organization_detail' pk=order.relation_organization.pk %}" class="font-semibold text-nova-700 hover:underline">{{ order.relation_organization.name }}</a>
+      </p>
+    {% endif %}
+    {% if order.notes %}
+      <div class="mt-3 max-w-2xl rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Notes</p>
+        <p class="mt-1 whitespace-pre-wrap">{{ order.notes }}</p>
+      </div>
+    {% endif %}
+  </div>
+  {# Status actions — only available for actionable statuses #}
+  {% if order.status == 'draft' or order.status == 'confirmed' %}
+    <div class="flex shrink-0 flex-wrap gap-2">
+      {% if order.status == 'draft' %}
+        <form method="post" action="{% url 'sales:order_status_update' pk=order.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+            <i class="fa-solid fa-circle-check text-xs" aria-hidden="true"></i> Confirm order
+          </button>
+        </form>
+      {% endif %}
+      <form method="post" action="{% url 'sales:order_status_update' pk=order.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cancel">
+        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+          onclick="return confirm('Cancel order {{ order.reference }}?')">
+          <i class="fa-solid fa-ban text-xs" aria-hidden="true"></i> Cancel
+        </button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+{# Pipeline: related documents and available next steps #}
+{% if order.quote or open_fulfillment or can_create_fulfillment or shipping_orders or open_invoice or can_create_invoice %}
+<div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="border-b border-slate-200 bg-slate-50 px-5 py-3">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Pipeline</h2>
+  </div>
+  <div class="divide-y divide-slate-100">
+
+    {# Source quote #}
+    {% if order.quote %}
+      <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm">
+        <span class="flex items-center gap-2 text-slate-500">
+          <i class="fa-solid fa-file-signature w-4 text-center text-slate-400" aria-hidden="true"></i>
+          Source quote
+        </span>
+        <span class="flex items-center gap-2">
+          <a href="{{ order.quote.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ order.quote.reference }}</a>
+          {% if order.quote.is_locked %}<span class="inline-flex rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">Locked</span>{% endif %}
+        </span>
+      </div>
+    {% endif %}
+
+    {# Fulfillment #}
+    {% if open_fulfillment %}
+      <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm">
+        <span class="flex items-center gap-2 text-slate-500">
+          <i class="fa-solid fa-dolly w-4 text-center text-slate-400" aria-hidden="true"></i>
+          Fulfillment order
+        </span>
+        <span class="flex flex-wrap items-center gap-2">
+          <a href="{{ open_fulfillment.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ open_fulfillment.reference }}</a>
+          <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+            {% if open_fulfillment.status == 'pending' %}bg-amber-100 text-amber-900
+            {% elif open_fulfillment.status == 'in_progress' %}bg-sky-100 text-sky-900
+            {% elif open_fulfillment.status == 'completed' %}bg-emerald-100 text-emerald-900
+            {% else %}bg-slate-100 text-slate-800{% endif %}">
+            {{ open_fulfillment.get_status_display }}
+          </span>
+        </span>
+      </div>
+    {% elif can_create_fulfillment %}
+      <div class="px-5 py-4">
+        <p class="text-sm text-slate-600">No fulfillment order yet. Create one to generate a warehouse pick list.</p>
+        <form method="post" action="{% url 'sales:order_create_fulfillment' pk=order.pk %}" class="mt-3">
+          {% csrf_token %}
+          <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+            <i class="fa-solid fa-dolly text-xs" aria-hidden="true"></i>
+            Create fulfillment order
+          </button>
+        </form>
+      </div>
+    {% endif %}
+
+    {# Shipping orders #}
+    {% if shipping_orders %}
+      <div class="px-5 py-3 text-sm">
+        <div class="mb-2 flex items-center gap-2 text-slate-500">
+          <i class="fa-solid fa-truck w-4 text-center text-slate-400" aria-hidden="true"></i>
+          Shipping orders
+        </div>
+        <ul class="space-y-1.5 pl-6">
+          {% for sh in shipping_orders %}
+            <li class="flex flex-wrap items-center gap-2">
+              <a href="{{ sh.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ sh.reference }}</a>
+              <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+                {% if sh.status == 'draft' %}bg-slate-100 text-slate-800
+                {% elif sh.status == 'released' %}bg-sky-100 text-sky-900
+                {% elif sh.status == 'partially_shipped' %}bg-amber-100 text-amber-900
+                {% elif sh.status == 'shipped' %}bg-emerald-100 text-emerald-900
+                {% elif sh.status == 'cancelled' %}bg-red-100 text-red-900
+                {% else %}bg-slate-100 text-slate-800{% endif %}">
+                {{ sh.get_status_display }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {# Invoice #}
+    {% if open_invoice %}
+      <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm">
+        <span class="flex items-center gap-2 text-slate-500">
+          <i class="fa-solid fa-file-invoice-dollar w-4 text-center text-slate-400" aria-hidden="true"></i>
+          Invoice
+        </span>
+        <span class="flex flex-wrap items-center gap-2">
+          <a href="{{ open_invoice.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ open_invoice.reference }}</a>
+          {% if open_invoice_is_paid %}
+            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-900">
+              <i class="fa-solid fa-circle-check text-xs" aria-hidden="true"></i> Paid in full
+            </span>
+          {% else %}
+            <span class="text-slate-600">Balance: <strong class="text-slate-900">{{ open_invoice.currency }} {{ open_invoice_balance|floatformat:2 }}</strong></span>
+          {% endif %}
+        </span>
+      </div>
+    {% elif can_create_invoice %}
+      <div class="px-5 py-4">
+        <p class="text-sm text-slate-600">No invoice yet. Create one to bill the customer — line amounts will be snapshot from this order.</p>
+        <form method="post" action="{% url 'sales:order_create_invoice' pk=order.pk %}" class="mt-3">
+          {% csrf_token %}
+          <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+            <i class="fa-solid fa-file-invoice-dollar text-xs" aria-hidden="true"></i>
+            Create invoice
+          </button>
+        </form>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Product</th>
+        <th class="px-4 py-3">SKU</th>
+        <th class="px-4 py-3">Qty</th>
+        <th class="px-4 py-3">Unit</th>
+        <th class="px-4 py-3">Line total</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for line in order.lines.all %}
+        <tr>
+          <td class="px-4 py-3 font-medium">{{ line.product_name }}</td>
+          <td class="px-4 py-3 font-mono text-xs">{{ line.sku }}</td>
+          <td class="px-4 py-3">{{ line.quantity }}</td>
+          <td class="px-4 py-3">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+          <td class="px-4 py-3">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot class="border-t-2 border-slate-200 bg-slate-50">
+      <tr>
+        <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Order total</td>
+        <td class="px-4 py-3 text-sm font-bold text-slate-900">
+          {% with first_line=order.lines.all.0 %}{{ first_line.currency }}{% endwith %} {{ order_total|floatformat:2 }}
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}

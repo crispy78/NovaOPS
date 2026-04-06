@@ -1,0 +1,101 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Quotes{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Quotes</h1>
+    <p class="mt-1 text-sm text-slate-500">Price snapshots sent to prospects or customers. Add products to your <a href="{% url 'sales:cart' %}" class="font-medium text-nova-700 hover:underline">cart</a> to create a new quote.</p>
+  </div>
+  <a href="{% url 'sales:cart' %}" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Go to cart
+  </a>
+</div>
+
+{% include "sales/partials/list_filters.html" %}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Reference</th>
+        <th class="px-4 py-3">Account</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3 text-right">Lines</th>
+        <th class="px-4 py-3 text-right">Total</th>
+        <th class="px-4 py-3">Created</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for q in quotes %}
+        <tr class="hover:bg-slate-50/80">
+          <td class="px-4 py-3">
+            <a href="{{ q.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ q.reference }}</a>
+            {% if q.is_locked %}
+              <span class="ml-1.5 inline-flex rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">Locked</span>
+            {% endif %}
+            {% if q.internal_reference or q.external_reference %}
+              <p class="mt-0.5 text-xs text-slate-400">
+                {% if q.internal_reference %}<span class="font-mono">Int: {{ q.internal_reference }}</span>{% endif %}
+                {% if q.internal_reference and q.external_reference %} · {% endif %}
+                {% if q.external_reference %}<span class="font-mono">Ext: {{ q.external_reference }}</span>{% endif %}
+              </p>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-slate-600">
+            {% if q.relation_organization %}
+              <a href="{% url 'relations:organization_detail' pk=q.relation_organization.pk %}" class="font-medium text-nova-700 hover:underline">{{ q.relation_organization.name }}</a>
+            {% else %}
+              <span class="text-slate-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+              {% if q.status == 'draft' %}bg-slate-100 text-slate-800
+              {% elif q.status == 'sent' %}bg-sky-100 text-sky-900
+              {% elif q.status == 'accepted' %}bg-emerald-100 text-emerald-900
+              {% elif q.status == 'cancelled' %}bg-red-100 text-red-900
+              {% else %}bg-amber-100 text-amber-900{% endif %}">
+              {{ q.get_status_display }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ q.line_count }}</td>
+          <td class="px-4 py-3 text-right font-semibold text-slate-900">EUR {{ q.lines_total|floatformat:2 }}</td>
+          <td class="px-4 py-3 text-slate-500">
+            <span>{{ q.created_at|date:"Y-m-d" }}</span>
+            <span class="text-slate-400">{{ q.created_at|date:"H:i" }}</span>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td class="px-4 py-12 text-center" colspan="6">
+            <i class="fa-solid fa-file-signature text-3xl text-slate-300" aria-hidden="true"></i>
+            <p class="mt-3 font-semibold text-slate-700">No quotes yet</p>
+            <p class="mt-1 text-sm text-slate-500">Add products to your cart and create a quote linked to an account.</p>
+            <a href="{% url 'sales:cart' %}" class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+              <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>Go to cart
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-6 flex items-center justify-center gap-2 text-sm" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
+        <i class="fa-solid fa-chevron-left text-xs mr-1" aria-hidden="true"></i>Previous
+      </a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
+        Next<i class="fa-solid fa-chevron-right text-xs ml-1" aria-hidden="true"></i>
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+---
+description: Database identifiers — UUID primary keys and stable references
+globs: "**/*.py"
+alwaysApply: true
+---
+
+# Data model conventions
+
+## Primary keys
+
+- **Use UUID v4 as the primary key** for all new domain models (catalog, sales, CRM entities, etc.), not auto-increment integers.
+- Define an explicit `id` field: `UUIDField(primary_key=True, default=uuid.uuid4, editable=False)`, or inherit the shared abstract base from `core.models.UUIDPrimaryKeyModel`.
+- **ForeignKey / OneToOneField / ManyToManyField** must reference these UUID primary keys (Django does this automatically when the related model uses a UUID PK).
+
+## Public URLs and APIs
+
+- Prefer **UUID** in URLs and external references (e.g. `/products/<uuid>/`, `/sales/quotes/<uuid>/`) instead of business codes (SKU, human-readable quote numbers) where guessability or enumeration is a concern.
+- Business codes (SKU, `Q-2026-00001`) remain useful for display and search but are **not** the primary join key across modules.
+
+## Migrations
+
+- When adding new apps/models, create migrations that use UUID columns for `id` and matching UUID FK columns from the start; avoid later PK migrations from BigInt to UUID unless planned with a data migration.
+
+## Logging and audit
+
+- Store **entity_id** in audit/event tables as **UUID** (or string form of UUID) aligned with the owning row’s `id`.
+
+## Data retention (no hard deletes)
+
+- Default to **soft delete / archive** for domain entities (products, quotes, orders, CRM records). Add fields like `is_archived` / `archived_at` (and optional reason/actor) instead of deleting rows.
+- **Never expose destructive delete actions in the frontend** for domain data. Hiding/archiving/disable is allowed; hard delete is reserved for admins (or a deliberately added elevated permission).
+- Uploaded media (images/documents) may be deletable by designated roles, but the owning domain records should still follow soft-delete retention rules.
+
+## Security hardening (sensitive company data)
+
+- Treat this application as **confidential-by-default**: assume data is company-sensitive and must not be publicly accessible.
+- Prefer **authentication required** for CRM pages and APIs unless a route is explicitly intended to be public.
+- Avoid direct public access to uploaded files (media). Prefer **protected media** behind auth/permissions; don’t rely on obscurity of filenames/UUIDs.
+- Use Django’s security best-practices in settings (secure cookies, clickjacking protection, content-type sniffing protection, HSTS/SSL redirect in production).
+
+## Demo data discipline
+
+- Keep **realistic demo data** up to date as the schema evolves. When a new module/model/field is added, update or add a corresponding seeding routine so the UI can be exercised end-to-end.
+- Prefer **idempotent** seed commands (safe to re-run) and include a `--clear` option to rebuild demo data from scratch.

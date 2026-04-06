@@ -1,0 +1,116 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Contracts{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Contracts</h1>
+    <p class="mt-1 text-sm text-slate-500">Customer contracts with computed costs.</p>
+  </div>
+  <a href="{% url 'contracts:contract_create' %}"
+     class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+    <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+    New contract
+  </a>
+</div>
+
+{# Filters #}
+<form method="get" class="mb-4 flex flex-wrap items-center gap-2">
+  <div class="relative">
+    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400" aria-hidden="true"></i>
+    <input type="text" name="q" value="{{ q }}" placeholder="Search reference or customer…"
+           class="rounded-lg border border-slate-200 bg-white py-2 pl-8 pr-4 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500 w-64">
+  </div>
+  <select name="status"
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+    <option value="">All statuses</option>
+    {% for val, label in status_choices %}
+      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit"
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+    Filter
+  </button>
+  {% if q or current_status %}
+    <a href="{% url 'contracts:contract_list' %}"
+       class="text-sm text-slate-500 hover:text-nova-700">Clear</a>
+  {% endif %}
+</form>
+
+<section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  {% if contracts %}
+    <table class="min-w-full divide-y divide-slate-100 text-sm">
+      <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-5 py-3 text-left">Reference</th>
+          <th class="px-5 py-3 text-left">Customer</th>
+          <th class="px-5 py-3 text-left hidden md:table-cell">Template</th>
+          <th class="px-5 py-3 text-left hidden lg:table-cell">Period</th>
+          <th class="px-5 py-3 text-center">Status</th>
+          <th class="px-5 py-3 text-right">Result</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for c in contracts %}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-5 py-3 font-mono text-xs">
+              <a href="{{ c.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ c.reference }}</a>
+            </td>
+            <td class="px-5 py-3 font-medium text-slate-900">{{ c.organization.name }}</td>
+            <td class="px-5 py-3 text-slate-500 hidden md:table-cell">{{ c.template.name }}</td>
+            <td class="px-5 py-3 text-xs text-slate-500 hidden lg:table-cell">
+              {% if c.start_date and c.end_date %}
+                {{ c.start_date|date:"d M Y" }} – {{ c.end_date|date:"d M Y" }}
+              {% else %}
+                <span class="text-slate-300">—</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3 text-center">
+              <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold
+                {% if c.status == 'active' %}bg-emerald-50 text-emerald-700
+                {% elif c.status == 'draft' %}bg-slate-100 text-slate-600
+                {% elif c.status == 'expired' %}bg-amber-50 text-amber-700
+                {% else %}bg-red-50 text-red-700{% endif %}">
+                {{ c.get_status_display }}
+              </span>
+            </td>
+            <td class="px-5 py-3 text-right font-mono text-sm">
+              {% if c.computed_result is not None %}
+                <span class="font-semibold text-nova-700">{{ c.computed_result|floatformat:2 }}</span>
+              {% else %}
+                <span class="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700">N/A</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if is_paginated %}
+      <div class="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+        <p class="text-xs text-slate-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
+        <div class="flex gap-1">
+          {% if page_obj.has_previous %}
+            <a href="?{% if q %}q={{ q }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}page={{ page_obj.previous_page_number }}"
+               class="rounded border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50">Prev</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a href="?{% if q %}q={{ q }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}page={{ page_obj.next_page_number }}"
+               class="rounded border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50">Next</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="p-12 text-center">
+      <i class="fa-solid fa-file-contract text-3xl text-slate-300" aria-hidden="true"></i>
+      <p class="mt-3 text-sm text-slate-500">No contracts found.</p>
+      <a href="{% url 'contracts:contract_create' %}"
+         class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-nova-700 hover:underline">
+        Create a contract <i class="fa-solid fa-arrow-right text-xs"></i>
+      </a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

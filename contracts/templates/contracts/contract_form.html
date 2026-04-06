@@ -1,0 +1,179 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if is_create %}New contract{% else %}Edit {{ object.reference }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+      <a href="{% url 'contracts:contract_list' %}" class="hover:text-nova-700">Contracts</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+      {% if not is_create %}
+        <a href="{{ object.get_absolute_url }}" class="hover:text-nova-700">{{ object.reference }}</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <span class="font-medium text-slate-700">Edit</span>
+      {% else %}
+        <span class="font-medium text-slate-700">New contract</span>
+      {% endif %}
+    </nav>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      {% if is_create %}New contract{% else %}Edit contract{% endif %}
+    </h1>
+  </div>
+  {% if not is_create %}
+    <a href="{{ object.get_absolute_url }}"
+       class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Back
+    </a>
+  {% else %}
+    <a href="{% url 'contracts:contract_list' %}"
+       class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Back
+    </a>
+  {% endif %}
+</div>
+
+<form method="post" class="space-y-6">
+  {% csrf_token %}
+
+  {# Contract basics #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="font-semibold text-slate-900">Contract details</h2>
+    </div>
+    {% if form.non_field_errors %}
+      <div class="mx-5 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="p-5 grid gap-5 md:grid-cols-2">
+      <div>
+        <label for="{{ form.template.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Template <span class="text-red-500">*</span>
+        </label>
+        {{ form.template }}
+        {% if form.template.errors %}<p class="mt-1 text-xs text-red-600">{{ form.template.errors|striptags }}</p>{% endif %}
+        {% if not is_create %}
+          <p class="mt-1 text-xs text-slate-400">Template cannot be changed after creation.</p>
+        {% endif %}
+      </div>
+      <div>
+        <label for="{{ form.organization.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Customer <span class="text-red-500">*</span>
+        </label>
+        {{ form.organization }}
+        {% if form.organization.errors %}<p class="mt-1 text-xs text-red-600">{{ form.organization.errors|striptags }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="{{ form.status.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
+        {{ form.status }}
+      </div>
+      <div></div>
+      <div>
+        <label for="{{ form.start_date.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Start date</label>
+        {{ form.start_date }}
+        {% if form.start_date.errors %}<p class="mt-1 text-xs text-red-600">{{ form.start_date.errors|striptags }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="{{ form.end_date.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">End date</label>
+        {{ form.end_date }}
+        {% if form.end_date.errors %}<p class="mt-1 text-xs text-red-600">{{ form.end_date.errors|striptags }}</p>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  {# Linked documents #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="font-semibold text-slate-900">Linked documents</h2>
+      <p class="mt-0.5 text-sm text-slate-500">
+        Optionally link a quote, sales order, or installed asset. Their totals become available as
+        <code class="rounded bg-slate-100 px-1 text-xs">quote_total</code>,
+        <code class="rounded bg-slate-100 px-1 text-xs">order_total</code>,
+        <code class="rounded bg-slate-100 px-1 text-xs">asset_purchase_price</code> in the formula.
+      </p>
+    </div>
+    <div class="p-5 grid gap-5 md:grid-cols-3">
+      <div>
+        <label for="{{ form.quote.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Quote</label>
+        {{ form.quote }}
+      </div>
+      <div>
+        <label for="{{ form.sales_order.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sales order</label>
+        {{ form.sales_order }}
+      </div>
+      <div>
+        <label for="{{ form.asset.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Asset</label>
+        {{ form.asset }}
+      </div>
+    </div>
+  </section>
+
+  {# Variable values (edit mode only) #}
+  {% if not is_create and value_formset %}
+    <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-100 px-5 py-4">
+        <h2 class="font-semibold text-slate-900">Variable values</h2>
+        <p class="mt-0.5 text-sm text-slate-500">Fill in the user-input variables for this contract's formula.</p>
+      </div>
+      <div class="p-5">
+        {{ value_formset.management_form }}
+        {% if value_formset.non_form_errors %}
+          <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ value_formset.non_form_errors|striptags }}</div>
+        {% endif %}
+        {% if value_formset.forms %}
+          <div class="space-y-3">
+            {% for vf in value_formset %}
+              {% for hidden in vf.hidden_fields %}{{ hidden }}{% endfor %}
+              <div class="flex items-center gap-4">
+                <div class="w-48 shrink-0">
+                  <p class="text-sm font-medium text-slate-800">{{ vf.instance.variable.label }}</p>
+                  <p class="font-mono text-xs text-slate-400">{{ vf.instance.variable.name }}
+                    {% if vf.instance.variable.unit %}
+                      · {{ vf.instance.variable.unit }}
+                    {% endif %}
+                  </p>
+                </div>
+                <div class="flex-1 max-w-xs">
+                  {{ vf.value }}
+                  {% if vf.value.errors %}<p class="mt-1 text-xs text-red-600">{{ vf.value.errors|striptags }}</p>{% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-sm text-slate-400">No user-input variables in this template.</p>
+        {% endif %}
+      </div>
+    </section>
+  {% elif is_create %}
+    <div class="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-500">
+      <i class="fa-solid fa-circle-info mr-1.5 text-slate-400" aria-hidden="true"></i>
+      Variable values can be entered after the contract is created.
+    </div>
+  {% endif %}
+
+  {# Notes #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="font-semibold text-slate-900">Notes</h2>
+    </div>
+    <div class="p-5">
+      {{ form.notes }}
+    </div>
+  </section>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="submit"
+            class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+      <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+      Save
+    </button>
+    {% if not is_create %}
+      <a href="{{ object.get_absolute_url }}"
+         class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% else %}
+      <a href="{% url 'contracts:contract_list' %}"
+         class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

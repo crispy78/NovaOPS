@@ -1,0 +1,323 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if form.instance.pk %}Edit {{ form.instance }}{% else %}New contact{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    {% if form.instance.pk %}
+      <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+        <a href="{% url 'relations:person_list' %}" class="hover:text-nova-700">Contacts</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <a href="{% url 'relations:person_detail' pk=form.instance.pk %}" class="hover:text-nova-700">{{ form.instance }}</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <span class="font-medium text-slate-700">Edit</span>
+      </nav>
+    {% else %}
+      <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+        <a href="{% url 'relations:person_list' %}" class="hover:text-nova-700">Contacts</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <span class="font-medium text-slate-700">New contact</span>
+      </nav>
+    {% endif %}
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      {% if form.instance.pk %}Edit contact{% else %}New contact{% endif %}
+    </h1>
+  </div>
+  {% if form.instance.pk %}
+    <a href="{% url 'relations:person_detail' pk=form.instance.pk %}" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i>
+      Back
+    </a>
+  {% else %}
+    <a href="{% url 'relations:person_list' %}" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i>
+      Back
+    </a>
+  {% endif %}
+</div>
+
+<form method="post" class="space-y-6">
+  {% csrf_token %}
+
+  {# ── Identity ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="font-semibold text-slate-900">Identity</h2>
+    </div>
+    <div class="p-5 grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Title / prefix</label>
+        {{ form.title_prefix }}
+      </div>
+      <div>{# spacer #}</div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">First name <span class="text-red-500">*</span></label>
+        {{ form.first_name }}
+        {% if form.first_name.errors %}<p class="mt-1 text-xs text-red-700">{{ form.first_name.errors|striptags }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Last name <span class="text-red-500">*</span></label>
+        {{ form.last_name }}
+        {% if form.last_name.errors %}<p class="mt-1 text-xs text-red-700">{{ form.last_name.errors|striptags }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Date of birth</label>
+        {{ form.date_of_birth }}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Pronouns</label>
+        {{ form.pronouns }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Background / bio</label>
+        {{ form.bio }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</label>
+        {{ form.notes }}
+      </div>
+      {% if form.instance.pk %}
+        <div class="flex items-center gap-2">
+          {{ form.is_archived }}
+          <label class="text-sm text-slate-700 cursor-pointer">Archive this contact</label>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# ── Employment ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="font-semibold text-slate-900">Employment</h2>
+        <p class="text-sm text-slate-500">Add roles over time. Leave end date empty for a current role.</p>
+      </div>
+      <button type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-formset-add="#aff-formset">
+        <i class="fa-solid fa-plus text-xs text-slate-400" aria-hidden="true"></i>
+        Add role
+      </button>
+    </div>
+    <div id="aff-formset" class="divide-y divide-slate-100">
+      {{ affiliation_formset.management_form }}
+      {% for f in affiliation_formset.forms %}
+        <div class="formset-row p-5">
+          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+          {% if f.non_field_errors %}<p class="mb-2 text-xs text-red-700">{{ f.non_field_errors|striptags }}</p>{% endif %}
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Organization</label>
+              {{ f.organization }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Job title</label>
+              {{ f.job_title }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Start date</label>
+              {{ f.start_date }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">End date <span class="font-normal text-slate-400">(leave blank if current)</span></label>
+              {{ f.end_date }}
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              {{ f.is_primary }}
+              <label class="text-sm text-slate-700 cursor-pointer">Primary role</label>
+            </div>
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</label>
+              {{ f.notes }}
+            </div>
+            {% if f.DELETE %}
+              <div class="md:col-span-2 flex justify-end">
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
+                  {{ f.DELETE }}
+                  <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                  Remove this role
+                </label>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Contact details ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="font-semibold text-slate-900">Contact details</h2>
+        <p class="text-sm text-slate-500">Phones, emails. Link to an employer for work-specific contacts.</p>
+      </div>
+      <button type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-formset-add="#comm-formset">
+        <i class="fa-solid fa-plus text-xs text-slate-400" aria-hidden="true"></i>
+        Add contact method
+      </button>
+    </div>
+    <div id="comm-formset" class="divide-y divide-slate-100">
+      {{ communication_formset.management_form }}
+      {% if communication_formset.non_form_errors %}
+        <p class="px-5 py-3 text-sm text-red-700">{{ communication_formset.non_form_errors|striptags }}</p>
+      {% endif %}
+      {% for f in communication_formset.forms %}
+        <div class="formset-row p-5">
+          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+          {% if f.errors %}
+            <ul class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-700 space-y-0.5">
+              {% for field in f %}
+                {% if field.errors %}<li>{{ field.label }}: {{ field.errors|striptags }}</li>{% endif %}
+              {% endfor %}
+              {% if f.non_field_errors %}<li>{{ f.non_field_errors|striptags }}</li>{% endif %}
+            </ul>
+          {% endif %}
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+              {{ f.comm_type }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Label <span class="font-normal text-slate-400">(e.g. Mobile, Work)</span></label>
+              {{ f.label }}
+            </div>
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Value</label>
+              {{ f.value }}
+            </div>
+            {% if f.employer_organization %}
+              <div class="md:col-span-2">
+                <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Linked employer <span class="font-normal text-slate-400">(optional — for work contacts)</span>
+                </label>
+                {{ f.employer_organization }}
+                <p class="mt-1 text-xs text-slate-400">Must match an organization in Employment above.</p>
+              </div>
+            {% endif %}
+            <div class="flex items-center gap-2">
+              {{ f.is_primary }}
+              <label class="text-sm text-slate-700 cursor-pointer">Primary</label>
+            </div>
+            {% if f.DELETE %}
+              <div class="flex justify-end">
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
+                  {{ f.DELETE }}
+                  <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                  Remove
+                </label>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Special events ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="font-semibold text-slate-900">Key dates</h2>
+        <p class="text-sm text-slate-500">Anniversaries, birthdays, preferences, and milestones.</p>
+      </div>
+      <button type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-formset-add="#sev-formset">
+        <i class="fa-solid fa-plus text-xs text-slate-400" aria-hidden="true"></i>
+        Add event
+      </button>
+    </div>
+    <div id="sev-formset" class="divide-y divide-slate-100">
+      {{ special_event_formset.management_form }}
+      {% for f in special_event_formset.forms %}
+        <div class="formset-row p-5">
+          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Event name / type</label>
+              {{ f.name }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Date</label>
+              {{ f.event_date }}
+            </div>
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</label>
+              {{ f.notes }}
+            </div>
+            {% if f.DELETE %}
+              <div class="md:col-span-2 flex justify-end">
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
+                  {{ f.DELETE }}
+                  <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                  Remove
+                </label>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Save / Cancel ── #}
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+      <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+      Save
+    </button>
+    {% if form.instance.pk %}
+      <a href="{% url 'relations:person_detail' pk=form.instance.pk %}" class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% else %}
+      <a href="{% url 'relations:person_list' %}" class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+
+<style>
+  label input[type="checkbox"][name$="-DELETE"] {
+    display: none;
+  }
+</style>
+
+<script>
+  (function() {
+    function addForm(container) {
+      const mgmt = container.querySelector('input[name$="-TOTAL_FORMS"]');
+      if (!mgmt) return;
+      const total = parseInt(mgmt.value || '0', 10);
+      const forms = container.querySelectorAll(':scope > .formset-row');
+      const last = forms[forms.length - 1];
+      if (!last) return;
+      const clone = last.cloneNode(true);
+      const re = new RegExp('(\\b\\w+-)(\\d+)(-)');
+      clone.querySelectorAll('input, select, textarea, label').forEach((el) => {
+        if (el.name) el.name = el.name.replace(re, `$1${total}$3`);
+        if (el.id) el.id = el.id.replace(re, `$1${total}$3`);
+        if (el.htmlFor) el.htmlFor = el.htmlFor.replace(re, `$1${total}$3`);
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          if (el.type === 'checkbox') el.checked = false;
+          else if (el.type === 'hidden') {
+            if (el.name && /-\d+-id$/.test(el.name)) el.value = '';
+          } else el.value = '';
+        }
+      });
+      clone.querySelectorAll('input[type="checkbox"][name$="-DELETE"]').forEach((cb) => cb.checked = false);
+      container.appendChild(clone);
+      mgmt.value = String(total + 1);
+    }
+
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-formset-add]');
+      if (!btn) return;
+      const sel = btn.getAttribute('data-formset-add');
+      const container = document.querySelector(sel);
+      if (container) addForm(container);
+    });
+  })();
+</script>
+{% endblock %}

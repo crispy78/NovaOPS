@@ -1,0 +1,43 @@
+{# Expects: filter_org, filter_include_children, filter_person, filter_status, filter_ref, filter_organizations, filter_people, filter_status_choices, filter_querystring, request #}
+<form method="get" class="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm">
+  <div class="min-w-[12rem] flex-1">
+    <label for="flt-org" class="mb-1 block text-xs font-medium text-slate-600">Account</label>
+    <select id="flt-org" name="org" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">All accounts</option>
+      {% for o in filter_organizations %}
+        <option value="{{ o.pk }}" {% if filter_org == o.pk|stringformat:"s" %}selected{% endif %}>{{ o.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <label class="flex cursor-pointer items-center gap-2 pb-2 text-sm text-slate-700">
+    <input type="checkbox" name="include_children" value="1" class="h-4 w-4 rounded border-slate-300 text-nova-600" {% if filter_include_children %}checked{% endif %}>
+    <span>Include subsidiaries</span>
+  </label>
+  <div class="min-w-[12rem] flex-1">
+    <label for="flt-person" class="mb-1 block text-xs font-medium text-slate-600">Contact (employed at account)</label>
+    <select id="flt-person" name="person" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">Any contact</option>
+      {% for p in filter_people %}
+        <option value="{{ p.pk }}" {% if filter_person == p.pk|stringformat:"s" %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="min-w-[9rem]">
+    <label for="flt-status" class="mb-1 block text-xs font-medium text-slate-600">{{ filter_status_label|default:"Status" }}</label>
+    <select id="flt-status" name="status" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">All</option>
+      {% for value, label in filter_status_choices %}
+        <option value="{{ value }}" {% if filter_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="min-w-[8rem] flex-1">
+    <label for="flt-ref" class="mb-1 block text-xs font-medium text-slate-600">Reference contains</label>
+    <input id="flt-ref" type="search" name="ref" value="{{ filter_ref }}" placeholder="e.g. Q-2026"
+           class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+  </div>
+  <div class="flex gap-2 pb-0.5">
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">Filter</button>
+    <a href="{{ request.path }}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Clear</a>
+  </div>
+</form>

@@ -1,0 +1,43 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if object %}Edit {{ object.reference }}{% else %}New recall campaign{% endif %}{% endblock %}
+
+{% block content %}
+<nav class="mb-4 text-sm text-slate-500">
+  <a href="{% url 'assets:recall_list' %}" class="hover:text-nova-700">Recalls</a>
+  <span class="mx-2">/</span>
+  {% if object %}
+    <a href="{{ object.get_absolute_url }}" class="hover:text-nova-700">{{ object.reference }}</a>
+    <span class="mx-2">/</span>
+    <span class="text-slate-900">Edit</span>
+  {% else %}
+    <span class="text-slate-900">New</span>
+  {% endif %}
+</nav>
+
+<h1 class="text-2xl font-bold text-slate-900">{% if object %}Edit recall campaign{% else %}New recall campaign{% endif %}</h1>
+{% if object %}
+  <p class="mt-1 text-sm text-slate-600">Reference <span class="font-mono font-semibold text-slate-800">{{ object.reference }}</span> cannot be changed. Link assets from the campaign detail page.</p>
+{% else %}
+  <p class="mt-1 text-sm text-slate-600">A reference code is assigned automatically. Then link customer assets from the campaign page.</p>
+{% endif %}
+
+<form method="post" class="mt-6 max-w-2xl space-y-4">
+  {% csrf_token %}
+  {% for field in form %}
+    <div>
+      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-800">{{ field.label }}</label>
+      {{ field }}
+      {% for e in field.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+    </div>
+  {% endfor %}
+  <div class="flex gap-3">
+    <button type="submit" class="rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800">{% if object %}Save changes{% else %}Create{% endif %}</button>
+    {% if object %}
+      <a href="{{ object.get_absolute_url }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% else %}
+      <a href="{% url 'assets:recall_list' %}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

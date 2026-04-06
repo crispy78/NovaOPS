@@ -1,0 +1,29 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Replacement advice — {{ asset.display_name }}{% endblock %}
+
+{% block content %}
+<nav class="mb-4 text-sm text-slate-500">
+  <a href="{{ asset.get_absolute_url }}" class="hover:text-nova-700">{{ asset.display_name }}</a>
+  <span class="mx-2">/</span>
+  <span class="text-slate-900">Replacement recommendation</span>
+</nav>
+
+<h1 class="text-2xl font-bold text-slate-900">Suggest a replacement SKU</h1>
+<p class="mt-1 text-sm text-slate-600">Appears on the asset for sales follow-up and can be mirrored on maintenance plan lines with “promote to customer”.</p>
+
+<form method="post" class="mt-6 max-w-2xl space-y-4">
+  {% csrf_token %}
+  {% for field in form %}
+    <div>
+      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-800">{{ field.label }}</label>
+      {{ field }}
+      {% for e in field.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+    </div>
+  {% endfor %}
+  <div class="flex gap-3">
+    <button type="submit" class="rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800">Save</button>
+    <a href="{{ asset.get_absolute_url }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Cancel</a>
+  </div>
+</form>
+{% endblock %}

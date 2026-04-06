@@ -1,0 +1,85 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Shipping{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Shipping orders</h1>
+    <p class="mt-1 text-sm text-slate-500">Outbound customer shipments. Each shipping order contains one or more parcels (shipments) and is linked to a fulfillment order.</p>
+  </div>
+  <a href="{% url 'sales:fulfillment_list' %}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+    <i class="fa-solid fa-dolly" aria-hidden="true"></i>Fulfillment orders
+  </a>
+</div>
+
+{% include "sales/partials/list_filters.html" %}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Reference</th>
+        <th class="px-4 py-3">Sales order</th>
+        <th class="px-4 py-3">Fulfillment</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3">Created</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for sh in shipping_orders %}
+        <tr class="hover:bg-slate-50/80">
+          <td class="px-4 py-3 font-semibold">
+            <a href="{{ sh.get_absolute_url }}" class="text-nova-700 hover:underline">{{ sh.reference }}</a>
+          </td>
+          <td class="px-4 py-3">
+            <a href="{{ sh.sales_order.get_absolute_url }}" class="text-nova-700 hover:underline">{{ sh.sales_order.reference }}</a>
+          </td>
+          <td class="px-4 py-3">
+            <a href="{{ sh.fulfillment_order.get_absolute_url }}" class="text-nova-700 hover:underline">{{ sh.fulfillment_order.reference }}</a>
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+              {% if sh.status == 'draft' %}bg-slate-100 text-slate-800
+              {% elif sh.status == 'released' %}bg-sky-100 text-sky-900
+              {% elif sh.status == 'partially_shipped' %}bg-amber-100 text-amber-900
+              {% elif sh.status == 'shipped' %}bg-emerald-100 text-emerald-900
+              {% elif sh.status == 'cancelled' %}bg-red-100 text-red-900
+              {% else %}bg-slate-100 text-slate-800{% endif %}">
+              {{ sh.get_status_display }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-slate-500">{{ sh.created_at|date:"Y-m-d" }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td class="px-4 py-12 text-center" colspan="5">
+            <i class="fa-solid fa-truck text-3xl text-slate-300" aria-hidden="true"></i>
+            <p class="mt-3 font-semibold text-slate-700">No shipping orders yet</p>
+            <p class="mt-1 text-sm text-slate-500">Open a fulfillment order and create a shipping order from there.</p>
+            <a href="{% url 'sales:fulfillment_list' %}" class="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Go to fulfillment orders
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-6 flex items-center justify-center gap-2 text-sm" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
+        <i class="fa-solid fa-chevron-left text-xs mr-1" aria-hidden="true"></i>Previous
+      </a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50" href="{{ request.path }}?{% if filter_querystring %}{{ filter_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
+        Next<i class="fa-solid fa-chevron-right text-xs ml-1" aria-hidden="true"></i>
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

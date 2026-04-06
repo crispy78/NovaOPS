@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  <title>{% block title %}NovaOPS{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/all.min.css' %}">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nova: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    .skip-link {
+      position: absolute; left: -9999px; top: 0; z-index: 9999;
+      padding: .5rem 1rem; background: #0f172a; color: #fff;
+      font-size: .875rem; font-weight: 600; border-radius: .5rem; text-decoration: none;
+    }
+    .skip-link:focus { left: 1rem; top: 1rem; outline: 2px solid #0284c7; outline-offset: 2px; }
+    #sidebar { transition: transform .22s cubic-bezier(.4,0,.2,1); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+{# Mobile overlay #}
+<div id="nav-overlay" class="fixed inset-0 z-30 hidden bg-slate-900/50 lg:hidden" onclick="closeSidebar()"></div>
+
+{# ── Sidebar ── #}
+<aside id="sidebar" class="fixed inset-y-0 left-0 z-40 flex w-56 -translate-x-full flex-col overflow-y-auto border-r border-slate-200 bg-white shadow-xl lg:translate-x-0 lg:shadow-none">
+
+  {# Logo #}
+  <div class="flex h-16 shrink-0 items-center border-b border-slate-200 px-4">
+    <a href="{% url 'dashboard' %}" aria-label="NovaOPS home" class="flex items-center">
+      <img src="{% static 'img/nova-logo.png' %}" alt="NovaOPS" class="h-8 w-auto max-w-[11rem] object-contain object-left">
+    </a>
+  </div>
+
+  {# Navigation #}
+  {% with u=request.resolver_match.url_name ns=request.resolver_match.namespace %}
+  <nav class="flex-1 space-y-0.5 px-3 py-4" aria-label="Main navigation">
+
+    {# Dashboard #}
+    <a href="{% url 'dashboard' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if u == 'dashboard' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-gauge-high w-4 text-center {% if u == 'dashboard' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Dashboard
+    </a>
+
+    {# Catalog #}
+    <p class="mb-1 mt-3 px-3 pt-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Catalog</p>
+    <a href="{% url 'catalog:index' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'catalog' and u != 'image_library' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-boxes-stacked w-4 text-center {% if ns == 'catalog' and u != 'image_library' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Products
+    </a>
+    {% if user.is_authenticated and perms.catalog.view_productimage %}
+      <a href="{% url 'catalog:image_library' %}"
+         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+         {% if u == 'image_library' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+        <i class="fa-solid fa-images w-4 text-center {% if u == 'image_library' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+        Image library
+      </a>
+    {% endif %}
+    {% if user.is_authenticated %}
+      <a href="{% url 'pricing:rule_list' %}"
+         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+         {% if ns == 'pricing' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+        <i class="fa-solid fa-tags w-4 text-center {% if ns == 'pricing' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+        Pricing rules
+      </a>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+
+    {# Sales #}
+    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Sales</p>
+    <a href="{% url 'sales:cart' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'sales' and 'cart' in u and 'quote' not in u and 'order' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-cart-shopping w-4 text-center {% if ns == 'sales' and 'cart' in u and 'quote' not in u and 'order' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Cart
+      {% if cart_item_count %}
+        <span class="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-nova-600 px-1 text-[10px] font-bold leading-none text-white">{{ cart_item_count }}</span>
+      {% endif %}
+    </a>
+    <a href="{% url 'sales:quote_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'sales' and 'quote' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-file-signature w-4 text-center {% if ns == 'sales' and 'quote' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Quotes
+    </a>
+    <a href="{% url 'sales:order_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'sales' and 'order' in u and 'quote' not in u and 'fulfillment' not in u and 'invoice' not in u and 'shipping' not in u and 'cart' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-clipboard-list w-4 text-center {% if ns == 'sales' and 'order' in u and 'quote' not in u and 'fulfillment' not in u and 'invoice' not in u and 'shipping' not in u and 'cart' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Orders
+    </a>
+    <a href="{% url 'sales:fulfillment_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'sales' and 'fulfillment' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-dolly w-4 text-center {% if ns == 'sales' and 'fulfillment' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Fulfillment
+    </a>
+    <a href="{% url 'sales:shipping_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'sales' and 'shipping' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-truck w-4 text-center {% if ns == 'sales' and 'shipping' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Shipping
+    </a>
+    <a href="{% url 'sales:invoice_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'sales' and 'invoice' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-file-invoice-dollar w-4 text-center {% if ns == 'sales' and 'invoice' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Invoices
+    </a>
+
+    {# Assets #}
+    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Assets</p>
+    <a href="{% url 'assets:asset_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'assets' and 'asset' in u and 'recall' not in u and 'mjop' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-screwdriver-wrench w-4 text-center {% if ns == 'assets' and 'asset' in u and 'recall' not in u and 'mjop' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Assets
+    </a>
+    <a href="{% url 'assets:recall_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'assets' and 'recall' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-triangle-exclamation w-4 text-center {% if ns == 'assets' and 'recall' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Recalls
+    </a>
+    <a href="{% url 'assets:mjop_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'assets' and 'mjop' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-calendar-check w-4 text-center {% if ns == 'assets' and 'mjop' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Maint. plans
+    </a>
+
+    {# Contracts #}
+    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Contracts</p>
+    <a href="{% url 'contracts:contract_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'contracts' and 'template' not in u and 'rate' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-file-contract w-4 text-center {% if ns == 'contracts' and 'template' not in u and 'rate' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Contracts
+    </a>
+    <a href="{% url 'contracts:template_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'contracts' and 'template' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-scroll w-4 text-center {% if ns == 'contracts' and 'template' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Templates
+    </a>
+    <a href="{% url 'contracts:rate_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'contracts' and 'rate' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-clock w-4 text-center {% if ns == 'contracts' and 'rate' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Service rates
+    </a>
+
+    {# Relations #}
+    {% if perms.relations.view_organization or perms.relations.view_person %}
+      <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Relations</p>
+      {% if perms.relations.view_organization %}
+        <a href="{% url 'relations:organization_list' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'relations' and 'organization' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-building w-4 text-center {% if ns == 'relations' and 'organization' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Accounts
+        </a>
+      {% endif %}
+      {% if perms.relations.view_person %}
+        <a href="{% url 'relations:person_list' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'relations' and 'person' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-users w-4 text-center {% if ns == 'relations' and 'person' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Contacts
+        </a>
+      {% endif %}
+    {% endif %}
+
+    {% endif %}{# /if user.is_authenticated #}
+
+  </nav>
+  {% endwith %}
+
+  {# Profile / Logout at the bottom #}
+  <div class="shrink-0 space-y-0.5 border-t border-slate-200 px-3 py-3">
+    {% if user.is_authenticated %}
+      <a href="{% url 'accounts:user_directory' %}"
+         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-nova-700">
+        <i class="fa-solid fa-users w-4 shrink-0 text-center text-slate-400" aria-hidden="true"></i>
+        Team
+      </a>
+      <a href="{% url 'accounts:profile' %}"
+         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-nova-700">
+        <i class="fa-solid fa-circle-user w-4 shrink-0 text-center text-slate-400" aria-hidden="true"></i>
+        <span class="truncate">{{ user.get_full_name|default:user.email }}</span>
+      </a>
+      {% if user.is_staff %}
+        <a href="{% url 'admin:index' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-nova-700">
+          <i class="fa-solid fa-gears w-4 text-center text-slate-400" aria-hidden="true"></i>
+          Admin
+        </a>
+      {% endif %}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-nova-700">
+          <i class="fa-solid fa-right-from-bracket w-4 text-center text-slate-400" aria-hidden="true"></i>
+          Log out
+        </button>
+      </form>
+    {% else %}
+      <a href="{% url 'login' %}?next={{ request.path|urlencode }}"
+         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-nova-700">
+        <i class="fa-solid fa-right-to-bracket w-4 text-center text-slate-400" aria-hidden="true"></i>
+        Log in
+      </a>
+    {% endif %}
+  </div>
+
+</aside>
+
+{# ── Content area (pushed right by sidebar on desktop) ── #}
+<div class="flex min-h-screen flex-col lg:pl-56">
+
+  {# Mobile topbar #}
+  <div class="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm lg:hidden">
+    <button type="button" onclick="openSidebar()" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500" aria-label="Open menu">
+      <i class="fa-solid fa-bars text-lg" aria-hidden="true"></i>
+    </button>
+    <a href="{% url 'catalog:index' %}" aria-label="NovaOPS home">
+      <img src="{% static 'img/nova-logo.png' %}" alt="NovaOPS" class="h-7 w-auto object-contain">
+    </a>
+    <div class="flex items-center">
+      {% if user.is_authenticated %}
+        <a href="{% url 'sales:cart' %}" class="relative rounded-lg p-2 text-slate-500 hover:text-nova-700" aria-label="Cart">
+          <i class="fa-solid fa-cart-shopping text-lg" aria-hidden="true"></i>
+          {% if cart_item_count %}
+            <span class="absolute right-0.5 top-0.5 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-nova-600 px-1 text-[10px] font-bold leading-none text-white">{{ cart_item_count }}</span>
+          {% endif %}
+        </a>
+      {% else %}
+        <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="rounded-lg p-2 text-slate-500 hover:text-nova-700" aria-label="Log in">
+          <i class="fa-solid fa-right-to-bracket text-lg" aria-hidden="true"></i>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Main content #}
+  <main id="main-content" class="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8" tabindex="-1">
+    {% if messages %}
+      <div class="mb-6 space-y-2" aria-live="polite" id="flash-messages">
+        {% for message in messages %}
+          {% if 'error' in message.tags %}
+            <div class="flash-msg flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+              <i class="fa-solid fa-circle-xmark mt-0.5 shrink-0 text-red-500" aria-hidden="true"></i>
+              <span class="flex-1">{{ message }}</span>
+              <button type="button" onclick="this.closest('.flash-msg').remove()" class="shrink-0 text-red-400 hover:text-red-700" aria-label="Dismiss"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+          {% elif 'warning' in message.tags %}
+            <div class="flash-msg flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert">
+              <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0 text-amber-500" aria-hidden="true"></i>
+              <span class="flex-1">{{ message }}</span>
+              <button type="button" onclick="this.closest('.flash-msg').remove()" class="shrink-0 text-amber-400 hover:text-amber-700" aria-label="Dismiss"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+          {% elif 'success' in message.tags %}
+            <div class="flash-msg flash-success flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status">
+              <i class="fa-solid fa-circle-check mt-0.5 shrink-0 text-emerald-500" aria-hidden="true"></i>
+              <span class="flex-1">{{ message }}</span>
+              <button type="button" onclick="this.closest('.flash-msg').remove()" class="shrink-0 text-emerald-400 hover:text-emerald-700" aria-label="Dismiss"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+          {% else %}
+            <div class="flash-msg flex items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950" role="status">
+              <i class="fa-solid fa-circle-info mt-0.5 shrink-0 text-sky-500" aria-hidden="true"></i>
+              <span class="flex-1">{{ message }}</span>
+              <button type="button" onclick="this.closest('.flash-msg').remove()" class="shrink-0 text-sky-400 hover:text-sky-700" aria-label="Dismiss"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          document.querySelectorAll('.flash-success').forEach(function (el) {
+            setTimeout(function () {
+              el.style.transition = 'opacity 0.4s ease';
+              el.style.opacity = '0';
+              setTimeout(function () { el.remove(); }, 400);
+            }, 4000);
+          });
+        });
+      </script>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
+    NovaOPS &middot; v{{ app_version }} <span class="font-mono text-slate-300" title="Build hash — changes on every code update">{{ app_build }}</span>
+  </footer>
+</div>
+
+<script>
+  function openSidebar() {
+    document.getElementById('sidebar').style.transform = 'translateX(0)';
+    document.getElementById('nav-overlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').style.transform = '';
+    document.getElementById('nav-overlay').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  // Disable submit button and show spinner on POST form submission
+  // (prevents double-submits and signals progress to the user)
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('form[method="post"]').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        var btn = form.querySelector('[type="submit"]');
+        if (!btn || btn.disabled) return;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs mr-1.5" aria-hidden="true"></i>Saving\u2026';
+      });
+    });
+  });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

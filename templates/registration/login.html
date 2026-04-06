@@ -1,0 +1,39 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Log in{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md">
+  <h1 class="text-2xl font-bold tracking-tight text-slate-900">Log in</h1>
+  <p class="mt-2 text-sm text-slate-600">
+    Use your <strong>email address</strong> and password. Accounts are created by an administrator — there is no public registration.
+  </p>
+
+  {% if form.errors %}
+    <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      Invalid email or password.
+    </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'login' %}" class="mt-6 space-y-4">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next|default:'' }}">
+
+    {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<p class="mt-1 text-sm text-red-600" role="alert">{% for err in field.errors %}{{ err }}{% if not forloop.last %} {% endif %}{% endfor %}</p>{% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="w-full rounded-lg bg-nova-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
+      Log in
+    </button>
+  </form>
+
+  <p class="mt-8 text-center text-sm text-slate-600">
+    <a href="{% url 'catalog:index' %}" class="font-medium text-nova-700 hover:text-nova-800 hover:underline">← Back to catalog</a>
+  </p>
+</div>
+{% endblock %}

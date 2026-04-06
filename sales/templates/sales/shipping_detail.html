@@ -1,0 +1,153 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ shipping.reference }} — Shipping{% endblock %}
+
+{% block content %}
+<nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+  <a href="{% url 'sales:shipping_list' %}" class="hover:text-nova-700">Shipping</a>
+  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+  <span class="font-medium text-slate-900">{{ shipping.reference }}</span>
+</nav>
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">{{ shipping.reference }}</h1>
+  <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+    <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+      {% if shipping.status == 'draft' %}bg-slate-100 text-slate-800
+      {% elif shipping.status == 'released' %}bg-sky-100 text-sky-900
+      {% elif shipping.status == 'partially_shipped' %}bg-amber-100 text-amber-900
+      {% elif shipping.status == 'shipped' %}bg-emerald-100 text-emerald-900
+      {% elif shipping.status == 'cancelled' %}bg-red-100 text-red-900
+      {% else %}bg-slate-100 text-slate-800{% endif %}">
+      {{ shipping.get_status_display }}
+    </span>
+    <span>· Created {{ shipping.created_at|date:"Y-m-d H:i" }} by {{ shipping.created_by.get_username }}</span>
+  </p>
+  <p class="mt-2 text-sm text-slate-600">
+    Sales order:
+    <a href="{{ shipping.sales_order.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ shipping.sales_order.reference }}</a>
+    · Fulfillment:
+    <a href="{{ shipping.fulfillment_order.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ shipping.fulfillment_order.reference }}</a>
+  </p>
+  {% if shipping.notes %}
+    <div class="mt-3 max-w-2xl rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+      <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Notes</p>
+      <p class="mt-1 whitespace-pre-wrap">{{ shipping.notes }}</p>
+    </div>
+  {% endif %}
+</div>
+
+<div class="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-lg font-semibold text-slate-900">Shipping lines</h2>
+    <p class="mt-0.5 text-xs text-slate-500">Quantities on this outbound document. Parcels below allocate from these lines.</p>
+  </div>
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Product</th>
+        <th class="px-4 py-3">SKU</th>
+        <th class="px-4 py-3">Qty on doc</th>
+        <th class="px-4 py-3">On shipments</th>
+        <th class="px-4 py-3">Remaining</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for line, on_shipments, remaining in shipping_line_rows %}
+        <tr>
+          <td class="px-4 py-3 font-medium">{{ line.fulfillment_line.product_name }}</td>
+          <td class="px-4 py-3 font-mono text-xs">{{ line.fulfillment_line.sku }}</td>
+          <td class="px-4 py-3">{{ line.quantity }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ on_shipments }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ remaining }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-lg font-semibold text-slate-900">Shipments (parcels)</h2>
+    <p class="mt-0.5 text-xs text-slate-500">Each shipment is one dispatch; split quantities across multiple parcels as needed.</p>
+  </div>
+  {% if shipping.shipments.all %}
+    <div class="divide-y divide-slate-100">
+      {% for ship in shipping.shipments.all %}
+        <div class="px-4 py-4">
+          <div class="flex flex-wrap items-center gap-2 text-sm">
+            <span class="font-semibold text-slate-900">#{{ ship.sequence }}</span>
+            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold
+              {% if ship.status == 'planned' %}bg-slate-100 text-slate-800
+              {% elif ship.status == 'in_transit' %}bg-sky-100 text-sky-900
+              {% elif ship.status == 'delivered' %}bg-emerald-100 text-emerald-900
+              {% elif ship.status == 'cancelled' %}bg-red-100 text-red-900
+              {% else %}bg-slate-100 text-slate-800{% endif %}">
+              {{ ship.get_status_display }}
+            </span>
+            {% if ship.carrier %}<span class="text-slate-600">{{ ship.carrier }}</span>{% endif %}
+            {% if ship.tracking_number %}<span class="font-mono text-xs text-slate-700">{{ ship.tracking_number }}</span>{% endif %}
+            {% if ship.shipped_at %}<span class="text-slate-500">{{ ship.shipped_at|date:"Y-m-d H:i" }}</span>{% endif %}
+          </div>
+          {% if ship.notes %}<p class="mt-2 text-sm text-slate-600 whitespace-pre-wrap">{{ ship.notes }}</p>{% endif %}
+          <ul class="mt-2 list-inside list-disc text-sm text-slate-700">
+            {% for sl in ship.lines.all %}
+              <li>{{ sl.shipping_order_line.fulfillment_line.product_name }} ({{ sl.shipping_order_line.fulfillment_line.sku }}) — {{ sl.quantity }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="px-4 py-6 text-sm text-slate-600">No shipments yet. Use the form below to record the first parcel.</p>
+  {% endif %}
+</div>
+
+{% if can_add_shipment %}
+  <div class="max-w-3xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 bg-slate-50 px-5 py-3">
+      <h2 class="text-base font-semibold text-slate-900">Add shipment</h2>
+      <p class="mt-0.5 text-sm text-slate-500">Carrier and tracking are optional. Allocate quantities to this parcel; you can add another shipment for the remainder.</p>
+    </div>
+    <form method="post" class="space-y-4 p-5">
+      {% csrf_token %}
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label for="{{ header_form.carrier.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ header_form.carrier.label }}</label>
+          {{ header_form.carrier }}
+        </div>
+        <div>
+          <label for="{{ header_form.tracking_number.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ header_form.tracking_number.label }}</label>
+          {{ header_form.tracking_number }}
+        </div>
+      </div>
+      <div>
+        <label for="{{ header_form.notes.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ header_form.notes.label }}</label>
+        {{ header_form.notes }}
+      </div>
+      <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Line quantities for this parcel</p>
+        <div class="mt-2 space-y-3">
+          {% for field in lines_form %}
+            <div>
+              <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-800">{{ field.label }}</label>
+              {% if field.help_text %}<p class="text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+              {{ field }}
+              {% for e in field.errors %}<p class="text-xs text-red-600">{{ e }}</p>{% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+        <i class="fa-solid fa-truck-fast text-xs" aria-hidden="true"></i>Save shipment
+      </button>
+    </form>
+  </div>
+{% elif shipping.status != 'cancelled' and shipping.lines.exists %}
+  <div class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+    <i class="fa-solid fa-circle-check text-emerald-500" aria-hidden="true"></i>
+    All line quantities are assigned to shipments. Status: <strong>{{ shipping.get_status_display }}</strong>.
+  </div>
+{% endif %}
+
+{% endblock %}

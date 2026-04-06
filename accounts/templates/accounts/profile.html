@@ -1,0 +1,46 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Your profile{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-lg">
+  <h1 class="text-2xl font-bold tracking-tight text-slate-900">Your profile</h1>
+  <p class="mt-2 text-sm text-slate-600">
+    Accounts are created by an administrator. There is no public sign-up; sign-in uses your <strong>email address</strong>.
+  </p>
+
+  <form method="post" class="mt-8 space-y-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+    {% endif %}
+    {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}<p class="mt-1 text-sm text-red-600">{{ field.errors }}</p>{% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
+      Save profile
+    </button>
+  </form>
+
+  <div class="mt-10 border-t border-slate-200 pt-8">
+    <h2 class="text-lg font-semibold text-slate-900">Team</h2>
+    <p class="mt-1 text-sm text-slate-600">Browse colleagues with application access.</p>
+    <a href="{% url 'accounts:user_directory' %}" class="mt-4 inline-block rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
+      Open team directory
+    </a>
+  </div>
+
+  <div class="mt-10 border-t border-slate-200 pt-8">
+    <h2 class="text-lg font-semibold text-slate-900">Password</h2>
+    <p class="mt-1 text-sm text-slate-600">Change your password (you must know your current password).</p>
+    <a href="{% url 'password_change' %}" class="mt-4 inline-block rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
+      Change password
+    </a>
+  </div>
+</div>
+{% endblock %}

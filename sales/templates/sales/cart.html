@@ -1,0 +1,204 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Cart{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">Shopping cart</h1>
+  <p class="mt-1 text-sm text-slate-500">Review your items, then create a quote or a direct order.</p>
+</div>
+
+{% if lines %}
+  <div class="grid gap-6 lg:grid-cols-[1fr_22rem]">
+
+    {# ── Left: line items ── #}
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table class="min-w-full text-left text-sm">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="px-4 py-3" colspan="2">Product</th>
+            <th class="px-4 py-3 text-center">Qty</th>
+            <th class="px-4 py-3 text-right">Unit price</th>
+            <th class="px-4 py-3 text-right">Total</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for line in lines %}
+            <tr class="hover:bg-slate-50/60" id="row-{{ line.pk }}">
+
+              {# Thumbnail #}
+              <td class="w-14 px-3 py-3">
+                {% with img=line.product.images.all.0 %}
+                  {% if img %}
+                    <img src="{{ img.image.url }}" alt="" class="h-10 w-10 rounded-lg object-cover border border-slate-200">
+                  {% else %}
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-100">
+                      <i class="fa-regular fa-image text-slate-300 text-sm" aria-hidden="true"></i>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              </td>
+
+              {# Product info #}
+              <td class="px-2 py-3">
+                <a href="{{ line.product.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-nova-700">{{ line.product.name }}</a>
+                <p class="mt-0.5 font-mono text-xs text-slate-400">{{ line.product.sku }}</p>
+                {% if line.product.brand %}
+                  <p class="mt-0.5 text-xs text-slate-400">{{ line.product.brand }}</p>
+                {% endif %}
+              </td>
+
+              {# Qty stepper #}
+              <td class="px-4 py-3">
+                <form method="post" action="{% url 'sales:cart_line_update' line_pk=line.pk %}" id="qty-form-{{ forloop.counter }}">
+                  {% csrf_token %}
+                  <div class="flex items-center overflow-hidden rounded-lg border border-slate-300">
+                    <button type="button"
+                            onclick="var f=document.getElementById('qty-form-{{ forloop.counter }}'),i=f.querySelector('[name=quantity]');var v=parseInt(i.value||1)-1;i.value=Math.max(0,v);f.submit()"
+                            class="flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 focus:outline-none"
+                            aria-label="Decrease">
+                      <i class="fa-solid fa-minus text-[10px]" aria-hidden="true"></i>
+                    </button>
+                    <input type="number" name="quantity" value="{{ line.quantity }}" min="0"
+                           aria-label="Quantity for {{ line.product.name }}"
+                           class="w-9 border-0 bg-transparent text-center text-sm font-semibold outline-none">
+                    <button type="button"
+                            onclick="var f=document.getElementById('qty-form-{{ forloop.counter }}'),i=f.querySelector('[name=quantity]');i.value=parseInt(i.value||0)+1;f.submit()"
+                            class="flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 focus:outline-none"
+                            aria-label="Increase">
+                      <i class="fa-solid fa-plus text-[10px]" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </form>
+              </td>
+
+              {# Unit price #}
+              <td class="px-4 py-3 text-right text-slate-700">
+                {% if line.product.list_price is not None %}
+                  {{ line.product.currency }} {{ line.product.list_price|floatformat:2 }}
+                {% else %}
+                  <span class="text-slate-400">On request</span>
+                {% endif %}
+              </td>
+
+              {# Line total #}
+              <td class="px-4 py-3 text-right font-semibold text-slate-900">
+                {% if line.product.list_price is not None %}
+                  {{ line.product.currency }} {{ line.line_total|floatformat:2 }}
+                {% else %}
+                  <span class="font-normal text-slate-400">—</span>
+                {% endif %}
+              </td>
+
+              {# Remove #}
+              <td class="px-3 py-3 text-right">
+                <form method="post" action="{% url 'sales:cart_line_update' line_pk=line.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="quantity" value="0">
+                  <button type="submit"
+                          class="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+                          aria-label="Remove {{ line.product.name }}">
+                    <i class="fa-solid fa-trash-can text-sm" aria-hidden="true"></i>
+                  </button>
+                </form>
+              </td>
+
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="border-t-2 border-slate-200 bg-slate-50">
+          <tr>
+            <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Subtotal ({{ cart_item_total }} item{{ cart_item_total|pluralize }})
+            </td>
+            <td class="px-4 py-3 text-right text-sm font-bold text-slate-900">EUR {{ cart_total|floatformat:2 }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="px-4 py-2.5 text-xs text-slate-400">
+        <i class="fa-solid fa-circle-info mr-1" aria-hidden="true"></i>
+        Prices are live catalog prices and will be snapshotted when a quote or order is created.
+      </p>
+    </div>
+
+    {# ── Right: summary + actions ── #}
+    <div class="space-y-4">
+
+      {# Create quote (primary action) #}
+      <div class="rounded-xl border border-nova-200 bg-white p-5 shadow-sm">
+        <h2 class="text-base font-semibold text-slate-900">
+          <i class="fa-solid fa-file-signature mr-1.5 text-nova-500" aria-hidden="true"></i>
+          Create quote
+        </h2>
+        <p class="mt-1 text-xs text-slate-500">
+          Saves a price snapshot linked to an account. The quote can be sent, accepted, and converted to an order later.
+        </p>
+        <form method="post" action="{% url 'sales:cart_create_quote' %}" class="mt-4 space-y-3">
+          {% csrf_token %}
+          {% for field in create_quote_form %}
+            <div>
+              <label for="{{ field.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<p class="mt-1 text-xs text-slate-400">{{ field.help_text }}</p>{% endif %}
+              {% for err in field.errors %}<p class="mt-1 text-xs text-red-600">{{ err }}</p>{% endfor %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="w-full rounded-lg bg-nova-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
+            <i class="fa-solid fa-file-signature mr-1.5" aria-hidden="true"></i>Create quote
+          </button>
+        </form>
+      </div>
+
+      {# Create order (secondary action) #}
+      <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-base font-semibold text-slate-900">
+          <i class="fa-solid fa-clipboard-list mr-1.5 text-slate-400" aria-hidden="true"></i>
+          Create order directly
+        </h2>
+        <p class="mt-1 text-xs text-slate-500">
+          Skip the quote step and place a sales order immediately. A quote is still recommended for external customers.
+        </p>
+        <form method="post" action="{% url 'sales:cart_create_order' %}" class="mt-4 space-y-3">
+          {% csrf_token %}
+          {% for field in create_order_form %}
+            <div>
+              <label for="{{ field.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<p class="mt-1 text-xs text-slate-400">{{ field.help_text }}</p>{% endif %}
+              {% for err in field.errors %}<p class="mt-1 text-xs text-red-600">{{ err }}</p>{% endfor %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
+            <i class="fa-solid fa-clipboard-list mr-1.5 text-slate-500" aria-hidden="true"></i>Create order
+          </button>
+        </form>
+      </div>
+
+      {# Quick links #}
+      <div class="flex flex-wrap gap-2 text-sm">
+        <a href="{% url 'sales:quote_list' %}" class="text-nova-700 hover:underline">
+          <i class="fa-solid fa-file-signature mr-1 text-xs" aria-hidden="true"></i>View all quotes
+        </a>
+        <span class="text-slate-300">·</span>
+        <a href="{% url 'catalog:index' %}" class="text-nova-700 hover:underline">
+          <i class="fa-solid fa-boxes-stacked mr-1 text-xs" aria-hidden="true"></i>Back to catalog
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+{% else %}
+  <div class="rounded-xl border border-dashed border-slate-300 bg-white p-14 text-center shadow-sm">
+    <i class="fa-solid fa-cart-shopping text-4xl text-slate-300" aria-hidden="true"></i>
+    <p class="mt-4 text-lg font-semibold text-slate-700">Your cart is empty</p>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-slate-500">Browse the catalog, open a product and click <strong>Add to cart</strong>. Come back here to create a quote or order.</p>
+    <a href="{% url 'catalog:index' %}" class="mt-6 inline-flex items-center gap-2 rounded-lg bg-nova-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
+      <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
+      Browse catalog
+    </a>
+  </div>
+{% endif %}
+{% endblock %}

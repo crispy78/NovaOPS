@@ -1,0 +1,85 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if object.pk %}Edit {{ object.name }}{% else %}New service rate{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+      <a href="{% url 'contracts:rate_list' %}" class="hover:text-nova-700">Service rates</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+      <span class="font-medium text-slate-700">{% if object.pk %}Edit{% else %}New rate{% endif %}</span>
+    </nav>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      {% if object.pk %}Edit service rate{% else %}New service rate{% endif %}
+    </h1>
+  </div>
+  <a href="{% url 'contracts:rate_list' %}"
+     class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+    <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Back
+  </a>
+</div>
+
+<form method="post" class="max-w-xl space-y-6">
+  {% csrf_token %}
+
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="font-semibold text-slate-900">Rate details</h2>
+    </div>
+    {% if form.non_field_errors %}
+      <div class="mx-5 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="p-5 space-y-4">
+      <div>
+        <label for="{{ form.name.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Name <span class="text-red-500">*</span>
+        </label>
+        {{ form.name }}
+        {% if form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.name.errors|striptags }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="{{ form.code.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Code <span class="text-red-500">*</span>
+        </label>
+        {{ form.code }}
+        {% if form.code.errors %}<p class="mt-1 text-xs text-red-600">{{ form.code.errors|striptags }}</p>{% endif %}
+        <p class="mt-1 text-xs text-slate-400">Short slug used when linking this rate to a template variable (e.g. <code>mechanic</code>).</p>
+      </div>
+      <div>
+        <label for="{{ form.description.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Description</label>
+        {{ form.description }}
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label for="{{ form.rate_per_hour.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Rate per hour <span class="text-red-500">*</span>
+          </label>
+          {{ form.rate_per_hour }}
+          {% if form.rate_per_hour.errors %}<p class="mt-1 text-xs text-red-600">{{ form.rate_per_hour.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label for="{{ form.currency.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Currency</label>
+          {{ form.currency }}
+        </div>
+      </div>
+      <div class="flex items-center gap-2.5">
+        {{ form.is_active }}
+        <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-slate-700 cursor-pointer">Active</label>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="submit"
+            class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+      <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+      Save
+    </button>
+    <a href="{% url 'contracts:rate_list' %}"
+       class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+      Cancel
+    </a>
+  </div>
+</form>
+{% endblock %}

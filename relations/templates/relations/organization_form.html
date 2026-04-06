@@ -1,0 +1,336 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if form.instance.pk %}Edit {{ form.instance.name }}{% else %}New account{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    {% if form.instance.pk %}
+      <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+        <a href="{% url 'relations:organization_list' %}" class="hover:text-nova-700">Accounts</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <a href="{% url 'relations:organization_detail' pk=form.instance.pk %}" class="hover:text-nova-700">{{ form.instance.name }}</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <span class="font-medium text-slate-700">Edit</span>
+      </nav>
+    {% else %}
+      <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+        <a href="{% url 'relations:organization_list' %}" class="hover:text-nova-700">Accounts</a>
+        <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+        <span class="font-medium text-slate-700">New account</span>
+      </nav>
+    {% endif %}
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      {% if form.instance.pk %}Edit account{% else %}New account{% endif %}
+    </h1>
+  </div>
+  {% if form.instance.pk %}
+    <a href="{% url 'relations:organization_detail' pk=form.instance.pk %}" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i>
+      Back
+    </a>
+  {% else %}
+    <a href="{% url 'relations:organization_list' %}" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i>
+      Back
+    </a>
+  {% endif %}
+</div>
+
+<form method="post" class="space-y-6">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  {# ── Organization details ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="font-semibold text-slate-900">Organization details</h2>
+    </div>
+    <div class="p-5 grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Name <span class="text-red-500">*</span></label>
+        {{ form.name }}
+        {% if form.name.errors %}<p class="mt-1 text-xs text-red-700">{{ form.name.errors|striptags }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Legal name</label>
+        {{ form.legal_name }}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Unit type</label>
+        {{ form.unit_kind }}
+        {% if form.unit_kind.errors %}<p class="mt-1 text-xs text-red-700">{{ form.unit_kind.errors|striptags }}</p>{% endif %}
+        <p class="mt-1 text-xs text-slate-400">Distinguish companies from departments, branches, teams, etc.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Parent account</label>
+        {{ form.parent }}
+        {% if form.parent.errors %}<p class="mt-1 text-xs text-red-700">{{ form.parent.errors|striptags }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Primary category</label>
+        {{ form.primary_category }}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Additional categories</label>
+        {{ form.categories }}
+        <p class="mt-1 text-xs text-slate-400">Hold Ctrl / Cmd to select multiple.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Industry / sector</label>
+        {{ form.industry }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Website</label>
+        {{ form.website }}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tax ID / VAT</label>
+        {{ form.tax_id_vat }}
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Registration number</label>
+        {{ form.registration_number }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</label>
+        {{ form.notes }}
+      </div>
+      {% if form.instance.pk %}
+        <div class="flex items-center gap-2">
+          {{ form.is_archived }}
+          <label class="text-sm text-slate-700 cursor-pointer">Archive this account</label>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# ── Addresses ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="font-semibold text-slate-900">Addresses</h2>
+        <p class="text-sm text-slate-500">Visiting, billing, and shipping addresses.</p>
+      </div>
+      <button type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-formset-add="#addr-formset">
+        <i class="fa-solid fa-plus text-xs text-slate-400" aria-hidden="true"></i>
+        Add address
+      </button>
+    </div>
+    <div id="addr-formset" class="divide-y divide-slate-100">
+      {{ address_formset.management_form }}
+      {% for f in address_formset.forms %}
+        <div class="formset-row p-5">
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+              {{ f.address_type }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Label</label>
+              {{ f.label }}
+            </div>
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Street</label>
+              {{ f.street }}
+            </div>
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Street line 2</label>
+              {{ f.street2 }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Postcode</label>
+              {{ f.zipcode }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">City</label>
+              {{ f.city }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">State / province</label>
+              {{ f.state_province }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Country</label>
+              {{ f.country }}
+            </div>
+            <div class="flex items-center gap-2">
+              {{ f.is_primary }}
+              <label class="text-sm text-slate-700 cursor-pointer">Primary address</label>
+            </div>
+            {% if f.DELETE %}
+              <div class="md:col-span-2 flex justify-end">
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
+                  {{ f.DELETE }}
+                  <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                  Remove this address
+                </label>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="px-5 py-3 text-sm text-slate-400 border-t border-slate-100 empty-state" id="addr-empty" style="display:none">
+      No addresses added yet.
+    </div>
+  </section>
+
+  {# ── Communications ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="font-semibold text-slate-900">Contact methods</h2>
+        <p class="text-sm text-slate-500">Phone numbers, email addresses, and fax.</p>
+      </div>
+      <button type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-formset-add="#comm-formset">
+        <i class="fa-solid fa-plus text-xs text-slate-400" aria-hidden="true"></i>
+        Add contact method
+      </button>
+    </div>
+    <div id="comm-formset" class="divide-y divide-slate-100">
+      {{ communication_formset.management_form }}
+      {% for f in communication_formset.forms %}
+        <div class="formset-row p-5">
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Type</label>
+              {{ f.comm_type }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Label <span class="font-normal text-slate-400">(e.g. Main, Sales)</span></label>
+              {{ f.label }}
+            </div>
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Value</label>
+              {{ f.value }}
+            </div>
+            <div class="flex items-center gap-2">
+              {{ f.is_primary }}
+              <label class="text-sm text-slate-700 cursor-pointer">Primary</label>
+            </div>
+            {% if f.DELETE %}
+              <div class="flex justify-end">
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
+                  {{ f.DELETE }}
+                  <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                  Remove
+                </label>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Social profiles ── #}
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="font-semibold text-slate-900">Social profiles</h2>
+        <p class="text-sm text-slate-500">LinkedIn, X, Instagram, and other networks.</p>
+      </div>
+      <button type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-formset-add="#soc-formset">
+        <i class="fa-solid fa-plus text-xs text-slate-400" aria-hidden="true"></i>
+        Add profile
+      </button>
+    </div>
+    <div id="soc-formset" class="divide-y divide-slate-100">
+      {{ social_formset.management_form }}
+      {% for f in social_formset.forms %}
+        <div class="formset-row p-5">
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Platform</label>
+              {{ f.platform }}
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Handle</label>
+              {{ f.handle }}
+            </div>
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">URL</label>
+              {{ f.url }}
+            </div>
+            {% if f.DELETE %}
+              <div class="md:col-span-2 flex justify-end">
+                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
+                  {{ f.DELETE }}
+                  <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                  Remove
+                </label>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Save / Cancel ── #}
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+      <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+      Save
+    </button>
+    {% if form.instance.pk %}
+      <a href="{% url 'relations:organization_detail' pk=form.instance.pk %}" class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% else %}
+      <a href="{% url 'relations:organization_list' %}" class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+
+<style>
+  /* Hide the raw checkbox in the delete label, keep it functional */
+  label input[type="checkbox"][name$="-DELETE"] {
+    display: none;
+  }
+</style>
+
+<script>
+  (function() {
+    function addForm(container) {
+      const mgmt = container.querySelector('input[name$="-TOTAL_FORMS"]');
+      if (!mgmt) return;
+      const total = parseInt(mgmt.value || '0', 10);
+      const forms = container.querySelectorAll(':scope > .formset-row');
+      const last = forms[forms.length - 1];
+      if (!last) return;
+      const clone = last.cloneNode(true);
+      const re = new RegExp('(\\b\\w+-)(\\d+)(-)');
+      clone.querySelectorAll('input, select, textarea, label').forEach((el) => {
+        if (el.name) el.name = el.name.replace(re, `$1${total}$3`);
+        if (el.id) el.id = el.id.replace(re, `$1${total}$3`);
+        if (el.htmlFor) el.htmlFor = el.htmlFor.replace(re, `$1${total}$3`);
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          if (el.type === 'checkbox') el.checked = false;
+          else if (el.type === 'hidden') {
+            if (el.name && /-\d+-id$/.test(el.name)) el.value = '';
+          } else el.value = '';
+        }
+      });
+      clone.querySelectorAll('input[type="checkbox"][name$="-DELETE"]').forEach((cb) => cb.checked = false);
+      container.appendChild(clone);
+      mgmt.value = String(total + 1);
+    }
+
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-formset-add]');
+      if (!btn) return;
+      const sel = btn.getAttribute('data-formset-add');
+      const container = document.querySelector(sel);
+      if (container) addForm(container);
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if asset %}Edit asset{% else %}Register asset{% endif %}{% endblock %}
+
+{% block content %}
+<nav class="mb-4 text-sm text-slate-500">
+  <a href="{% url 'assets:asset_list' %}" class="hover:text-nova-700">Assets</a>
+  <span class="mx-2">/</span>
+  <span class="text-slate-900">{% if asset %}Edit{% else %}New{% endif %}</span>
+</nav>
+
+<h1 class="text-2xl font-bold text-slate-900">{% if asset %}Edit asset{% else %}Register asset{% endif %}</h1>
+<p class="mt-1 text-sm text-slate-600">Customer / prospect organizations only. Optional catalog product and dates for lifespan and multi-year maintenance planning.</p>
+
+<form method="post" class="mt-6 max-w-2xl space-y-4">
+  {% csrf_token %}
+  {% for field in form %}
+    <div>
+      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-800">{{ field.label }}</label>
+      {% if field.help_text %}<p class="text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+      {{ field }}
+      {% for e in field.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+    </div>
+  {% endfor %}
+  <div class="flex gap-3 pt-2">
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">Save</button>
+    <a href="{% if asset %}{{ asset.get_absolute_url }}{% else %}{% url 'assets:asset_list' %}{% endif %}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+  </div>
+</form>
+{% endblock %}

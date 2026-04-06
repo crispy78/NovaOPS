@@ -1,0 +1,269 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ asset.display_name }}{% endblock %}
+
+{% block content %}
+<nav class="mb-4 text-sm text-slate-500">
+  <a href="{% url 'assets:asset_list' %}" class="hover:text-nova-700">Assets</a>
+  <span class="mx-2">/</span>
+  <span class="text-slate-900">{{ asset.display_name }}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">{{ asset.display_name }}</h1>
+    <p class="mt-1 text-sm text-slate-600">
+      <a href="{% url 'relations:organization_detail' pk=asset.organization.pk %}" class="font-semibold text-nova-700 hover:underline">{{ asset.organization.name }}</a>
+      {% if asset.person %}· {{ asset.person }}{% endif %}
+    </p>
+    <p class="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-800">{{ asset.get_status_display }}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'assets:asset_update' pk=asset.pk %}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">Edit</a>
+    <a href="{% url 'assets:asset_event_create' asset_pk=asset.pk %}" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">Add event</a>
+    <a href="{% url 'assets:asset_recommendation_create' asset_pk=asset.pk %}" class="rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-900 hover:bg-violet-100">Replacement advice</a>
+  </div>
+</div>
+
+<div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-medium uppercase text-slate-500">Product</p>
+    <p class="mt-1 text-sm font-medium text-slate-900">{% if asset.product %}<a href="{{ asset.product.get_absolute_url }}" class="text-nova-700 hover:underline">{{ asset.product.name }}</a><span class="block font-mono text-xs text-slate-600">{{ asset.product.sku }}</span>{% else %}—{% endif %}</p>
+  </div>
+  <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-medium uppercase text-slate-500">Serial / tag</p>
+    <p class="mt-1 font-mono text-sm text-slate-900">{{ asset.serial_number|default:"—" }}</p>
+    {% if asset.asset_tag %}<p class="text-xs text-slate-600">Tag: {{ asset.asset_tag }}</p>{% endif %}
+  </div>
+  <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-medium uppercase text-slate-500">Purchase / install</p>
+    <p class="mt-1 text-sm text-slate-800">{{ asset.purchase_date|date:"Y-m-d"|default:"—" }} / {{ asset.installation_date|date:"Y-m-d"|default:"—" }}</p>
+  </div>
+  <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-medium uppercase text-slate-500">Warranty / EOL</p>
+    <p class="mt-1 text-sm text-slate-800">{{ asset.warranty_end_date|date:"Y-m-d"|default:"—" }}</p>
+    <p class="text-xs text-amber-800">EOL: {{ asset.expected_end_of_life_date|date:"Y-m-d"|default:"—" }}</p>
+  </div>
+</div>
+
+{% if asset.location_note or asset.notes %}
+  <div class="mb-6 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+    {% if asset.location_note %}<p><span class="font-medium text-slate-900">Location:</span> {{ asset.location_note }}</p>{% endif %}
+    {% if asset.notes %}<p class="mt-2 whitespace-pre-wrap">{{ asset.notes }}</p>{% endif %}
+  </div>
+{% endif %}
+
+<div class="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-lg font-semibold text-slate-900">Custody history</h2>
+    <p class="text-xs text-slate-500">Customer organization changes (including initial registration).</p>
+  </div>
+  {% if asset.organization_transfers.all %}
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-3">When (UTC)</th>
+          <th class="px-4 py-3">From</th>
+          <th class="px-4 py-3">To</th>
+          <th class="px-4 py-3">Recorded by</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for t in asset.organization_transfers.all %}
+          <tr>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ t.transferred_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3 text-slate-700">{% if t.from_organization %}<a href="{% url 'relations:organization_detail' pk=t.from_organization.pk %}" class="font-medium text-nova-700 hover:underline">{{ t.from_organization.name }}</a>{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+            <td class="px-4 py-3 text-slate-900"><a href="{% url 'relations:organization_detail' pk=t.to_organization.pk %}" class="font-medium text-nova-700 hover:underline">{{ t.to_organization.name }}</a></td>
+            <td class="px-4 py-3 text-slate-600">{% if t.transferred_by.get_full_name %}{{ t.transferred_by.get_full_name }}{% else %}{{ t.transferred_by.email|default:t.transferred_by.username }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="px-4 py-6 text-sm text-slate-600">No moves on file. New assets get a row when they are created; changing the customer on <a href="{% url 'assets:asset_update' pk=asset.pk %}" class="font-medium text-nova-700 hover:underline">Edit</a> adds another row.</p>
+  {% endif %}
+</div>
+
+{% if asset.order_line_id %}
+  <p class="mb-6 text-sm text-slate-600">Sales line: <a href="{% url 'sales:order_detail' pk=asset.order_line.order_id %}" class="font-medium text-nova-700 hover:underline">{{ asset.order_line.order.reference }}</a> · {{ asset.order_line.sku }} × {{ asset.order_line.quantity }}</p>
+{% endif %}
+
+<div class="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-lg font-semibold text-slate-900">Timeline</h2>
+    <p class="text-xs text-slate-500">Repairs, inspections, recalls, recommendations.</p>
+  </div>
+  <ul class="divide-y divide-slate-100">
+    {% for ev in asset.events.all %}
+      <li class="px-4 py-3 text-sm">
+        <span class="font-semibold text-slate-900">{{ ev.title }}</span>
+        <span class="ml-2 text-xs text-slate-500">{{ ev.get_event_type_display }} · {{ ev.occurred_on|date:"Y-m-d" }}</span>
+        {% if ev.description %}<p class="mt-1 text-slate-600 whitespace-pre-wrap">{{ ev.description }}</p>{% endif %}
+      </li>
+    {% empty %}
+      <li class="px-4 py-6 text-slate-600">No events yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="mb-8 overflow-hidden rounded-xl border border-violet-200 bg-violet-50/40 shadow-sm">
+  <div class="border-b border-violet-200 px-4 py-3">
+    <h2 class="text-lg font-semibold text-violet-950">Replacement recommendations</h2>
+    <p class="text-xs text-violet-800">Sales queue — link to catalog SKUs for upsell and maintenance plans.</p>
+  </div>
+  <ul class="divide-y divide-violet-100">
+    {% for rec in asset.replacement_recommendations.all %}
+      {% if not rec.is_archived %}
+        <li class="px-4 py-3 text-sm">
+          <span class="font-semibold text-slate-900">{{ rec.suggested_product.name }}</span>
+          <span class="ml-2 font-mono text-xs text-slate-600">{{ rec.suggested_product.sku }}</span>
+          <span class="ml-2 rounded-full bg-white px-2 py-0.5 text-xs font-medium text-violet-900">{{ rec.get_priority_display }} · {{ rec.get_status_display }}</span>
+          {% if rec.rationale %}<p class="mt-1 text-slate-600">{{ rec.rationale }}</p>{% endif %}
+        </li>
+      {% endif %}
+    {% empty %}
+      <li class="px-4 py-6 text-violet-900/80">No recommendations yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+{% if asset.recall_links.all %}
+  <div class="overflow-hidden rounded-xl border border-amber-200 bg-amber-50/50 shadow-sm">
+    <div class="border-b border-amber-200 px-4 py-3">
+      <h2 class="text-lg font-semibold text-amber-950">Recalls</h2>
+    </div>
+    <ul class="divide-y divide-amber-100 text-sm">
+      {% for link in asset.recall_links.all %}
+        <li class="px-4 py-4">
+          {# ── Header row ── #}
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <a href="{{ link.recall_campaign.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">
+                {{ link.recall_campaign.reference }}
+              </a>
+              <span class="ml-2 text-slate-600">{{ link.recall_campaign.title }}</span>
+            </div>
+            {# Status badge #}
+            <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
+              {% if link.status == 'completed' %}bg-emerald-100 text-emerald-800
+              {% elif link.status == 'not_affected' or link.status == 'exempt' %}bg-slate-100 text-slate-700
+              {% elif link.status == 'in_progress' %}bg-sky-100 text-sky-800
+              {% elif link.status == 'action_required' %}bg-red-100 text-red-800
+              {% else %}bg-amber-100 text-amber-800{% endif %}">
+              {{ link.get_status_display }}
+            </span>
+          </div>
+
+          {# Completion date #}
+          {% if link.completed_on %}
+            <p class="mt-1 text-xs text-slate-500">
+              <i class="fa-solid fa-check-circle text-emerald-500 mr-1" aria-hidden="true"></i>
+              Completed on {{ link.completed_on|date:"Y-m-d" }}
+            </p>
+          {% endif %}
+
+          {# Notes #}
+          {% if link.notes %}
+            <p class="mt-1 text-slate-600 text-xs italic">{{ link.notes }}</p>
+          {% endif %}
+
+          {# Update form — collapsed by default, revealed by button #}
+          {% if link.status != 'completed' and link.status != 'not_affected' and link.status != 'exempt' %}
+            <div class="mt-3">
+              <button type="button"
+                      onclick="document.getElementById('recall-form-{{ link.pk }}').classList.toggle('hidden')"
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-50">
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>Update status
+              </button>
+              <form id="recall-form-{{ link.pk }}"
+                    method="post"
+                    action="{% url 'assets:recall_link_update' pk=link.pk %}"
+                    class="hidden mt-3 space-y-3 rounded-lg border border-amber-200 bg-white p-4">
+                {% csrf_token %}
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">Status</label>
+                    <select name="status" class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+                        <option value="pending"        {% if link.status == 'pending' %}selected{% endif %}>Pending assessment</option>
+                      <option value="action_required" {% if link.status == 'action_required' %}selected{% endif %}>Action required</option>
+                      <option value="in_progress"   {% if link.status == 'in_progress' %}selected{% endif %}>Remedy in progress</option>
+                      <option value="completed"     {% if link.status == 'completed' %}selected{% endif %}>Completed</option>
+                      <option value="not_affected"  {% if link.status == 'not_affected' %}selected{% endif %}>Not affected</option>
+                      <option value="exempt"        {% if link.status == 'exempt' %}selected{% endif %}>Exempt / waived</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">Completion date</label>
+                    <input type="date" name="completed_on"
+                           value="{{ link.completed_on|date:'Y-m-d' }}"
+                           class="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+                  </div>
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-700">Notes</label>
+                  <textarea name="notes" rows="2"
+                            class="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">{{ link.notes }}</textarea>
+                </div>
+                <div class="flex gap-2">
+                  <button type="submit"
+                          class="inline-flex items-center gap-1.5 rounded-lg bg-nova-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-nova-700">
+                    <i class="fa-solid fa-check" aria-hidden="true"></i>Save
+                  </button>
+                  <button type="button"
+                          onclick="document.getElementById('recall-form-{{ link.pk }}').classList.add('hidden')"
+                          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          {% else %}
+            {# Already resolved — show a re-open link #}
+            <div class="mt-2">
+              <button type="button"
+                      onclick="document.getElementById('recall-form-{{ link.pk }}').classList.toggle('hidden')"
+                      class="text-xs text-slate-400 hover:text-slate-600 underline">
+                Update status
+              </button>
+              <form id="recall-form-{{ link.pk }}"
+                    method="post"
+                    action="{% url 'assets:recall_link_update' pk=link.pk %}"
+                    class="hidden mt-3 space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+                {% csrf_token %}
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">Status</label>
+                    <select name="status" class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+                        <option value="pending"        {% if link.status == 'pending' %}selected{% endif %}>Pending assessment</option>
+                      <option value="action_required" {% if link.status == 'action_required' %}selected{% endif %}>Action required</option>
+                      <option value="in_progress"   {% if link.status == 'in_progress' %}selected{% endif %}>Remedy in progress</option>
+                      <option value="completed"     {% if link.status == 'completed' %}selected{% endif %}>Completed</option>
+                      <option value="not_affected"  {% if link.status == 'not_affected' %}selected{% endif %}>Not affected</option>
+                      <option value="exempt"        {% if link.status == 'exempt' %}selected{% endif %}>Exempt / waived</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">Completion date</label>
+                    <input type="date" name="completed_on"
+                           value="{{ link.completed_on|date:'Y-m-d' }}"
+                           class="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+                  </div>
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-700">Notes</label>
+                  <textarea name="notes" rows="2"
+                            class="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">{{ link.notes }}</textarea>
+                </div>
+                <button type="submit"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-nova-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-nova-700">
+                  <i class="fa-solid fa-check" aria-hidden="true"></i>Save
+                </button>
+              </form>
+            </div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+{% endblock %}
