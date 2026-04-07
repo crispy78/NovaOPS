@@ -38,6 +38,7 @@ from .models import (
     next_quote_reference,
     next_shipping_order_reference,
     snapshot_line_from_product,
+    snapshot_option_from_cart_line,
 )
 
 
@@ -49,7 +50,9 @@ def get_or_create_cart(user) -> Cart:
 @transaction.atomic
 def add_to_cart(*, user, product: Product, quantity: int, request=None) -> CartLine:
     cart = get_or_create_cart(user)
-    line, created = CartLine.objects.get_or_create(cart=cart, product=product, defaults={'quantity': quantity})
+    line, created = CartLine.objects.get_or_create(
+        cart=cart, product=product, parent_line=None, defaults={'quantity': quantity},
+    )
     if not created:
         line.quantity += quantity
         line.save()
@@ -59,6 +62,72 @@ def add_to_cart(*, user, product: Product, quantity: int, request=None) -> CartL
         entity_id=cart.id,
         request=request,
         metadata={'product_id': str(product.id), 'sku': product.sku, 'quantity': line.quantity},
+    )
+    return line
+
+
+@transaction.atomic
+def add_to_cart_with_options(
+    *,
+    user,
+    product: Product,
+    quantity: int,
+    selected_option_pks: list,
+    request=None,
+) -> CartLine:
+    """
+    Add a product to the cart together with the given options.
+    If the product is already in the cart, quantity is updated and options are replaced.
+    selected_option_pks is a list of ProductOption PKs to include.
+    """
+    from catalog.models import ProductOption
+
+    cart = get_or_create_cart(user)
+
+    # Upsert the main line (set quantity rather than increment, since the
+    # user is explicitly configuring the product with options).
+    line, _ = CartLine.objects.get_or_create(
+        cart=cart, product=product, parent_line=None, defaults={'quantity': quantity},
+    )
+    line.quantity = quantity
+    line.save(update_fields=['quantity'])
+
+    # Replace option child lines.
+    line.option_lines.all().delete()
+
+    options = list(ProductOption.objects.filter(pk__in=selected_option_pks, parent_product=product))
+    for opt in options:
+        if opt.linked_product_id:
+            CartLine.objects.create(
+                cart=cart,
+                product=opt.linked_product,
+                quantity=quantity,
+                parent_line=line,
+                product_option=opt,
+            )
+        else:
+            CartLine.objects.create(
+                cart=cart,
+                product=None,
+                quantity=quantity,
+                parent_line=line,
+                product_option=opt,
+                option_name=opt.name,
+                option_sku=opt.sku,
+                option_price_delta=opt.price_delta,
+            )
+
+    log_event(
+        action='cart.line_added',
+        entity_type='Cart',
+        entity_id=cart.id,
+        request=request,
+        metadata={
+            'product_id': str(product.id),
+            'sku': product.sku,
+            'quantity': quantity,
+            'options': len(options),
+        },
     )
     return line
 
@@ -101,7 +170,7 @@ def create_quote_from_cart(
     request=None,
 ) -> Quote:
     cart = get_or_create_cart(user)
-    lines = list(cart.lines.select_related('product'))
+    lines = list(cart.lines.filter(parent_line__isnull=True).select_related('product'))
     if not lines:
         raise ValueError('Cart is empty')
 
@@ -121,7 +190,10 @@ def create_quote_from_cart(
     for i, cl in enumerate(lines):
         p = cl.product
         data = snapshot_line_from_product(p, cl.quantity, sort_order=i)
-        QuoteLine.objects.create(quote=quote, **data)
+        parent_ql = QuoteLine.objects.create(quote=quote, **data)
+        for opt_cl in cl.option_lines.select_related('product').all():
+            opt_data = snapshot_option_from_cart_line(opt_cl, sort_order=i, parent_currency=p.currency)
+            QuoteLine.objects.create(quote=quote, parent_line=parent_ql, **opt_data)
 
     log_event(
         action='quote.created',
@@ -154,7 +226,7 @@ def create_order_from_cart(
     request=None,
 ) -> SalesOrder:
     cart = get_or_create_cart(user)
-    lines = list(cart.lines.select_related('product'))
+    lines = list(cart.lines.filter(parent_line__isnull=True).select_related('product'))
     if not lines:
         raise ValueError('Cart is empty')
     if relation_organization is None:
@@ -169,7 +241,10 @@ def create_order_from_cart(
     for i, cl in enumerate(lines):
         p = cl.product
         data = snapshot_line_from_product(p, cl.quantity, sort_order=i)
-        OrderLine.objects.create(order=order, **data)
+        parent_ol = OrderLine.objects.create(order=order, **data)
+        for opt_cl in cl.option_lines.select_related('product').all():
+            opt_data = snapshot_option_from_cart_line(opt_cl, sort_order=i, parent_currency=p.currency)
+            OrderLine.objects.create(order=order, parent_line=parent_ol, **opt_data)
 
     log_event(
         action='order.created',
@@ -222,7 +297,7 @@ def create_order_from_quote(*, quote: Quote, user, request=None) -> SalesOrder:
         raise ValueError('This quote is already locked.')
     if quote.orders.exists():
         raise ValueError('An order already exists for this quote.')
-    lines = list(quote.lines.select_related('product'))
+    lines = list(quote.lines.filter(parent_line__isnull=True).select_related('product'))
     if not lines:
         raise ValueError('Quote has no lines.')
 
@@ -236,7 +311,7 @@ def create_order_from_quote(*, quote: Quote, user, request=None) -> SalesOrder:
         notes=(f'From quote {quote.reference}.' + (f'\n\n{quote.notes}' if quote.notes else '')).strip(),
     )
     for i, ql in enumerate(lines):
-        OrderLine.objects.create(
+        parent_ol = OrderLine.objects.create(
             order=order,
             product=ql.product,
             product_name=ql.product_name,
@@ -248,6 +323,21 @@ def create_order_from_quote(*, quote: Quote, user, request=None) -> SalesOrder:
             line_total=ql.line_total,
             sort_order=i,
         )
+        for opt_ql in ql.option_lines.select_related('product').all():
+            OrderLine.objects.create(
+                order=order,
+                parent_line=parent_ol,
+                product=opt_ql.product,
+                product_name=opt_ql.product_name,
+                sku=opt_ql.sku,
+                brand=opt_ql.brand or '',
+                quantity=opt_ql.quantity,
+                unit_price=opt_ql.unit_price,
+                currency=opt_ql.currency,
+                line_total=opt_ql.line_total,
+                sort_order=i,
+                product_option=opt_ql.product_option,
+            )
 
     quote.is_locked = True
     quote.status = QuoteStatus.ACCEPTED
@@ -280,7 +370,7 @@ def create_invoice_from_order(*, order: SalesOrder, user, request=None) -> Invoi
         raise ValueError(
             'This order already has an invoice. Cancel the existing invoice in Admin if you need to replace it.',
         )
-    lines = list(order.lines.select_related('product'))
+    lines = list(order.lines.filter(parent_line__isnull=True).select_related('product'))
     if not lines:
         raise ValueError('Order has no lines.')
 
@@ -295,7 +385,7 @@ def create_invoice_from_order(*, order: SalesOrder, user, request=None) -> Invoi
         currency=currency,
     )
     for i, ol in enumerate(lines):
-        InvoiceLine.objects.create(
+        parent_il = InvoiceLine.objects.create(
             invoice=invoice,
             product=ol.product,
             product_name=ol.product_name,
@@ -307,6 +397,21 @@ def create_invoice_from_order(*, order: SalesOrder, user, request=None) -> Invoi
             line_total=ol.line_total,
             sort_order=i,
         )
+        for opt_ol in ol.option_lines.select_related('product').all():
+            InvoiceLine.objects.create(
+                invoice=invoice,
+                parent_line=parent_il,
+                product=opt_ol.product,
+                product_name=opt_ol.product_name,
+                sku=opt_ol.sku,
+                brand=opt_ol.brand or '',
+                quantity=opt_ol.quantity,
+                unit_price=opt_ol.unit_price,
+                currency=opt_ol.currency,
+                line_total=opt_ol.line_total,
+                sort_order=i,
+                product_option=opt_ol.product_option,
+            )
 
     log_event(
         action='invoice.created',
@@ -367,7 +472,7 @@ def create_fulfillment_order_from_sales_order(*, order: SalesOrder, user, reques
         raise ValueError(
             'This sales order already has a fulfillment order. Cancel the existing one in Admin if you need to replace it.',
         )
-    lines = list(order.lines.select_related('product'))
+    lines = list(order.lines.filter(parent_line__isnull=True).select_related('product'))
     if not lines:
         raise ValueError('Order has no lines.')
 
@@ -379,10 +484,8 @@ def create_fulfillment_order_from_sales_order(*, order: SalesOrder, user, reques
         status=FulfillmentOrderStatus.PENDING,
     )
     for i, ol in enumerate(lines):
-        wh_loc = ''
-        if ol.product_id:
-            wh_loc = (ol.product.warehouse_location or '')[:120]
-        FulfillmentOrderLine.objects.create(
+        wh_loc = (ol.product.warehouse_location or '')[:120] if ol.product_id else ''
+        parent_fl = FulfillmentOrderLine.objects.create(
             fulfillment_order=fo,
             product=ol.product,
             product_name=ol.product_name,
@@ -392,6 +495,19 @@ def create_fulfillment_order_from_sales_order(*, order: SalesOrder, user, reques
             warehouse_location=wh_loc,
             sort_order=i,
         )
+        for opt_ol in ol.option_lines.select_related('product').all():
+            opt_wh_loc = (opt_ol.product.warehouse_location or '')[:120] if opt_ol.product_id else ''
+            FulfillmentOrderLine.objects.create(
+                fulfillment_order=fo,
+                parent_line=parent_fl,
+                product=opt_ol.product,
+                product_name=opt_ol.product_name,
+                sku=opt_ol.sku,
+                brand=opt_ol.brand or '',
+                quantity=opt_ol.quantity,
+                warehouse_location=opt_wh_loc,
+                sort_order=i,
+            )
 
     log_event(
         action='fulfillment_order.created',

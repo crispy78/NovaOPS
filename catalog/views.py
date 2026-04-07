@@ -15,6 +15,7 @@ from .models import (
     ProductBOMLine,
     ProductCategory,
     ProductImage,
+    ProductOption,
     ProductRelation,
     ProductRelationType,
     ProductStatus,
@@ -129,6 +130,10 @@ class ProductDetailView(LoginRequiredMixin, DetailView):
                     ),
                 ),
                 'documents',
+                Prefetch(
+                    'options',
+                    queryset=ProductOption.objects.select_related('linked_product').order_by('sort_order', 'name'),
+                ),
             )
         )
 
@@ -155,6 +160,7 @@ class ProductDetailView(LoginRequiredMixin, DetailView):
             from sales.forms import AddToCartForm, ReplacementPickForm
 
             ctx['add_to_cart_form'] = AddToCartForm()
+            ctx['product_options'] = list(product.options.all())
             if self.request.user.has_perm('catalog.change_product'):
                 existing = list(
                     product.relations_from.filter(relation_type=ProductRelationType.REPLACEMENT).values_list(

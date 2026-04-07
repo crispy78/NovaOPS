@@ -420,6 +420,96 @@ class ProductRelation(UUIDPrimaryKeyModel):
         super().save(*args, **kwargs)
 
 
+class ProductOption(UUIDPrimaryKeyModel):
+    """
+    Selectable add-on for a product at sale time.
+
+    Two kinds:
+    - Inline option (linked_product=None): a non-standalone item (e.g. printer cutter, network
+      card). Cannot be ordered independently. name/sku/price_delta define it fully.
+    - Product-as-option (linked_product set): an existing Product that can also be sold
+      standalone. Its own name, SKU, and list_price are used; price_delta is ignored.
+    """
+
+    parent_product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='options',
+        verbose_name='parent product',
+    )
+    linked_product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='as_option_in',
+        verbose_name='linked product',
+        help_text='Set this when the option is an existing standalone product.',
+    )
+    # Used only when linked_product is None:
+    name = models.CharField(max_length=200, blank=True, verbose_name='option name')
+    sku = models.CharField(max_length=100, blank=True, verbose_name='SKU')
+    price_delta = models.DecimalField(
+        **MONEY,
+        default=Decimal('0.00'),
+        verbose_name='additional price',
+        help_text='Price added to the parent when selected. Ignored when a linked product is set.',
+    )
+
+    is_required = models.BooleanField(
+        default=False,
+        verbose_name='required',
+        help_text='Always included; shown pre-selected and cannot be unchecked.',
+    )
+    is_default = models.BooleanField(default=False, verbose_name='selected by default')
+    sort_order = models.PositiveSmallIntegerField(default=0, verbose_name='sort order')
+
+    class Meta:
+        verbose_name = 'product option'
+        verbose_name_plural = 'product options'
+        ordering = ['parent_product', 'sort_order', 'name']
+
+    def __str__(self) -> str:
+        return f'{self.parent_product.sku} + {self.display_sku}'
+
+    @property
+    def display_name(self) -> str:
+        return self.linked_product.name if self.linked_product_id else self.name
+
+    @property
+    def display_sku(self) -> str:
+        return self.linked_product.sku if self.linked_product_id else self.sku
+
+    @property
+    def display_price(self) -> Decimal:
+        if self.linked_product_id:
+            return self.linked_product.list_price or Decimal('0.00')
+        return self.price_delta
+
+    @property
+    def is_standalone(self) -> bool:
+        """True when the option references a product that can also be sold independently."""
+        return self.linked_product_id is not None
+
+    def clean(self) -> None:
+        super().clean()
+        if not self.linked_product_id:
+            if not self.name:
+                raise ValidationError({'name': 'Name is required for inline options (no linked product).'})
+            if not self.sku:
+                raise ValidationError({'sku': 'SKU is required for inline options.'})
+        if (
+            self.linked_product_id
+            and self.parent_product_id
+            and self.linked_product_id == self.parent_product_id
+        ):
+            raise ValidationError({'linked_product': 'The linked product cannot be the same as the parent product.'})
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
 def product_image_upload_to(instance: 'ProductImage', filename: str) -> str:
     _, ext = os.path.splitext(filename or '')
     ext = (ext or '').lower()

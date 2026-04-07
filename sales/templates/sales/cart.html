@@ -47,6 +47,19 @@
                 {% if line.product.brand %}
                   <p class="mt-0.5 text-xs text-slate-400">{{ line.product.brand }}</p>
                 {% endif %}
+                {# Option sub-rows #}
+                {% for opt in line.option_lines.all %}
+                  <p class="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
+                    <i class="fa-solid fa-plus text-[9px] text-slate-300" aria-hidden="true"></i>
+                    <span class="font-medium text-slate-600">{{ opt.option_name|default:opt.product.name }}</span>
+                    <span class="font-mono text-slate-400">{{ opt.option_sku|default:opt.product.sku }}</span>
+                    {% if opt.product_id %}
+                      <span class="text-slate-400">{{ opt.product.currency }} {{ opt.product.list_price|floatformat:2 }}</span>
+                    {% elif opt.option_price_delta %}
+                      <span class="text-slate-400">+ {{ opt.option_price_delta|floatformat:2 }}</span>
+                    {% endif %}
+                  </p>
+                {% endfor %}
               </td>
 
               {# Qty stepper #}
@@ -82,10 +95,10 @@
                 {% endif %}
               </td>
 
-              {# Line total #}
+              {# Line total (including options) #}
               <td class="px-4 py-3 text-right font-semibold text-slate-900">
                 {% if line.product.list_price is not None %}
-                  {{ line.product.currency }} {{ line.line_total|floatformat:2 }}
+                  {{ line.product.currency }} {{ line.line_total_with_options|floatformat:2 }}
                 {% else %}
                   <span class="font-normal text-slate-400">—</span>
                 {% endif %}

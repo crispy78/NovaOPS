@@ -49,6 +49,7 @@ from .models import (
 from .services import (
     add_invoice_payment,
     add_to_cart,
+    add_to_cart_with_options,
     create_fulfillment_order_from_sales_order,
     create_invoice_from_order,
     create_order_from_cart,
@@ -67,16 +68,25 @@ class CartAddView(LoginRequiredMixin, View):
     def post(self, request, product_pk, *args, **kwargs):
         product = get_object_or_404(Product, pk=product_pk)
         form = AddToCartForm(request.POST)
-        if form.is_valid():
-            add_to_cart(
+        if not form.is_valid():
+            messages.error(request, 'Enter a valid quantity.')
+            return redirect(product.get_absolute_url())
+
+        quantity = form.cleaned_data['quantity']
+        selected_option_pks = request.POST.getlist('option_pks')
+
+        if selected_option_pks:
+            add_to_cart_with_options(
                 user=request.user,
                 product=product,
-                quantity=form.cleaned_data['quantity'],
+                quantity=quantity,
+                selected_option_pks=selected_option_pks,
                 request=request,
             )
-            messages.success(request, f'Added {form.cleaned_data["quantity"]} item(s) to your cart.')
         else:
-            messages.error(request, 'Enter a valid quantity.')
+            add_to_cart(user=request.user, product=product, quantity=quantity, request=request)
+
+        messages.success(request, f'Added {quantity} item(s) to your cart.')
         return redirect(product.get_absolute_url())
 
 
@@ -87,15 +97,21 @@ class CartView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         cart = get_or_create_cart(self.request.user)
         from catalog.models import ProductImage
+        from .models import CartLine as CL
         money = DecimalField(max_digits=14, decimal_places=2)
-        lines = list(
+        main_lines = list(
             cart.lines
+            .filter(parent_line__isnull=True)
             .select_related('product', 'product__category')
             .prefetch_related(
                 Prefetch(
                     'product__images',
                     queryset=ProductImage.objects.order_by('-is_primary', 'sort_order', 'pk'),
-                )
+                ),
+                Prefetch(
+                    'option_lines',
+                    queryset=CL.objects.select_related('product').order_by('id'),
+                ),
             )
             .annotate(
                 line_total=ExpressionWrapper(
@@ -105,10 +121,19 @@ class CartView(LoginRequiredMixin, TemplateView):
             )
             .order_by('product__name')
         )
+        # Compute per-line totals including options
+        for ln in main_lines:
+            opt_total = sum(
+                (opt.option_price_delta if not opt.product_id else (opt.product.list_price or Decimal('0')))
+                * opt.quantity
+                for opt in ln.option_lines.all()
+            )
+            ln.line_total_with_options = ln.line_total + opt_total
+
         ctx['cart'] = cart
-        ctx['lines'] = lines
-        ctx['cart_total'] = sum((ln.line_total for ln in lines), Decimal('0'))
-        ctx['cart_item_total'] = sum(ln.quantity for ln in lines)
+        ctx['lines'] = main_lines
+        ctx['cart_total'] = sum((ln.line_total_with_options for ln in main_lines), Decimal('0'))
+        ctx['cart_item_total'] = sum(ln.quantity for ln in main_lines)
         ctx['create_quote_form'] = CreateQuoteFromCartForm()
         ctx['create_order_form'] = CreateOrderFromCartForm()
         return ctx
@@ -210,24 +235,35 @@ class QuoteDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'quote'
 
     def get_queryset(self):
-        return Quote.objects.select_related('created_by', 'relation_organization').prefetch_related('lines__product')
+        from .models import QuoteLine as QL
+        return Quote.objects.select_related('created_by', 'relation_organization').prefetch_related(
+            Prefetch(
+                'lines',
+                queryset=QL.objects.filter(parent_line__isnull=True).select_related('product').prefetch_related(
+                    Prefetch('option_lines', queryset=QL.objects.select_related('product').order_by('sort_order', 'id'))
+                ),
+                to_attr='main_lines',
+            )
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         q = self.object
         from django.utils import timezone
         ctx['today'] = timezone.localdate()
+        ctx['main_lines'] = q.main_lines
         ctx['can_create_order'] = (
-            not q.is_locked and not q.orders.exists() and q.lines.exists()
+            not q.is_locked and not q.orders.exists() and bool(q.main_lines)
         )
         ctx['primary_order'] = q.orders.order_by('created_at').first()
         ctx['quote_total'] = q.lines.aggregate(s=Sum('line_total'))['s'] or Decimal('0')
+        main_line_qs = q.lines.filter(parent_line__isnull=True)
         if q.is_locked:
             ctx['header_form'] = None
             ctx['formset'] = None
         else:
             ctx['header_form'] = QuoteHeaderForm(instance=q)
-            ctx['formset'] = QuoteLineFormSet(instance=q)
+            ctx['formset'] = QuoteLineFormSet(instance=q, queryset=main_line_qs)
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -236,11 +272,12 @@ class QuoteDetailView(LoginRequiredMixin, DetailView):
             messages.error(request, 'This quote is locked and cannot be edited.')
             return redirect(self.object)
         header_form = QuoteHeaderForm(request.POST, instance=self.object)
-        formset = QuoteLineFormSet(request.POST, instance=self.object)
+        main_line_qs = self.object.lines.filter(parent_line__isnull=True)
+        formset = QuoteLineFormSet(request.POST, instance=self.object, queryset=main_line_qs)
         if header_form.is_valid() and formset.is_valid():
             header_form.save()
             formset.save()
-            for line in self.object.lines.all():
+            for line in self.object.lines.filter(parent_line__isnull=True):
                 line.line_total = line.unit_price * line.quantity
                 line.save(update_fields=['line_total'])
             log_event(
@@ -311,10 +348,17 @@ class SalesOrderDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'order'
 
     def get_queryset(self):
+        from .models import OrderLine as OL
         return (
             SalesOrder.objects.select_related('created_by', 'quote', 'relation_organization')
             .prefetch_related(
-                'lines__product',
+                Prefetch(
+                    'lines',
+                    queryset=OL.objects.filter(parent_line__isnull=True).select_related('product').prefetch_related(
+                        Prefetch('option_lines', queryset=OL.objects.select_related('product').order_by('sort_order', 'id'))
+                    ),
+                    to_attr='main_lines',
+                ),
                 'invoices',
                 'fulfillment_orders',
                 'shipping_orders',
@@ -337,6 +381,7 @@ class SalesOrderDetailView(LoginRequiredMixin, DetailView):
             open_invoice is None
             and order.lines.exists()
         )
+        ctx['main_lines'] = order.main_lines
         ctx['order_total'] = order.lines.aggregate(s=Sum('line_total'))['s'] or Decimal('0')
         fulfillment = (
             order.fulfillment_orders.exclude(status=FulfillmentOrderStatus.CANCELLED)
@@ -673,14 +718,25 @@ class InvoiceDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'invoice'
 
     def get_queryset(self):
+        from .models import InvoiceLine as IL
         return (
             Invoice.objects.select_related('order', 'relation_organization', 'created_by')
-            .prefetch_related('lines', 'payments__created_by')
+            .prefetch_related(
+                Prefetch(
+                    'lines',
+                    queryset=IL.objects.filter(parent_line__isnull=True).select_related('product').prefetch_related(
+                        Prefetch('option_lines', queryset=IL.objects.select_related('product').order_by('sort_order', 'id'))
+                    ),
+                    to_attr='main_lines',
+                ),
+                'payments__created_by',
+            )
         )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         inv = self.object
+        ctx['main_lines'] = inv.main_lines
         inv_total = inv.total()
         inv_paid = inv.amount_paid()
         inv_balance = inv_total - inv_paid

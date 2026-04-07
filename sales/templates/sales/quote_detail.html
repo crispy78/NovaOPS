@@ -82,7 +82,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
-        {% for line in quote.lines.all %}
+        {% for line in main_lines %}
           <tr>
             <td class="px-4 py-3 font-medium">{{ line.product_name }}</td>
             <td class="px-4 py-3 font-mono text-xs">{{ line.sku }}</td>
@@ -91,6 +91,18 @@
             <td class="px-4 py-3">{{ line.currency }}</td>
             <td class="px-4 py-3 font-medium">{{ line.line_total|floatformat:2 }}</td>
           </tr>
+          {% for opt in line.option_lines.all %}
+            <tr class="bg-slate-50/60">
+              <td class="py-2 pl-8 pr-4 text-xs text-slate-500">
+                <i class="fa-solid fa-plus mr-1 text-[9px] text-slate-300" aria-hidden="true"></i>{{ opt.product_name }}
+              </td>
+              <td class="px-4 py-2 font-mono text-xs text-slate-400">{{ opt.sku }}</td>
+              <td class="px-4 py-2 text-xs text-slate-500">{{ opt.quantity }}</td>
+              <td class="px-4 py-2 text-xs text-slate-500">{{ opt.unit_price|floatformat:2 }}</td>
+              <td class="px-4 py-2 text-xs text-slate-400">{{ opt.currency }}</td>
+              <td class="px-4 py-2 text-xs text-slate-500">{{ opt.line_total|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
         {% endfor %}
       </tbody>
       <tfoot class="border-t-2 border-slate-200 bg-slate-50">

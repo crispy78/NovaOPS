@@ -33,16 +33,42 @@ class Cart(UUIDPrimaryKeyModel):
 
 class CartLine(UUIDPrimaryKeyModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='lines')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='cart_lines')
+    product = models.ForeignKey(
+        Product, null=True, blank=True, on_delete=models.CASCADE, related_name='cart_lines',
+    )
     quantity = models.PositiveIntegerField(default=1)
+    parent_line = models.ForeignKey(
+        'self',
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name='option_lines',
+        verbose_name='parent line',
+    )
+    product_option = models.ForeignKey(
+        'catalog.ProductOption',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='cart_lines',
+    )
+    # Denormalized for inline (non-standalone) options:
+    option_name = models.CharField(max_length=200, blank=True)
+    option_sku = models.CharField(max_length=100, blank=True)
+    option_price_delta = models.DecimalField(**MONEY, default=Decimal('0.00'))
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['cart', 'product'], name='sales_cartline_unique_product'),
+            # Only one line per product per cart for top-level (non-option) lines.
+            models.UniqueConstraint(
+                fields=['cart', 'product'],
+                condition=models.Q(parent_line__isnull=True),
+                name='sales_cartline_unique_product_main',
+            ),
         ]
 
     def __str__(self) -> str:
-        return f'{self.quantity}× {self.product.sku}'
+        if self.product_id:
+            return f'{self.quantity}× {self.product.sku}'
+        return f'{self.quantity}× {self.option_sku}'
 
 
 class QuoteStatus(models.TextChoices):
@@ -133,6 +159,19 @@ class QuoteLine(UUIDPrimaryKeyModel):
     currency = models.CharField(max_length=3, default='EUR')
     line_total = models.DecimalField(**MONEY)
     sort_order = models.PositiveSmallIntegerField(default=0)
+    parent_line = models.ForeignKey(
+        'self',
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name='option_lines',
+        verbose_name='parent line',
+    )
+    product_option = models.ForeignKey(
+        'catalog.ProductOption',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='quote_lines',
+    )
 
     class Meta:
         ordering = ['quote', 'sort_order', 'id']
@@ -203,6 +242,19 @@ class OrderLine(UUIDPrimaryKeyModel):
     currency = models.CharField(max_length=3, default='EUR')
     line_total = models.DecimalField(**MONEY)
     sort_order = models.PositiveSmallIntegerField(default=0)
+    parent_line = models.ForeignKey(
+        'self',
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name='option_lines',
+        verbose_name='parent line',
+    )
+    product_option = models.ForeignKey(
+        'catalog.ProductOption',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='order_lines',
+    )
 
     class Meta:
         ordering = ['order', 'sort_order', 'id']
@@ -295,6 +347,19 @@ class InvoiceLine(UUIDPrimaryKeyModel):
     currency = models.CharField(max_length=3, default='EUR')
     line_total = models.DecimalField(**MONEY)
     sort_order = models.PositiveSmallIntegerField(default=0)
+    parent_line = models.ForeignKey(
+        'self',
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name='option_lines',
+        verbose_name='parent line',
+    )
+    product_option = models.ForeignKey(
+        'catalog.ProductOption',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='invoice_lines',
+    )
 
     class Meta:
         ordering = ['invoice', 'sort_order', 'id']
@@ -403,6 +468,13 @@ class FulfillmentOrderLine(UUIDPrimaryKeyModel):
         help_text='Bin/aisle snapshot from the product when this line was created.',
     )
     sort_order = models.PositiveSmallIntegerField(default=0)
+    parent_line = models.ForeignKey(
+        'self',
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name='option_lines',
+        verbose_name='parent line',
+    )
 
     class Meta:
         ordering = ['fulfillment_order', 'sort_order', 'id']
@@ -588,4 +660,36 @@ def snapshot_line_from_product(product: Product, quantity: int, sort_order: int 
         'currency': product.currency,
         'line_total': unit * quantity,
         'sort_order': sort_order,
+    }
+
+
+def snapshot_option_from_cart_line(cart_line: 'CartLine', *, sort_order: int = 0, parent_currency: str = 'EUR') -> dict:
+    """Build a document-line snapshot dict for a CartLine that is an option child."""
+    if cart_line.product_id:
+        p = cart_line.product
+        unit = p.list_price if p.list_price is not None else Decimal('0')
+        return {
+            'product': p,
+            'product_name': p.name,
+            'sku': p.sku,
+            'brand': p.brand or '',
+            'quantity': cart_line.quantity,
+            'unit_price': unit,
+            'currency': p.currency,
+            'line_total': unit * cart_line.quantity,
+            'sort_order': sort_order,
+            'product_option': cart_line.product_option,
+        }
+    unit = cart_line.option_price_delta or Decimal('0')
+    return {
+        'product': None,
+        'product_name': cart_line.option_name,
+        'sku': cart_line.option_sku,
+        'brand': '',
+        'quantity': cart_line.quantity,
+        'unit_price': unit,
+        'currency': parent_currency,
+        'line_total': unit * cart_line.quantity,
+        'sort_order': sort_order,
+        'product_option': cart_line.product_option,
     }

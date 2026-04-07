@@ -51,6 +51,15 @@ class Asset(UUIDPrimaryKeyModel):
         related_name='customer_assets',
         verbose_name='product',
     )
+    parent_asset = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='sub_assets',
+        verbose_name='parent asset',
+        help_text='Set when this asset was installed as an option/add-on of another asset.',
+    )
     order_line = models.ForeignKey(
         'sales.OrderLine',
         null=True,
@@ -138,6 +147,53 @@ class Asset(UUIDPrimaryKeyModel):
                     'organization': 'Assets may only be registered for organizations tagged as Customer or Prospect.',
                 },
             )
+
+
+class AssetComponent(UUIDPrimaryKeyModel):
+    """
+    A non-standalone option physically installed as part of an asset
+    (e.g. a printer cutter, network interface card).
+
+    For standalone product-as-option add-ons (e.g. a customer display sold alongside a POS),
+    a separate Asset record with parent_asset set is used instead.
+    """
+
+    asset = models.ForeignKey(
+        Asset,
+        on_delete=models.CASCADE,
+        related_name='components',
+        verbose_name='asset',
+    )
+    name = models.CharField(max_length=200, verbose_name='component name')
+    sku = models.CharField(max_length=100, blank=True, verbose_name='SKU')
+    price = models.DecimalField(**MONEY, null=True, blank=True, verbose_name='price at installation')
+    installed_at = models.DateField(
+        null=True, blank=True, default=timezone.localdate, verbose_name='installed on',
+    )
+    order_line = models.ForeignKey(
+        'sales.OrderLine',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='asset_components',
+        verbose_name='order line',
+    )
+    product_option = models.ForeignKey(
+        'catalog.ProductOption',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='asset_components',
+        verbose_name='product option',
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['asset', 'installed_at', 'name']
+        verbose_name = 'asset component'
+        verbose_name_plural = 'asset components'
+
+    def __str__(self) -> str:
+        return f'{self.name} on {self.asset}'
 
 
 class AssetOrganizationTransfer(UUIDPrimaryKeyModel):

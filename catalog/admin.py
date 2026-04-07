@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from . import models
+from .models import ProductOption
 
 
 @admin.register(models.TaxRate)
@@ -25,6 +26,14 @@ class ProductCategoryAdmin(admin.ModelAdmin):
     list_filter = ('parent',)
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name', 'slug')
+
+
+class ProductOptionInline(admin.TabularInline):
+    model = ProductOption
+    fk_name = 'parent_product'
+    extra = 0
+    autocomplete_fields = ('linked_product',)
+    fields = ('sort_order', 'name', 'sku', 'price_delta', 'linked_product', 'is_required', 'is_default')
 
 
 class ProductPriceTierInline(admin.TabularInline):
@@ -89,6 +98,7 @@ class ProductAdmin(admin.ModelAdmin):
     autocomplete_fields = ('category', 'tax_rate', 'discount_group')
     readonly_fields = ('id',)
     inlines = (
+        ProductOptionInline,
         ProductPriceTierInline,
         ProductBOMLineInline,
         ProductRelationInline,
@@ -142,6 +152,22 @@ class ProductAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Domain data is retained; prefer archive/unarchive instead of hard delete.
         return request.user.is_superuser
+
+
+@admin.register(models.ProductOption)
+class ProductOptionAdmin(admin.ModelAdmin):
+    list_display = ('parent_product', 'display_sku_col', 'display_name_col', 'price_delta', 'linked_product', 'is_required', 'is_default', 'sort_order')
+    list_filter = ('is_required', 'is_default')
+    autocomplete_fields = ('parent_product', 'linked_product')
+    search_fields = ('name', 'sku', 'parent_product__sku', 'parent_product__name')
+
+    @admin.display(description='SKU')
+    def display_sku_col(self, obj):
+        return obj.display_sku
+
+    @admin.display(description='Name')
+    def display_name_col(self, obj):
+        return obj.display_name
 
 
 @admin.register(models.ProductPriceTier)

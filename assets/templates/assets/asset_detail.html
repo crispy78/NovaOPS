@@ -88,6 +88,67 @@
   <p class="mb-6 text-sm text-slate-600">Sales line: <a href="{% url 'sales:order_detail' pk=asset.order_line.order_id %}" class="font-medium text-nova-700 hover:underline">{{ asset.order_line.order.reference }}</a> · {{ asset.order_line.sku }} × {{ asset.order_line.quantity }}</p>
 {% endif %}
 
+{# ── Parent / sub-asset links ── #}
+{% if asset.parent_asset %}
+  <div class="mb-6 rounded-xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Add-on installed on</p>
+    <a href="{{ asset.parent_asset.get_absolute_url }}" class="mt-1 inline-flex items-center gap-1.5 font-semibold text-nova-700 hover:underline">
+      <i class="fa-solid fa-arrow-up-right-from-square text-xs" aria-hidden="true"></i>
+      {{ asset.parent_asset.display_name }}
+    </a>
+    <span class="ml-2 text-slate-500">@ {{ asset.parent_asset.organization.name }}</span>
+  </div>
+{% endif %}
+
+{% if asset.sub_assets.all %}
+  <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-4 py-3">
+      <h2 class="text-base font-semibold text-slate-900">Add-on assets</h2>
+      <p class="text-xs text-slate-500">Standalone products sold as options and tracked as sub-assets.</p>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for sub in asset.sub_assets.all %}
+        <li class="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+          <div>
+            <a href="{{ sub.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ sub.display_name }}</a>
+            {% if sub.product %}<span class="ml-2 font-mono text-xs text-slate-400">{{ sub.product.sku }}</span>{% endif %}
+          </div>
+          <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ sub.get_status_display }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+{% if asset.components.all %}
+  <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-4 py-3">
+      <h2 class="text-base font-semibold text-slate-900">Installed components</h2>
+      <p class="text-xs text-slate-500">Non-standalone options physically installed in this asset.</p>
+    </div>
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Component</th>
+          <th class="px-4 py-3">SKU</th>
+          <th class="px-4 py-3">Installed on</th>
+          <th class="px-4 py-3">Notes</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for comp in asset.components.all %}
+          <tr>
+            <td class="px-4 py-3 font-medium text-slate-900">{{ comp.name }}</td>
+            <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ comp.sku|default:"—" }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ comp.installed_at|date:"Y-m-d"|default:"—" }}</td>
+            <td class="px-4 py-3 text-slate-600">{{ comp.notes|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
 <div class="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
   <div class="border-b border-slate-200 px-4 py-3">
     <h2 class="text-lg font-semibold text-slate-900">Timeline</h2>

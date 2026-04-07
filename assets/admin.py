@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Asset,
+    AssetComponent,
     AssetEvent,
     AssetOrganizationTransfer,
     AssetRecallLink,
@@ -10,6 +11,13 @@ from .models import (
     MaintenancePlanLine,
     RecallCampaign,
 )
+
+
+class AssetComponentInline(admin.TabularInline):
+    model = AssetComponent
+    extra = 0
+    raw_id_fields = ('order_line', 'product_option')
+    fields = ('name', 'sku', 'price', 'installed_at', 'product_option', 'notes')
 
 
 class AssetOrganizationTransferInline(admin.TabularInline):
@@ -62,9 +70,10 @@ class AssetAdmin(admin.ModelAdmin):
     )
     list_filter = ('status', 'is_archived')
     search_fields = ('name', 'serial_number', 'asset_tag', 'notes', 'location_note')
-    raw_id_fields = ('organization', 'person', 'product', 'order_line', 'created_by')
+    raw_id_fields = ('organization', 'person', 'product', 'order_line', 'parent_asset', 'created_by')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [
+        AssetComponentInline,
         AssetOrganizationTransferInline,
         AssetEventInline,
         AssetRecallLinkInline,

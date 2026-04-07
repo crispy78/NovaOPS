@@ -162,20 +162,57 @@
     {# Add-to-cart / login prompt #}
     {% if user.is_authenticated %}
       <form method="post" action="{% url 'sales:cart_add' product_pk=product.pk %}"
+            id="add-to-cart-form"
             class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         {% csrf_token %}
+
+        {# Options #}
+        {% if product_options %}
+          <div class="mb-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Options</p>
+            <ul class="mt-2 space-y-2" id="option-list">
+              {% for opt in product_options %}
+                <li class="flex items-start justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2.5 text-sm
+                    {% if opt.is_required %}bg-slate-50{% endif %}">
+                  <label class="flex items-center gap-2.5 cursor-pointer">
+                    <input type="checkbox"
+                           name="option_pks"
+                           value="{{ opt.pk }}"
+                           class="option-checkbox h-4 w-4 rounded border-slate-300 text-nova-600 focus:ring-nova-500"
+                           data-price="{{ opt.display_price }}"
+                           {% if opt.is_required or opt.is_default %}checked{% endif %}
+                           {% if opt.is_required %}disabled{% endif %}>
+                    {# Keep required options in the POST even when the checkbox is disabled #}
+                    {% if opt.is_required %}
+                      <input type="hidden" name="option_pks" value="{{ opt.pk }}">
+                    {% endif %}
+                    <span>
+                      <span class="font-medium text-slate-800">{{ opt.display_name }}</span>
+                      <span class="ml-1.5 font-mono text-xs text-slate-400">{{ opt.display_sku }}</span>
+                      {% if opt.is_required %}<span class="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">required</span>{% endif %}
+                    </span>
+                  </label>
+                  <span class="shrink-0 font-semibold text-slate-700 option-price-label">
+                    {% if opt.display_price %}+ {{ product.currency }} {{ opt.display_price|floatformat:2 }}{% else %}Included{% endif %}
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
         <label for="id_quantity" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Quantity</label>
         <div class="mt-2 flex items-center gap-3">
           <div class="flex items-center overflow-hidden rounded-lg border border-slate-300 shadow-sm">
             <button type="button"
-                    onclick="var i=this.parentElement.querySelector('.qty-stepper-input');i.value=Math.max(1,parseInt(i.value||1)-1)"
+                    onclick="stepQty(-1)"
                     class="flex h-10 w-10 items-center justify-center text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-nova-500"
                     aria-label="Decrease quantity">
               <i class="fa-solid fa-minus text-xs" aria-hidden="true"></i>
             </button>
             {{ add_to_cart_form.quantity }}
             <button type="button"
-                    onclick="var i=this.parentElement.querySelector('.qty-stepper-input');i.value=parseInt(i.value||1)+1"
+                    onclick="stepQty(1)"
                     class="flex h-10 w-10 items-center justify-center text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-nova-500"
                     aria-label="Increase quantity">
               <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
@@ -184,6 +221,9 @@
           <button type="submit"
                   class="flex-1 rounded-lg bg-nova-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
             <i class="fa-solid fa-cart-plus mr-1.5" aria-hidden="true"></i>Add to cart
+            {% if product.list_price is not None %}
+              — <span id="total-price-label">{{ product.currency }} {{ product.list_price|floatformat:2 }}</span>
+            {% endif %}
           </button>
         </div>
         <a href="{% url 'sales:cart' %}" class="mt-2 block text-center text-xs font-medium text-nova-600 hover:text-nova-700 hover:underline">View cart</a>
@@ -534,7 +574,6 @@
 
 {% block extra_js %}
 <style>
-  /* Qty stepper: remove default number-input chrome so the ±/input looks unified */
   .qty-stepper-input {
     border: none;
     width: 3rem;
@@ -553,4 +592,39 @@
     margin: 0;
   }
 </style>
+{% if product_options and product.list_price is not None %}
+<script>
+(function () {
+  const basePrice = {{ product.list_price }};
+  const currency  = '{{ product.currency }}';
+  const label     = document.getElementById('total-price-label');
+
+  function recalc() {
+    let total = basePrice;
+    document.querySelectorAll('.option-checkbox:checked').forEach(function (cb) {
+      total += parseFloat(cb.dataset.price) || 0;
+    });
+    if (label) label.textContent = currency + ' ' + total.toFixed(2);
+  }
+
+  document.querySelectorAll('.option-checkbox').forEach(function (cb) {
+    cb.addEventListener('change', recalc);
+  });
+
+  recalc();
+
+  window.stepQty = function (delta) {
+    var i = document.querySelector('.qty-stepper-input');
+    i.value = Math.max(1, parseInt(i.value || 1) + delta);
+  };
+})();
+</script>
+{% else %}
+<script>
+  window.stepQty = function (delta) {
+    var i = document.querySelector('.qty-stepper-input');
+    i.value = Math.max(1, parseInt(i.value || 1) + delta);
+  };
+</script>
+{% endif %}
 {% endblock %}
