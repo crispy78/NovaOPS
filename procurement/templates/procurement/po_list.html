@@ -1,0 +1,103 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Purchase orders{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Purchase orders</h1>
+    <p class="mt-1 text-sm text-slate-500">{{ paginator.count }} order{{ paginator.count|pluralize }}</p>
+  </div>
+  {% if perms.procurement.add_purchaseorder %}
+    <a href="{% url 'procurement:po_create' %}"
+       class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+      <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+      New PO
+    </a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-4 flex flex-wrap items-end gap-3">
+  <div class="w-44">
+    <label class="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Status</label>
+    <select name="status" onchange="this.form.submit()"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+      <option value="">All statuses</option>
+      {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+{% if purchase_orders %}
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-6 py-3">Ref</th>
+          <th class="px-6 py-3">Supplier</th>
+          <th class="px-6 py-3">Status</th>
+          <th class="px-6 py-3">Expected</th>
+          <th class="px-6 py-3">Created</th>
+          <th class="px-6 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for po in purchase_orders %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-6 py-3 font-mono font-semibold text-slate-900">
+              <a href="{{ po.get_absolute_url }}" class="hover:text-nova-700">{{ po.ref }}</a>
+            </td>
+            <td class="px-6 py-3 text-slate-700">{{ po.supplier|default:"—" }}</td>
+            <td class="px-6 py-3">
+              <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold
+                {% if po.status == 'draft' %}bg-slate-100 text-slate-700
+                {% elif po.status == 'sent' %}bg-blue-50 text-blue-700
+                {% elif po.status == 'partial' %}bg-amber-50 text-amber-800
+                {% elif po.status == 'received' %}bg-emerald-50 text-emerald-800
+                {% else %}bg-red-50 text-red-700{% endif %}">
+                {{ po.get_status_display }}
+              </span>
+            </td>
+            <td class="px-6 py-3 text-slate-500">{{ po.expected_delivery_date|default:"—" }}</td>
+            <td class="px-6 py-3 text-slate-400 text-xs">{{ po.created_at|date:"Y-m-d" }}</td>
+            <td class="px-6 py-3 text-right">
+              <a href="{{ po.get_absolute_url }}" class="text-xs font-semibold text-nova-600 hover:text-nova-700">View →</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-6 flex items-center justify-center gap-2" aria-label="Pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}"
+           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <i class="fa-solid fa-chevron-left text-xs" aria-hidden="true"></i> Previous
+        </a>
+      {% endif %}
+      <span class="px-3 py-2 text-sm text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}"
+           class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          Next <i class="fa-solid fa-chevron-right text-xs" aria-hidden="true"></i>
+        </a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <div class="rounded-xl border border-dashed border-slate-300 bg-white p-14 text-center">
+    <i class="fa-solid fa-file-circle-question text-4xl text-slate-300" aria-hidden="true"></i>
+    <p class="mt-4 font-semibold text-slate-700">No purchase orders found</p>
+    {% if perms.procurement.add_purchaseorder %}
+      <a href="{% url 'procurement:po_create' %}"
+         class="mt-5 inline-block rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+        Create your first PO
+      </a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

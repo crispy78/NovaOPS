@@ -1,25 +1,28 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}Edit {{ product.name }}{% endblock %}
+{% block title %}{% if is_create %}New product{% else %}Edit {{ object.name }}{% endif %}{% endblock %}
 
 {% block content %}
 <nav class="mb-6 text-sm text-slate-500">
   <a href="{% url 'catalog:index' %}" class="hover:text-nova-700">Catalog</a>
+  {% if not is_create %}
+    <span class="mx-2">/</span>
+    <a href="{{ object.get_absolute_url }}" class="hover:text-nova-700">{{ object.name }}</a>
+  {% endif %}
   <span class="mx-2">/</span>
-  <a href="{{ product.get_absolute_url }}" class="hover:text-nova-700">{{ product.name }}</a>
-  <span class="mx-2">/</span>
-  <span class="text-slate-900">Edit</span>
+  <span class="text-slate-900">{% if is_create %}New product{% else %}Edit{% endif %}</span>
 </nav>
 
 <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
   <div>
-    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Edit product</h1>
-    <p class="mt-1 font-mono text-sm text-slate-500">{{ product.sku }}</p>
-    <p class="mt-2 text-sm text-slate-600">Changes apply to the catalog record. Fine-grained roles can be added later via Django permissions.</p>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">{% if is_create %}New product{% else %}Edit product{% endif %}</h1>
+    {% if not is_create %}<p class="mt-1 font-mono text-sm text-slate-500">{{ object.sku }}</p>{% endif %}
   </div>
-  <a href="{{ product.get_absolute_url }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-    Cancel
-  </a>
+  {% if is_create %}
+    <a href="{% url 'catalog:index' %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+  {% else %}
+    <a href="{{ object.get_absolute_url }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+  {% endif %}
 </div>
 
 <form method="post" class="space-y-10">
@@ -55,11 +58,13 @@
 
   <div class="flex flex-wrap gap-3">
     <button type="submit" class="rounded-lg bg-nova-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
-      Save changes
+      {% if is_create %}Create product{% else %}Save changes{% endif %}
     </button>
-    <a href="{{ product.get_absolute_url }}" class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
-      Cancel
-    </a>
+    {% if is_create %}
+      <a href="{% url 'catalog:index' %}" class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% else %}
+      <a href="{{ object.get_absolute_url }}" class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    {% endif %}
   </div>
 </form>
 {% endblock %}

@@ -1,0 +1,103 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if is_create %}New purchase order{% else %}Edit {{ po.ref }}{% endif %}{% endblock %}
+
+{% block content %}
+<nav class="mb-6 text-sm text-slate-500">
+  <a href="{% url 'procurement:po_list' %}" class="hover:text-nova-700">Purchase orders</a>
+  {% if not is_create %}
+    <span class="mx-2">/</span>
+    <a href="{{ po.get_absolute_url }}" class="hover:text-nova-700">{{ po.ref }}</a>
+  {% endif %}
+  <span class="mx-2">/</span>
+  <span class="text-slate-900">{% if is_create %}New{% else %}Edit{% endif %}</span>
+</nav>
+
+<div class="mb-6 flex items-center justify-between gap-4">
+  <h1 class="text-2xl font-bold tracking-tight text-slate-900">
+    {% if is_create %}New purchase order{% else %}Edit {{ po.ref }}{% endif %}
+  </h1>
+  <a href="{% if is_create %}{% url 'procurement:po_list' %}{% else %}{{ po.get_absolute_url }}{% endif %}"
+     class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+</div>
+
+<form method="post" class="space-y-8">
+  {% csrf_token %}
+
+  {# PO header #}
+  <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Order details</h2>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div>
+        <label class="block text-sm font-medium text-slate-700">{{ form.supplier.label }}</label>
+        {{ form.supplier }}
+        {% if form.supplier.errors %}<p class="mt-1 text-sm text-red-600">{{ form.supplier.errors }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">{{ form.status.label }}</label>
+        {{ form.status }}
+        {% if form.status.errors %}<p class="mt-1 text-sm text-red-600">{{ form.status.errors }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">{{ form.expected_delivery_date.label }}</label>
+        {{ form.expected_delivery_date }}
+        {% if form.expected_delivery_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.expected_delivery_date.errors }}</p>{% endif %}
+      </div>
+      <div class="sm:col-span-2 lg:col-span-3">
+        <label class="block text-sm font-medium text-slate-700">{{ form.notes.label }}</label>
+        {{ form.notes }}
+      </div>
+    </div>
+  </section>
+
+  {# Lines formset #}
+  <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Order lines</h2>
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}
+      <p class="mt-2 text-sm text-red-600">{{ formset.non_form_errors }}</p>
+    {% endif %}
+    <div class="mt-4 space-y-3">
+      {% for line_form in formset %}
+        <div class="rounded-lg border border-slate-200 p-4 {% if line_form.instance.pk %}bg-white{% else %}bg-slate-50{% endif %}">
+          {{ line_form.id }}
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="lg:col-span-1">
+              <label class="block text-xs font-medium uppercase text-slate-500">Product <span class="text-red-500">*</span></label>
+              {{ line_form.product }}
+              {% if line_form.product.errors %}<p class="mt-1 text-xs text-red-600">{{ line_form.product.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="lg:col-span-1">
+              <label class="block text-xs font-medium uppercase text-slate-500">Description override</label>
+              {{ line_form.description }}
+            </div>
+            <div>
+              <label class="block text-xs font-medium uppercase text-slate-500">Qty ordered <span class="text-red-500">*</span></label>
+              {{ line_form.qty_ordered }}
+              {% if line_form.qty_ordered.errors %}<p class="mt-1 text-xs text-red-600">{{ line_form.qty_ordered.errors|striptags }}</p>{% endif %}
+            </div>
+            <div>
+              <label class="block text-xs font-medium uppercase text-slate-500">Unit cost</label>
+              {{ line_form.unit_cost }}
+            </div>
+          </div>
+          {% if line_form.instance.pk %}
+            <div class="mt-2 flex items-center gap-2">
+              {{ line_form.DELETE }}
+              <label class="text-xs text-slate-500">Remove this line</label>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="flex gap-3">
+    <button type="submit" class="rounded-lg bg-nova-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+      {% if is_create %}Create purchase order{% else %}Save changes{% endif %}
+    </button>
+    <a href="{% if is_create %}{% url 'procurement:po_list' %}{% else %}{{ po.get_absolute_url }}{% endif %}"
+       class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+  </div>
+</form>
+{% endblock %}

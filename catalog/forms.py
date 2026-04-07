@@ -4,7 +4,7 @@ from typing import Any, Iterator
 
 from django import forms
 
-from .models import Product, ProductImage
+from .models import Product, ProductImage, ProductOption
 from .permissions import get_product_page_permissions
 
 
@@ -149,3 +149,35 @@ class ProductImageUploadForm(forms.ModelForm):
         self.fields['alt_text'].widget.attrs.setdefault('class', _input_classes())
         self.fields['is_primary'].widget.attrs.setdefault('class', _checkbox_classes())
         self.fields['sort_order'].widget.attrs.setdefault('class', _input_classes())
+
+
+class ProductOptionForm(forms.ModelForm):
+    """Add or edit a single option on a product."""
+
+    class Meta:
+        model = ProductOption
+        fields = ('name', 'sku', 'price_delta', 'linked_product', 'is_required', 'is_default', 'sort_order')
+
+    def __init__(self, *args: Any, parent_product: Product | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        css = _input_classes()
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.setdefault('class', _checkbox_classes())
+            else:
+                field.widget.attrs.setdefault('class', css)
+        # Exclude the parent product itself from the linked_product dropdown
+        if parent_product is not None:
+            self.fields['linked_product'].queryset = (
+                Product.objects.filter(is_archived=False)
+                .exclude(pk=parent_product.pk)
+                .order_by('name')
+            )
+        self.fields['linked_product'].required = False
+        self.fields['linked_product'].help_text = (
+            'Leave empty for a non-standalone option (e.g. cutter, network card). '
+            'Set this to link an existing product that can also be sold on its own.'
+        )
+        self.fields['name'].help_text = 'Required when no linked product is set. When a linked product is set, leave blank to use the product\'s name or fill in to override it.'
+        self.fields['sku'].help_text = 'Required when no linked product is set.'
+        self.fields['price_delta'].help_text = 'Extra price added to the parent when selected. Ignored when a linked product is set (that product\'s list price is used).'

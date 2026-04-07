@@ -7,6 +7,7 @@ app_name = 'catalog'
 urlpatterns = [
     path('', views.ProductListView.as_view(), name='index'),
     path('images/', views.ImageLibraryView.as_view(), name='image_library'),
+    path('products/new/', views.ProductCreateView.as_view(), name='product_create'),
     path('products/<uuid:pk>/', views.ProductDetailView.as_view(), name='product_detail'),
     path('products/<uuid:pk>/edit/', views.ProductUpdateView.as_view(), name='product_edit'),
     path('products/<uuid:pk>/images/add/', views.ProductImageAddView.as_view(), name='product_image_add'),
@@ -19,5 +20,15 @@ urlpatterns = [
         'products/<uuid:pk>/replacement/add/',
         views.ProductReplacementAddView.as_view(),
         name='product_replacement_add',
+    ),
+    path(
+        'products/<uuid:pk>/options/add/',
+        views.ProductOptionAddView.as_view(),
+        name='product_option_add',
+    ),
+    path(
+        'products/<uuid:pk>/options/<uuid:option_pk>/delete/',
+        views.ProductOptionDeleteView.as_view(),
+        name='product_option_delete',
     ),
 ]

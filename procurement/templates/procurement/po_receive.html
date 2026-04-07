@@ -1,0 +1,87 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Receive stock – {{ po.ref }}{% endblock %}
+
+{% block content %}
+<nav class="mb-6 text-sm text-slate-500">
+  <a href="{% url 'procurement:po_list' %}" class="hover:text-nova-700">Purchase orders</a>
+  <span class="mx-2">/</span>
+  <a href="{{ po.get_absolute_url }}" class="hover:text-nova-700">{{ po.ref }}</a>
+  <span class="mx-2">/</span>
+  <span class="text-slate-900">Receive stock</span>
+</nav>
+
+<div class="mb-6 flex items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Receive stock</h1>
+    <p class="mt-1 text-sm text-slate-500">{{ po.ref }}{% if po.supplier %} · {{ po.supplier }}{% endif %}</p>
+  </div>
+  <a href="{{ po.get_absolute_url }}"
+     class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+</div>
+
+{% if line_forms %}
+  <form method="post">
+    {% csrf_token %}
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-6 py-4">
+        <p class="text-sm text-slate-500">Enter the quantity received for each line and the destination location. Leave qty at 0 to skip a line.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-5 py-3">SKU</th>
+              <th class="px-5 py-3">Product</th>
+              <th class="px-5 py-3 text-right">Ordered</th>
+              <th class="px-5 py-3 text-right">Already received</th>
+              <th class="px-5 py-3 text-right">Outstanding</th>
+              <th class="px-5 py-3">Qty to receive now</th>
+              <th class="px-5 py-3">Destination location</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for line, form in line_forms %}
+              <tr>
+                <td class="px-5 py-4 font-mono text-xs text-slate-500">{{ line.product.sku }}</td>
+                <td class="px-5 py-4 font-medium text-slate-900">{{ line.display_name }}</td>
+                <td class="px-5 py-4 text-right font-mono text-slate-600">{{ line.qty_ordered|floatformat:"-3" }}</td>
+                <td class="px-5 py-4 text-right font-mono text-emerald-700">{{ line.qty_received|floatformat:"-3" }}</td>
+                <td class="px-5 py-4 text-right font-mono font-semibold text-amber-700">{{ line.qty_outstanding|floatformat:"-3" }}</td>
+                <td class="px-5 py-4">
+                  {{ form.qty_to_receive }}
+                  {% if form.qty_to_receive.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.qty_to_receive.errors|striptags }}</p>
+                  {% endif %}
+                </td>
+                <td class="px-5 py-4">
+                  {{ form.location }}
+                  {% if form.location.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.location.errors|striptags }}</p>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="mt-6 flex gap-3">
+      <button type="submit"
+              class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+        <i class="fa-solid fa-truck-ramp-box" aria-hidden="true"></i>
+        Confirm receipt
+      </button>
+      <a href="{{ po.get_absolute_url }}"
+         class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+    </div>
+  </form>
+{% else %}
+  <div class="rounded-xl border border-dashed border-slate-300 bg-white p-14 text-center">
+    <i class="fa-solid fa-circle-check text-4xl text-emerald-400" aria-hidden="true"></i>
+    <p class="mt-4 font-semibold text-slate-700">All lines fully received</p>
+    <a href="{{ po.get_absolute_url }}" class="mt-4 inline-block text-sm font-semibold text-nova-700 hover:underline">Back to PO</a>
+  </div>
+{% endif %}
+{% endblock %}

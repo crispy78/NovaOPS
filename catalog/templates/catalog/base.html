@@ -134,6 +134,21 @@
       Invoices
     </a>
 
+    {# Procurement & Inventory #}
+    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Procurement</p>
+    <a href="{% url 'procurement:po_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'procurement' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-file-circle-plus w-4 text-center {% if ns == 'procurement' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Purchase orders
+    </a>
+    <a href="{% url 'inventory:warehouse_list' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'inventory' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-warehouse w-4 text-center {% if ns == 'inventory' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Warehouses
+    </a>
+
     {# Assets #}
     <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Assets</p>
     <a href="{% url 'assets:asset_list' %}"

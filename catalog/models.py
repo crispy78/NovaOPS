@@ -474,7 +474,9 @@ class ProductOption(UUIDPrimaryKeyModel):
 
     @property
     def display_name(self) -> str:
-        return self.linked_product.name if self.linked_product_id else self.name
+        if self.linked_product_id:
+            return self.name or self.linked_product.name
+        return self.name
 
     @property
     def display_sku(self) -> str:

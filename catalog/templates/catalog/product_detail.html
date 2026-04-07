@@ -516,6 +516,50 @@
   </section>
 {% endif %}
 
+{# ── Stock levels ── #}
+{% if stock_entries is not None %}
+  <section class="mt-12 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-6 py-4">
+      <h2 class="text-lg font-semibold text-slate-900">Stock on hand</h2>
+    </div>
+    {% if stock_entries %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-6 py-3">Warehouse</th>
+              <th class="px-6 py-3">Location</th>
+              <th class="px-6 py-3 text-right">Qty on hand</th>
+              <th class="px-6 py-3 text-right">Last updated</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for entry in stock_entries %}
+              <tr>
+                <td class="px-6 py-3 font-medium text-slate-900">
+                  <a href="{{ entry.location.warehouse.get_absolute_url }}" class="hover:text-nova-700">{{ entry.location.warehouse.name }}</a>
+                </td>
+                <td class="px-6 py-3 font-mono text-xs text-slate-500">{{ entry.location.code }} — {{ entry.location.name }}</td>
+                <td class="px-6 py-3 text-right font-semibold text-slate-900">{{ entry.quantity_on_hand|floatformat:"-3" }}</td>
+                <td class="px-6 py-3 text-right text-xs text-slate-400">{{ entry.last_updated|date:"Y-m-d H:i" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-slate-200 bg-slate-50">
+              <td colspan="2" class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Total on hand</td>
+              <td class="px-6 py-3 text-right font-bold text-slate-900">{{ stock_total|floatformat:"-3" }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    {% else %}
+      <p class="px-6 py-6 text-center text-sm text-slate-400">No stock recorded for this product.</p>
+    {% endif %}
+  </section>
+{% endif %}
+
 {# ── Replacement products ── #}
 {% if replacement_links or replacement_form %}
   <section class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -542,6 +586,123 @@
           Save replacement
         </button>
       </form>
+    {% endif %}
+  </section>
+{% endif %}
+
+{# ── Options management (admin) ── #}
+{% if option_form or product_options %}
+  <section id="options" class="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-900">Product options</h2>
+    <p class="mt-1 text-sm text-slate-500">Selectable add-ons shown to customers on this product page.</p>
+
+    {% if product_options %}
+      <div class="mt-5 overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Name</th>
+              <th class="px-4 py-3">SKU</th>
+              <th class="px-4 py-3">Price</th>
+              <th class="px-4 py-3">Type</th>
+              <th class="px-4 py-3">Flags</th>
+              {% if option_form %}<th class="px-4 py-3"></th>{% endif %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for opt in product_options %}
+              <tr>
+                <td class="px-4 py-3 font-medium text-slate-900">
+                  {% if opt.linked_product %}
+                    <a href="{{ opt.linked_product.get_absolute_url }}" class="text-nova-700 hover:underline">{{ opt.display_name }}</a>
+                  {% else %}
+                    {{ opt.display_name }}
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ opt.display_sku|default:"—" }}</td>
+                <td class="px-4 py-3 text-slate-700">
+                  {% if opt.display_price %}
+                    + {{ product.currency }} {{ opt.display_price|floatformat:2 }}
+                  {% else %}
+                    Included
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                  {% if opt.is_standalone %}
+                    <span class="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">Linked product</span>
+                  {% else %}
+                    <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">Inline</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-xs text-slate-500">
+                  {% if opt.is_required %}<span class="mr-1 font-semibold text-slate-700">Required</span>{% endif %}
+                  {% if opt.is_default %}Default{% endif %}
+                </td>
+                {% if option_form %}
+                  <td class="px-4 py-3 text-right">
+                    <form method="post" action="{% url 'catalog:product_option_delete' pk=product.pk option_pk=opt.pk %}">
+                      {% csrf_token %}
+                      <button type="submit"
+                              class="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                              onclick="return confirm('Remove option {{ opt.display_name|escapejs }}?')">
+                        Remove
+                      </button>
+                    </form>
+                  </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mt-4 text-sm text-slate-500">No options defined yet.</p>
+    {% endif %}
+
+    {% if option_form %}
+      <div class="mt-6 border-t border-slate-100 pt-6">
+        <h3 class="text-sm font-semibold text-slate-900">Add option</h3>
+        <form method="post" action="{% url 'catalog:product_option_add' pk=product.pk %}" class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {% csrf_token %}
+          <div>
+            <label class="block text-xs font-medium uppercase text-slate-500">{{ option_form.linked_product.label }}</label>
+            {{ option_form.linked_product }}
+            {% if option_form.linked_product.help_text %}<p class="mt-1 text-xs text-slate-400">{{ option_form.linked_product.help_text }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="block text-xs font-medium uppercase text-slate-500">{{ option_form.name.label }}</label>
+            {{ option_form.name }}
+            {% if option_form.name.help_text %}<p class="mt-1 text-xs text-slate-400">{{ option_form.name.help_text }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="block text-xs font-medium uppercase text-slate-500">{{ option_form.sku.label }}</label>
+            {{ option_form.sku }}
+            {% if option_form.sku.help_text %}<p class="mt-1 text-xs text-slate-400">{{ option_form.sku.help_text }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="block text-xs font-medium uppercase text-slate-500">{{ option_form.price_delta.label }}</label>
+            {{ option_form.price_delta }}
+            {% if option_form.price_delta.help_text %}<p class="mt-1 text-xs text-slate-400">{{ option_form.price_delta.help_text }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="block text-xs font-medium uppercase text-slate-500">{{ option_form.sort_order.label }}</label>
+            {{ option_form.sort_order }}
+          </div>
+          <div class="flex flex-wrap items-center gap-5 pt-4 sm:pt-6">
+            <label class="flex items-center gap-2 text-sm text-slate-700">
+              {{ option_form.is_required }} {{ option_form.is_required.label }}
+            </label>
+            <label class="flex items-center gap-2 text-sm text-slate-700">
+              {{ option_form.is_default }} {{ option_form.is_default.label }}
+            </label>
+          </div>
+          <div class="sm:col-span-2 lg:col-span-3">
+            <button type="submit" class="rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+              Add option
+            </button>
+          </div>
+        </form>
+      </div>
     {% endif %}
   </section>
 {% endif %}

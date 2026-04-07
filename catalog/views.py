@@ -9,7 +9,7 @@ from django.views.generic import DetailView, ListView, UpdateView
 
 from audit.models import EventLog
 
-from .forms import ProductForm, ProductImageUploadForm
+from .forms import ProductForm, ProductImageUploadForm, ProductOptionForm
 from .models import (
     Product,
     ProductBOMLine,
@@ -20,6 +20,7 @@ from .models import (
     ProductRelationType,
     ProductStatus,
 )
+from django.views.generic.edit import CreateView
 from .permissions import get_product_page_permissions
 
 
@@ -172,6 +173,19 @@ class ProductDetailView(LoginRequiredMixin, DetailView):
                     exclude_product_ids=[product.pk, *existing],
                 )
                 ctx['image_upload_form'] = ProductImageUploadForm()
+                ctx['option_form'] = ProductOptionForm(parent_product=product)
+        if self.request.user.has_perm('inventory.view_stockentry'):
+            from decimal import Decimal
+            from inventory.models import StockEntry
+            entries = list(
+                StockEntry.objects
+                .filter(product=product, quantity_on_hand__gt=0)
+                .select_related('location__warehouse')
+                .order_by('location__warehouse__name', 'location__code')
+            )
+            ctx['stock_entries'] = entries
+            ctx['stock_total'] = sum((e.quantity_on_hand for e in entries), Decimal('0'))
+
         ctx['replacement_links'] = (
             product.relations_from.filter(relation_type=ProductRelationType.REPLACEMENT)
             .select_related('to_product')
@@ -403,3 +417,72 @@ class ProductUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
             self.object,
         )
         return ctx
+
+
+class ProductCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    """Create a new product from the catalog UI."""
+
+    model = Product
+    form_class = ProductForm
+    template_name = 'catalog/product_form.html'
+    permission_required = 'catalog.add_product'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        from audit.services import log_event
+        log_event(
+            action='product.created',
+            entity_type='Product',
+            entity_id=self.object.pk,
+            request=self.request,
+            metadata={'sku': self.object.sku, 'name': self.object.name},
+        )
+        messages.success(self.request, f'Product "{self.object.name}" created.')
+        return response
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['is_create'] = True
+        return ctx
+
+
+class ProductOptionAddView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Add a single option to a product from the product detail page."""
+
+    permission_required = 'catalog.change_product'
+
+    def post(self, request, pk, *args, **kwargs):
+        product = get_object_or_404(Product, pk=pk)
+        form = ProductOptionForm(request.POST, parent_product=product)
+        if form.is_valid():
+            opt = form.save(commit=False)
+            opt.parent_product = product
+            opt.save()
+            messages.success(request, f'Option "{opt.display_name}" added.')
+        else:
+            for field_errors in form.errors.values():
+                for err in field_errors:
+                    messages.error(request, err)
+        return redirect(product.get_absolute_url() + '#options')
+
+
+class ProductOptionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Delete a product option from the product detail page."""
+
+    permission_required = 'catalog.change_product'
+
+    def post(self, request, pk, option_pk, *args, **kwargs):
+        product = get_object_or_404(Product, pk=pk)
+        option = get_object_or_404(ProductOption, pk=option_pk, parent_product=product)
+        name = option.display_name
+        option.delete()
+        messages.success(request, f'Option "{name}" removed.')
+        return redirect(product.get_absolute_url() + '#options')
