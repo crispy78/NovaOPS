@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ credit_note.reference }} — Credit note</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: #1e293b; margin: 0; padding: 32px; }
+    h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    .header-right { text-align: right; }
+    .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 2px; }
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .meta-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+    .meta-box .value { font-weight: 600; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+    thead th { background: #f8fafc; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #64748b; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+    tbody td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+    tfoot td { padding: 8px 12px; }
+    tfoot tr:last-child td { border-top: 2px solid #e2e8f0; font-weight: 700; font-size: 14px; }
+    .text-right { text-align: right; }
+    .mono { font-family: 'SFMono-Regular', Consolas, monospace; }
+    .reason-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #92400e; }
+    .print-btn { display: inline-block; margin-bottom: 24px; padding: 8px 18px; background: #0f6fec; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    @media print {
+      .print-btn { display: none; }
+      body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+
+<div class="header">
+  <div>
+    <div class="label">Credit note</div>
+    <h1>{{ credit_note.reference }}</h1>
+  </div>
+  <div class="header-right">
+    <div class="label">Date</div>
+    <div class="value">{{ credit_note.created_at|date:"Y-m-d" }}</div>
+  </div>
+</div>
+
+<div class="meta-grid">
+  <div class="meta-box">
+    <div class="label">Against invoice</div>
+    <div class="value">{{ credit_note.invoice.reference }}</div>
+  </div>
+  <div class="meta-box">
+    <div class="label">Customer</div>
+    <div class="value">{{ credit_note.relation_organization.name|default:"—" }}</div>
+  </div>
+  <div class="meta-box">
+    <div class="label">Currency</div>
+    <div class="value">{{ credit_note.currency }}</div>
+  </div>
+</div>
+
+{% if credit_note.reason %}
+<div class="reason-box"><strong>Reason:</strong> {{ credit_note.reason }}</div>
+{% endif %}
+
+<table>
+  <thead>
+    <tr>
+      <th>SKU</th>
+      <th>Description</th>
+      <th class="text-right">Qty</th>
+      <th class="text-right">Unit price</th>
+      <th class="text-right">Tax %</th>
+      <th class="text-right">Line total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in main_lines %}
+      <tr>
+        <td class="mono" style="font-size:11px;color:#64748b;">{{ line.sku }}</td>
+        <td>{{ line.product_name }}</td>
+        <td class="text-right">{{ line.quantity }}</td>
+        <td class="text-right mono">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+        <td class="text-right">{% if line.tax_rate_pct %}{{ line.tax_rate_pct }}%{% else %}—{% endif %}</td>
+        <td class="text-right mono">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="5" class="text-right" style="color:#64748b;">Subtotal</td>
+      <td class="text-right mono">{{ credit_note.currency }} {{ cn_total|floatformat:2 }}</td>
+    </tr>
+    {% for row in tax_breakdown %}
+      <tr>
+        <td colspan="5" class="text-right" style="color:#64748b;">
+          BTW {% if row.rate %}{{ row.rate }}%{% else %}0%{% endif %}
+          <span style="color:#94a3b8;font-size:11px;">(base {{ credit_note.currency }} {{ row.base|floatformat:2 }})</span>
+        </td>
+        <td class="text-right mono">{{ credit_note.currency }} {{ row.tax|floatformat:2 }}</td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td colspan="5" class="text-right">Total credit (incl. BTW)</td>
+      <td class="text-right mono">{{ credit_note.currency }} {{ grand_total|floatformat:2 }}</td>
+    </tr>
+  </tfoot>
+</table>
+
+{% if credit_note.notes %}
+<div style="margin-top:24px;font-size:12px;color:#475569;">
+  <div class="label" style="margin-bottom:4px;">Notes</div>
+  {{ credit_note.notes|linebreaksbr }}
+</div>
+{% endif %}
+
+</body>
+</html>

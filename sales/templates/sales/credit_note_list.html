@@ -1,0 +1,55 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Credit notes — NovaOPS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-slate-900">Credit notes</h1>
+</div>
+
+{% if credit_notes %}
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Reference</th>
+        <th class="px-4 py-3">Invoice</th>
+        <th class="px-4 py-3">Customer</th>
+        <th class="px-4 py-3">Reason</th>
+        <th class="px-4 py-3">Date</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for cn in credit_notes %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-4 py-2">
+            <a href="{{ cn.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ cn.reference }}</a>
+          </td>
+          <td class="px-4 py-2">
+            <a href="{{ cn.invoice.get_absolute_url }}" class="text-nova-700 hover:underline">{{ cn.invoice.reference }}</a>
+          </td>
+          <td class="px-4 py-2 text-slate-600">{{ cn.relation_organization.name|default:"—" }}</td>
+          <td class="px-4 py-2 text-slate-600">{{ cn.reason|default:"—" }}</td>
+          <td class="px-4 py-2 text-slate-500">{{ cn.created_at|date:"Y-m-d" }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <div class="mt-4 flex gap-2 text-sm">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-100">← Previous</a>
+    {% endif %}
+    <span class="px-3 py-1 text-slate-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-100">Next →</a>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% else %}
+  <p class="text-slate-500">No credit notes yet.</p>
+{% endif %}
+{% endblock %}

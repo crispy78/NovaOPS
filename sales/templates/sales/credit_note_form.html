@@ -1,0 +1,81 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}New credit note — {{ invoice.reference }} — NovaOPS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Credit note</p>
+  <h1 class="text-2xl font-bold text-slate-900">New credit note against {{ invoice.reference }}</h1>
+  <p class="mt-1 text-sm text-slate-500">
+    Customer: <strong>{{ invoice.relation_organization.name|default:"—" }}</strong>
+  </p>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="mb-6 grid gap-4 sm:grid-cols-2">
+    <div>
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="id_reason">
+        Reason
+      </label>
+      <input type="text" name="reason" id="id_reason"
+             value="{{ posted.reason|default:'' }}"
+             placeholder="e.g. Returned goods, pricing error"
+             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="id_notes">
+        Internal notes
+      </label>
+      <textarea name="notes" id="id_notes" rows="2"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">{{ posted.notes|default:'' }}</textarea>
+    </div>
+  </div>
+
+  <div class="mb-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-4 py-3">
+      <h2 class="text-sm font-semibold text-slate-800">Select lines to credit</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Set quantity to 0 to exclude a line, or enter the quantity to credit.</p>
+    </div>
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-3">SKU</th>
+          <th class="px-4 py-3">Description</th>
+          <th class="px-4 py-3 text-right">Invoiced qty</th>
+          <th class="px-4 py-3 text-right">Unit price</th>
+          <th class="px-4 py-3 text-right">Credit qty</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for line in main_lines %}
+          <tr>
+            <td class="px-4 py-2 font-mono text-xs text-slate-500">{{ line.sku }}</td>
+            <td class="px-4 py-2 text-slate-800">{{ line.product_name }}</td>
+            <td class="px-4 py-2 text-right text-slate-600">{{ line.quantity }}</td>
+            <td class="px-4 py-2 text-right font-mono text-slate-600">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+            <td class="px-4 py-2 text-right">
+              <input type="number" name="qty_{{ line.pk }}"
+                     value="{% if posted %}{{ posted|default_if_none:'' }}{% else %}{{ line.quantity }}{% endif %}"
+                     min="0" max="{{ line.quantity }}"
+                     class="w-20 rounded border border-slate-300 px-2 py-1 text-right text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex gap-3">
+    <button type="submit"
+            class="rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
+      Issue credit note
+    </button>
+    <a href="{{ invoice.get_absolute_url }}"
+       class="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+      Cancel
+    </a>
+  </div>
+</form>
+{% endblock %}

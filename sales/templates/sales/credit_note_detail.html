@@ -1,0 +1,101 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ credit_note.reference }} — NovaOPS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Credit note</p>
+    <h1 class="text-2xl font-bold text-slate-900">{{ credit_note.reference }}</h1>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'sales:credit_note_print' pk=credit_note.pk %}"
+       target="_blank"
+       class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+      Print / PDF
+    </a>
+  </div>
+</div>
+
+<div class="mb-6 grid gap-4 sm:grid-cols-3">
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Against invoice</p>
+    <p class="mt-1 font-semibold text-nova-700">
+      <a href="{{ credit_note.invoice.get_absolute_url }}" class="hover:underline">{{ credit_note.invoice.reference }}</a>
+    </p>
+  </div>
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Customer</p>
+    <p class="mt-1 font-semibold text-slate-800">{{ credit_note.relation_organization.name|default:"—" }}</p>
+  </div>
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Date</p>
+    <p class="mt-1 font-semibold text-slate-800">{{ credit_note.created_at|date:"Y-m-d" }}</p>
+  </div>
+</div>
+
+{% if credit_note.reason %}
+<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+  <span class="font-semibold">Reason:</span> {{ credit_note.reason }}
+</div>
+{% endif %}
+
+{% if credit_note.notes %}
+<div class="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+  {{ credit_note.notes|linebreaksbr }}
+</div>
+{% endif %}
+
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-sm font-semibold text-slate-800">Credit lines</h2>
+  </div>
+  <table class="min-w-full text-left text-sm">
+    <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+      <tr>
+        <th class="px-4 py-3">SKU</th>
+        <th class="px-4 py-3">Description</th>
+        <th class="px-4 py-3 text-right">Qty</th>
+        <th class="px-4 py-3 text-right">Unit price</th>
+        <th class="px-4 py-3 text-right">Tax %</th>
+        <th class="px-4 py-3 text-right">Line total</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for line in main_lines %}
+        <tr>
+          <td class="px-4 py-2 font-mono text-xs text-slate-500">{{ line.sku }}</td>
+          <td class="px-4 py-2 text-slate-800">{{ line.product_name }}</td>
+          <td class="px-4 py-2 text-right text-slate-600">{{ line.quantity }}</td>
+          <td class="px-4 py-2 text-right font-mono text-slate-600">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+          <td class="px-4 py-2 text-right text-slate-500">{% if line.tax_rate_pct %}{{ line.tax_rate_pct }}%{% else %}—{% endif %}</td>
+          <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot class="border-t border-slate-200 bg-slate-50 text-sm">
+      <tr>
+        <td colspan="5" class="px-4 py-2 text-right text-slate-500">Subtotal</td>
+        <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ credit_note.currency }} {{ cn_total|floatformat:2 }}</td>
+      </tr>
+      {% for row in tax_breakdown %}
+        <tr>
+          <td colspan="5" class="px-4 py-2 text-right text-slate-500">
+            BTW {% if row.rate %}{{ row.rate }}%{% else %}0%{% endif %}
+          </td>
+          <td class="px-4 py-2 text-right font-mono text-slate-700">{{ credit_note.currency }} {{ row.tax|floatformat:2 }}</td>
+        </tr>
+      {% endfor %}
+      <tr class="border-t border-slate-200">
+        <td colspan="5" class="px-4 py-2 text-right font-semibold text-slate-700">Total credit (incl. BTW)</td>
+        <td class="px-4 py-2 text-right font-mono font-bold text-slate-900">{{ credit_note.currency }} {{ grand_total|floatformat:2 }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="mt-4 text-xs text-slate-400">
+  Created by {{ credit_note.created_by.get_full_name|default:credit_note.created_by.email }}
+  on {{ credit_note.created_at|date:"Y-m-d H:i" }}
+</div>
+{% endblock %}
