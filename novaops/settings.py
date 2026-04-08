@@ -32,6 +32,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 _allowed = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()] or ['localhost', '127.0.0.1', 'testserver']
 
+_origins = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in _origins.split(',') if o.strip()]
+
 
 # Application definition
 
