@@ -46,9 +46,6 @@
   <p class="text-sm font-semibold text-slate-700">Total outstanding: <span class="text-slate-900">EUR {{ grand_total|floatformat:2 }}</span></p>
 </div>
 
-{% for bucket_key, label, color_class in buckets|zip_with_labels %}
-{% endfor %}
-
 {% for bucket_name, invoices in buckets.items %}
   {% if invoices %}
     <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -79,8 +76,8 @@
               </td>
               <td class="px-4 py-2 text-slate-600">{{ inv.relation_organization.name|default:"—" }}</td>
               <td class="px-4 py-2 text-slate-600">{{ inv.due_date|date:"Y-m-d"|default:"—" }}</td>
-              <td class="px-4 py-2 text-right {% if inv._age_days > 0 %}text-red-700 font-semibold{% else %}text-slate-400{% endif %}">
-                {% if inv._age_days > 0 %}{{ inv._age_days }}{% else %}—{% endif %}
+              <td class="px-4 py-2 text-right {% if inv.age_days > 0 %}text-red-700 font-semibold{% else %}text-slate-400{% endif %}">
+                {% if inv.age_days > 0 %}{{ inv.age_days }}{% else %}—{% endif %}
               </td>
               <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ inv.currency }} {{ inv.balance|floatformat:2 }}</td>
             </tr>

@@ -41,9 +41,14 @@
     </div>
   {% endif %}
   </div>
-  <a href="{% url 'sales:invoice_print' pk=invoice.pk %}" target="_blank" class="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
-    <i class="fa-solid fa-print mr-1 text-xs" aria-hidden="true"></i>Print / PDF
-  </a>
+  <div class="flex shrink-0 gap-2">
+    <a href="{% url 'sales:invoice_print' pk=invoice.pk %}" target="_blank" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
+      <i class="fa-solid fa-print mr-1 text-xs" aria-hidden="true"></i>Print / PDF
+    </a>
+    <a href="{% url 'sales:credit_note_create' invoice_pk=invoice.pk %}" class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100">
+      Issue credit note
+    </a>
+  </div>
 </div>
 
 <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -162,6 +167,42 @@
         Add payment
       </button>
     </form>
+  </section>
+{% endif %}
+
+{% if credit_notes %}
+  <section class="mt-8">
+    <h2 class="text-lg font-semibold text-slate-900">Credit notes</h2>
+    <div class="mt-3 overflow-hidden rounded-xl border border-red-200 bg-white shadow-sm">
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-red-50 text-xs font-semibold uppercase text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Reference</th>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3">Reason</th>
+            <th class="px-4 py-3 text-right">Total credit</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for cn in credit_notes %}
+            <tr>
+              <td class="px-4 py-3">
+                <a href="{{ cn.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ cn.reference }}</a>
+              </td>
+              <td class="px-4 py-3 text-slate-600">{{ cn.created_at|date:"Y-m-d" }}</td>
+              <td class="px-4 py-3 text-slate-600">{{ cn.reason|default:"—" }}</td>
+              <td class="px-4 py-3 text-right font-mono font-semibold text-red-700">−{{ invoice.currency }} {{ cn.total|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="border-t border-slate-200 bg-slate-50">
+          <tr>
+            <td colspan="3" class="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Total credited</td>
+            <td class="px-4 py-2 text-right font-mono font-bold text-red-700">−{{ invoice.currency }} {{ credit_notes_total|floatformat:2 }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   </section>
 {% endif %}
 

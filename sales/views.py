@@ -36,6 +36,8 @@ from .list_filtering import (
 )
 from .models import (
     CartLine,
+    CreditNote,
+    CreditNoteLine,
     FulfillmentOrder,
     FulfillmentOrderStatus,
     Invoice,
@@ -47,6 +49,7 @@ from .models import (
     ShipmentStatus,
     ShippingOrder,
     ShippingOrderStatus,
+    next_credit_note_reference,
 )
 from .services import (
     add_invoice_payment,
@@ -818,6 +821,8 @@ class InvoiceDetailView(LoginRequiredMixin, DetailView):
         ctx['tax_breakdown'] = _tax_breakdown(inv.main_lines)
         ctx['payment_form'] = InvoicePaymentForm(max_amount=inv_balance if not inv_is_paid else None)
         ctx['can_record_payment'] = inv.status != InvoiceStatus.CANCELLED and not inv_is_paid
+        ctx['credit_notes'] = inv.credit_notes.order_by('created_at')
+        ctx['credit_notes_total'] = sum(cn.total() for cn in ctx['credit_notes'])
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -947,4 +952,138 @@ class InvoicePrintView(LoginRequiredMixin, DetailView):
         tax_total = sum(row['tax'] for row in ctx['tax_breakdown'])
         ctx['tax_total'] = tax_total
         ctx['grand_total'] = ctx['invoice_total'] + tax_total
+        return ctx
+
+
+# ── Credit notes ──────────────────────────────────────────────────────────────
+
+class CreditNoteListView(LoginRequiredMixin, ListView):
+    template_name = 'sales/credit_note_list.html'
+    context_object_name = 'credit_notes'
+    paginate_by = 50
+
+    def get_queryset(self):
+        return CreditNote.objects.select_related('invoice', 'relation_organization').order_by('-created_at')
+
+
+class CreditNoteDetailView(LoginRequiredMixin, DetailView):
+    model = CreditNote
+    template_name = 'sales/credit_note_detail.html'
+    context_object_name = 'credit_note'
+
+    def get_queryset(self):
+        return CreditNote.objects.select_related('invoice', 'relation_organization', 'created_by').prefetch_related('lines')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        cn = self.object
+        ctx['main_lines'] = list(cn.lines.order_by('sort_order', 'id'))
+        ctx['cn_total'] = cn.total()
+        ctx['tax_breakdown'] = _tax_breakdown(ctx['main_lines'])
+        ctx['tax_total'] = sum(row['tax'] for row in ctx['tax_breakdown'])
+        ctx['grand_total'] = ctx['cn_total'] + ctx['tax_total']
+        return ctx
+
+
+class CreditNoteCreateView(LoginRequiredMixin, View):
+    """Create a credit note against an invoice. Pre-populates lines from the invoice."""
+
+    template_name = 'sales/credit_note_form.html'
+
+    def _get_invoice(self, pk):
+        return get_object_or_404(
+            Invoice.objects.select_related('relation_organization').prefetch_related('lines'),
+            pk=pk,
+        )
+
+    def get(self, request, invoice_pk):
+        invoice = self._get_invoice(invoice_pk)
+        main_lines = list(invoice.lines.filter(parent_line__isnull=True).order_by('sort_order', 'id'))
+        return render(request, self.template_name, {
+            'invoice': invoice,
+            'main_lines': main_lines,
+        })
+
+    def post(self, request, invoice_pk):
+        from django.db import transaction as db_transaction
+
+        invoice = self._get_invoice(invoice_pk)
+        reason = request.POST.get('reason', '').strip()
+        notes = request.POST.get('notes', '').strip()
+
+        # Collect submitted line data
+        main_lines = list(invoice.lines.filter(parent_line__isnull=True).order_by('sort_order', 'id'))
+        selected_lines = []
+        for i, line in enumerate(main_lines):
+            qty_str = request.POST.get(f'qty_{line.pk}', '').strip()
+            if not qty_str:
+                continue
+            try:
+                qty = int(qty_str)
+            except ValueError:
+                continue
+            if qty <= 0:
+                continue
+            qty = min(qty, line.quantity)
+            selected_lines.append((line, qty))
+
+        if not selected_lines:
+            messages.error(request, 'Select at least one line with a quantity greater than zero.')
+            return render(request, self.template_name, {
+                'invoice': invoice,
+                'main_lines': main_lines,
+                'posted': request.POST,
+            })
+
+        with db_transaction.atomic():
+            cn = CreditNote.objects.create(
+                reference=next_credit_note_reference(),
+                invoice=invoice,
+                created_by=request.user,
+                relation_organization=invoice.relation_organization,
+                currency=invoice.currency,
+                reason=reason,
+                notes=notes,
+            )
+            for sort_order, (inv_line, qty) in enumerate(selected_lines):
+                CreditNoteLine.objects.create(
+                    credit_note=cn,
+                    invoice_line=inv_line,
+                    product_name=inv_line.product_name,
+                    sku=inv_line.sku,
+                    quantity=qty,
+                    unit_price=inv_line.unit_price,
+                    tax_rate_pct=inv_line.tax_rate_pct,
+                    currency=inv_line.currency,
+                    line_total=inv_line.unit_price * qty,
+                    sort_order=sort_order,
+                )
+
+        log_event(
+            actor=request.user,
+            verb='created',
+            target=cn,
+            detail=f'Credit note {cn.reference} issued against invoice {invoice.reference}.',
+            request=request,
+        )
+        messages.success(request, f'Credit note {cn.reference} created.')
+        return redirect(cn)
+
+
+class CreditNotePrintView(LoginRequiredMixin, DetailView):
+    model = CreditNote
+    template_name = 'sales/credit_note_print.html'
+    context_object_name = 'credit_note'
+
+    def get_queryset(self):
+        return CreditNote.objects.select_related('invoice', 'relation_organization', 'created_by').prefetch_related('lines')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        cn = self.object
+        ctx['main_lines'] = list(cn.lines.order_by('sort_order', 'id'))
+        ctx['cn_total'] = cn.total()
+        ctx['tax_breakdown'] = _tax_breakdown(ctx['main_lines'])
+        ctx['tax_total'] = sum(row['tax'] for row in ctx['tax_breakdown'])
+        ctx['grand_total'] = ctx['cn_total'] + ctx['tax_total']
         return ctx

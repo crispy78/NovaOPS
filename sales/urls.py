@@ -34,5 +34,9 @@ urlpatterns = [
     path('invoices/', views.InvoiceListView.as_view(), name='invoice_list'),
     path('invoices/<uuid:pk>/', views.InvoiceDetailView.as_view(), name='invoice_detail'),
     path('invoices/<uuid:pk>/print/', views.InvoicePrintView.as_view(), name='invoice_print'),
+    path('invoices/<uuid:invoice_pk>/credit-note/new/', views.CreditNoteCreateView.as_view(), name='credit_note_create'),
     path('quotes/<uuid:pk>/print/', views.QuotePrintView.as_view(), name='quote_print'),
+    path('credit-notes/', views.CreditNoteListView.as_view(), name='credit_note_list'),
+    path('credit-notes/<uuid:pk>/', views.CreditNoteDetailView.as_view(), name='credit_note_detail'),
+    path('credit-notes/<uuid:pk>/print/', views.CreditNotePrintView.as_view(), name='credit_note_print'),
 ]

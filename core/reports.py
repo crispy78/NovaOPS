@@ -8,7 +8,7 @@ import csv
 from decimal import Decimal
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import DecimalField, ExpressionWrapper, F, Sum, Value
+from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum, Value
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import StreamingHttpResponse
 from django.utils import timezone
@@ -26,12 +26,11 @@ class SalesReportView(LoginRequiredMixin, TemplateView):
         from sales.models import Invoice, InvoiceStatus, InvoiceLine
 
         # Monthly revenue (last 12 months)
-        twelve_ago = timezone.localdate().replace(day=1)
-        from dateutil.relativedelta import relativedelta
-        try:
-            twelve_ago = twelve_ago - relativedelta(months=11)
-        except ImportError:
-            pass
+        today_date = timezone.localdate()
+        month = today_date.month - 11
+        year = today_date.year + (month - 1) // 12
+        month = ((month - 1) % 12) + 1
+        twelve_ago = today_date.replace(year=year, month=month, day=1)
 
         monthly = (
             Invoice.objects
@@ -112,7 +111,7 @@ class AgedDebtorsReportView(LoginRequiredMixin, TemplateView):
             else:
                 key = 'over_90'
 
-            inv._age_days = age
+            inv.age_days = age
             buckets[key].append(inv)
             totals[key] += inv.balance
 

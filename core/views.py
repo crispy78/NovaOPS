@@ -99,8 +99,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         )
 
         # ── Revenue this month ───────────────────────────────────────────────
-        from django.db.models import Sum as Sum2
-        from django.db.models.functions import TruncMonth
         month_start = today.replace(day=1)
         ctx['revenue_this_month'] = (
             Invoice.objects.filter(
@@ -110,10 +108,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         # ── Low stock count ──────────────────────────────────────────────────
         try:
-            from django.db.models import DecimalField as DF, F, OuterRef, Subquery
-            from django.db.models.functions import Coalesce
+            from django.db.models import OuterRef, Subquery
             from inventory.models import StockEntry
             from catalog.models import Product
+            DF = DecimalField
             total_qs = (
                 StockEntry.objects
                 .filter(product=OuterRef('pk'))

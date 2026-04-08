@@ -626,6 +626,91 @@ class ShipmentLine(UUIDPrimaryKeyModel):
         ]
 
 
+class CreditNote(UUIDPrimaryKeyModel):
+    """Credit note issued against an invoice to reduce the amount owed."""
+
+    reference = models.CharField(max_length=32, unique=True, db_index=True)
+    invoice = models.ForeignKey(
+        Invoice,
+        on_delete=models.PROTECT,
+        related_name='credit_notes',
+        verbose_name='invoice',
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='credit_notes_created',
+    )
+    relation_organization = models.ForeignKey(
+        'relations.Organization',
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name='credit_notes',
+        verbose_name='organization',
+    )
+    currency = models.CharField(max_length=3, default='EUR')
+    reason = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='reason',
+        help_text='Short reason for issuing this credit note.',
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'credit note'
+        verbose_name_plural = 'credit notes'
+
+    def __str__(self) -> str:
+        return self.reference
+
+    def get_absolute_url(self) -> str:
+        from django.urls import reverse
+        return reverse('sales:credit_note_detail', kwargs={'pk': self.pk})
+
+    def total(self) -> Decimal:
+        from django.db.models import Sum
+        agg = self.lines.aggregate(s=Sum('line_total'))
+        return agg['s'] if agg['s'] is not None else Decimal('0')
+
+
+class CreditNoteLine(UUIDPrimaryKeyModel):
+    credit_note = models.ForeignKey(CreditNote, on_delete=models.CASCADE, related_name='lines')
+    invoice_line = models.ForeignKey(
+        InvoiceLine,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='credit_note_lines',
+        verbose_name='invoice line',
+    )
+    product_name = models.CharField(max_length=255)
+    sku = models.CharField(max_length=64, blank=True)
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(**MONEY)
+    tax_rate_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='tax rate (%)'
+    )
+    currency = models.CharField(max_length=3, default='EUR')
+    line_total = models.DecimalField(**MONEY)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['credit_note', 'sort_order', 'id']
+
+    def __str__(self) -> str:
+        return f'{self.sku} × {self.quantity}'
+
+
+def next_credit_note_reference() -> str:
+    from core.models import next_reference
+    return next_reference('CN', timezone.now().year)
+
+
 def next_quote_reference() -> str:
     from core.models import next_reference
     return next_reference('Q', timezone.now().year)
