@@ -145,8 +145,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Security hardening defaults (safe in dev; stricter in prod).
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SECURE = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
+_https = os.environ.get('DJANGO_SSL_REDIRECT', 'false').lower() == 'true'
+CSRF_COOKIE_SECURE = _https
+SESSION_COOKIE_SECURE = _https
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_REFERRER_POLICY = 'same-origin'
