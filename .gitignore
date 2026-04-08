@@ -24,7 +24,8 @@ local_settings.py
 media/
 
 # Static build output (compiled CSS — generated, not source)
-static/
+catalog/static/catalog/css/app.css
+staticfiles/
 
 # Node
 node_modules/
