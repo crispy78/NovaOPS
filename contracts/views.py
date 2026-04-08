@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
@@ -33,7 +33,8 @@ from .services import (
 # Service Rates
 # ──────────────────────────────────────────────────────────────────────────────
 
-class ServiceRateListView(LoginRequiredMixin, ListView):
+class ServiceRateListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'contracts.view_servicerate'
     model               = ServiceRate
     template_name       = 'contracts/service_rate_list.html'
     context_object_name = 'rates'
@@ -101,7 +102,8 @@ class _TemplateMixin:
         return HttpResponseRedirect(self.object.get_absolute_url())
 
 
-class ContractTemplateListView(LoginRequiredMixin, ListView):
+class ContractTemplateListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'contracts.view_contracttemplate'
     model               = ContractTemplate
     template_name       = 'contracts/template_list.html'
     context_object_name = 'templates'
@@ -147,7 +149,8 @@ class ContractTemplateUpdateView(_TemplateMixin, LoginRequiredMixin, UpdateView)
 # Contracts
 # ──────────────────────────────────────────────────────────────────────────────
 
-class ContractListView(LoginRequiredMixin, ListView):
+class ContractListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'contracts.view_contract'
     model               = Contract
     template_name       = 'contracts/contract_list.html'
     context_object_name = 'contracts'

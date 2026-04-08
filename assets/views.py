@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
@@ -55,7 +55,8 @@ def _org_tree(orgs) -> list[tuple]:
     return result
 
 
-class AssetListView(LoginRequiredMixin, ListView):
+class AssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'assets.view_asset'
     model = Asset
     template_name = 'assets/asset_list.html'
     context_object_name = 'assets'
@@ -328,7 +329,8 @@ class RecallLinkUpdateView(LoginRequiredMixin, UpdateView):
         return ctx
 
 
-class RecallCampaignListView(LoginRequiredMixin, ListView):
+class RecallCampaignListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'assets.view_recallcampaign'
     model = RecallCampaign
     template_name = 'assets/recall_list.html'
     context_object_name = 'recalls'
@@ -429,7 +431,8 @@ class RecallCampaignDetailView(LoginRequiredMixin, DetailView):
         return self.render_to_response(ctx)
 
 
-class MaintenancePlanListView(LoginRequiredMixin, ListView):
+class MaintenancePlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'assets.view_maintenanceplan'
     model = MaintenancePlan
     template_name = 'assets/mjop_list.html'
     context_object_name = 'plans'

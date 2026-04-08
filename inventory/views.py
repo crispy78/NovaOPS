@@ -16,7 +16,8 @@ from .models import MovementType, StockEntry, StockLocation, StockMovement, Ware
 from .services import adjust_stock
 
 
-class WarehouseListView(LoginRequiredMixin, ListView):
+class WarehouseListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'inventory.view_warehouse'
     model = Warehouse
     template_name = 'inventory/warehouse_list.html'
     context_object_name = 'warehouses'
@@ -112,8 +113,9 @@ class StockAdjustView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return render(request, self.template_name, {'form': form})
 
 
-class LowStockListView(LoginRequiredMixin, ListView):
+class LowStockListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """Products whose total stock on hand is at or below their reorder point."""
+    permission_required = 'inventory.view_stockentry'
 
     template_name = 'inventory/low_stock.html'
     context_object_name = 'low_stock_items'

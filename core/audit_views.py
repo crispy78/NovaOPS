@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 
 from audit.models import EventLog
 
+from .usermgmt import StaffRequiredMixin
 
-class AuditLogView(LoginRequiredMixin, ListView):
+
+class AuditLogView(StaffRequiredMixin, ListView):
     """Staff-only audit event log viewer with basic filtering."""
 
     template_name = 'core/audit_log.html'

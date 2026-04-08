@@ -4,7 +4,7 @@ import csv
 from decimal import Decimal
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Prefetch, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import StreamingHttpResponse
@@ -181,7 +181,8 @@ class CartLineUpdateView(LoginRequiredMixin, View):
         return redirect('sales:cart')
 
 
-class QuoteListView(LoginRequiredMixin, ListView):
+class QuoteListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_quote'
     model = Quote
     template_name = 'sales/quote_list.html'
     context_object_name = 'quotes'
@@ -368,7 +369,8 @@ class QuoteAcceptView(LoginRequiredMixin, View):
         return redirect('sales:quote_detail', pk=quote.pk)
 
 
-class SalesOrderListView(LoginRequiredMixin, ListView):
+class SalesOrderListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_salesorder'
     model = SalesOrder
     template_name = 'sales/order_list.html'
     context_object_name = 'orders'
@@ -513,7 +515,8 @@ class FulfillmentCreateFromOrderView(LoginRequiredMixin, View):
             return redirect('sales:order_detail', pk=order.pk)
 
 
-class FulfillmentOrderListView(LoginRequiredMixin, ListView):
+class FulfillmentOrderListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_fulfillmentorder'
     model = FulfillmentOrder
     template_name = 'sales/fulfillment_list.html'
     context_object_name = 'fulfillments'
@@ -650,7 +653,8 @@ class ShippingOrderCreateFromFulfillmentView(LoginRequiredMixin, View):
         return redirect(so)
 
 
-class ShippingOrderListView(LoginRequiredMixin, ListView):
+class ShippingOrderListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_shippingorder'
     model = ShippingOrder
     template_name = 'sales/shipping_list.html'
     context_object_name = 'shipping_orders'
@@ -755,7 +759,8 @@ class ShippingOrderDetailView(LoginRequiredMixin, DetailView):
         return self.render_to_response(ctx)
 
 
-class InvoiceListView(LoginRequiredMixin, ListView):
+class InvoiceListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_invoice'
     model = Invoice
     template_name = 'sales/invoice_list.html'
     context_object_name = 'invoices'
@@ -1047,7 +1052,8 @@ class InvoicePrintView(LoginRequiredMixin, DetailView):
 
 # ── Credit notes ──────────────────────────────────────────────────────────────
 
-class CreditNoteListView(LoginRequiredMixin, ListView):
+class CreditNoteListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_creditnote'
     template_name = 'sales/credit_note_list.html'
     context_object_name = 'credit_notes'
     paginate_by = 50

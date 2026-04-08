@@ -27,7 +27,8 @@ from django.views.generic.edit import CreateView
 from .permissions import get_product_page_permissions
 
 
-class ProductListView(LoginRequiredMixin, ListView):
+class ProductListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'catalog.view_product'
     model = Product
     context_object_name = 'products'
     template_name = 'catalog/product_list.html'

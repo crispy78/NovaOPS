@@ -35,6 +35,10 @@
     }
     .skip-link:focus { left: 1rem; top: 1rem; outline: 2px solid #0284c7; outline-offset: 2px; }
     #sidebar { transition: transform .22s cubic-bezier(.4,0,.2,1); }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] .chevron { transform: rotate(90deg); }
+    .chevron { transition: transform .15s ease; display: inline-block; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -55,9 +59,9 @@
 
   {# Navigation #}
   {% with u=request.resolver_match.url_name ns=request.resolver_match.namespace %}
-  <nav class="flex-1 space-y-0.5 px-3 py-4" aria-label="Main navigation">
+  <nav class="flex-1 px-3 py-4" aria-label="Main navigation">
 
-    {# Dashboard #}
+    {# Dashboard — always visible #}
     <a href="{% url 'dashboard' %}"
        class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
        {% if u == 'dashboard' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
@@ -65,214 +69,325 @@
       Dashboard
     </a>
 
-    {# Catalog #}
-    <p class="mb-1 mt-3 px-3 pt-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Catalog</p>
-    <a href="{% url 'catalog:index' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'catalog' and u != 'image_library' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-boxes-stacked w-4 text-center {% if ns == 'catalog' and u != 'image_library' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Products
-    </a>
-    {% if user.is_authenticated and perms.catalog.view_productimage %}
-      <a href="{% url 'catalog:image_library' %}"
-         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-         {% if u == 'image_library' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-        <i class="fa-solid fa-images w-4 text-center {% if u == 'image_library' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-        Image library
-      </a>
-    {% endif %}
-    {% if user.is_authenticated %}
-      <a href="{% url 'pricing:rule_list' %}"
-         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-         {% if ns == 'pricing' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-        <i class="fa-solid fa-tags w-4 text-center {% if ns == 'pricing' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-        Pricing rules
-      </a>
-    {% endif %}
-
     {% if user.is_authenticated %}
 
-    {# Sales #}
-    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Sales</p>
-    <a href="{% url 'sales:cart' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'sales' and 'cart' in u and 'quote' not in u and 'order' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-cart-shopping w-4 text-center {% if ns == 'sales' and 'cart' in u and 'quote' not in u and 'order' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Cart
-      {% if cart_item_count %}
-        <span class="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-nova-600 px-1 text-[10px] font-bold leading-none text-white">{{ cart_item_count }}</span>
-      {% endif %}
-    </a>
-    <a href="{% url 'sales:quote_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'sales' and 'quote' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-file-signature w-4 text-center {% if ns == 'sales' and 'quote' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Quotes
-    </a>
-    <a href="{% url 'sales:order_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'sales' and 'order' in u and 'quote' not in u and 'fulfillment' not in u and 'invoice' not in u and 'shipping' not in u and 'cart' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-clipboard-list w-4 text-center {% if ns == 'sales' and 'order' in u and 'quote' not in u and 'fulfillment' not in u and 'invoice' not in u and 'shipping' not in u and 'cart' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Orders
-    </a>
-    <a href="{% url 'sales:fulfillment_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'sales' and 'fulfillment' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-dolly w-4 text-center {% if ns == 'sales' and 'fulfillment' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Fulfillment
-    </a>
-    <a href="{% url 'sales:shipping_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'sales' and 'shipping' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-truck w-4 text-center {% if ns == 'sales' and 'shipping' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Shipping
-    </a>
-    <a href="{% url 'sales:invoice_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'sales' and 'invoice' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-file-invoice-dollar w-4 text-center {% if ns == 'sales' and 'invoice' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Invoices
-    </a>
-    <a href="{% url 'sales:credit_note_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'sales' and 'credit-note' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-file-circle-minus w-4 text-center {% if ns == 'sales' and 'credit-note' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Credit notes
-    </a>
+    {# ── Catalog ── #}
+    {% if perms.catalog.view_product %}
+    <details {% if ns == 'catalog' or ns == 'pricing' %}open{% endif %} class="mt-3">
+      <summary class="flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+        Catalog
+        <i class="fa-solid fa-chevron-right chevron text-[9px]" aria-hidden="true"></i>
+      </summary>
+      <div class="mt-0.5 space-y-0.5">
+        <a href="{% url 'catalog:index' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'catalog' and u != 'image_library' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-boxes-stacked w-4 text-center {% if ns == 'catalog' and u != 'image_library' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Products
+        </a>
+        {% if perms.catalog.view_productimage %}
+          <a href="{% url 'catalog:image_library' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if u == 'image_library' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-images w-4 text-center {% if u == 'image_library' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Image library
+          </a>
+        {% endif %}
+        {% if perms.pricing.view_pricingrule %}
+          <a href="{% url 'pricing:rule_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'pricing' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-tags w-4 text-center {% if ns == 'pricing' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Pricing rules
+          </a>
+        {% endif %}
+      </div>
+    </details>
+    {% endif %}
 
-    {# Procurement & Inventory #}
-    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Procurement</p>
-    <a href="{% url 'procurement:po_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'procurement' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-file-circle-plus w-4 text-center {% if ns == 'procurement' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Purchase orders
-    </a>
-    <a href="{% url 'inventory:warehouse_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'inventory' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-warehouse w-4 text-center {% if ns == 'inventory' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Warehouses
-    </a>
-    <a href="{% url 'inventory:low_stock' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
-      <i class="fa-solid fa-circle-exclamation w-4 text-center text-slate-400" aria-hidden="true"></i>
-      Low stock
-    </a>
-    <a href="{% url 'inventory:stock_adjust' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
-      <i class="fa-solid fa-sliders w-4 text-center text-slate-400" aria-hidden="true"></i>
-      Stock adjustment
-    </a>
-    <a href="{% url 'inventory:stock_transfer' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
-      <i class="fa-solid fa-arrow-right-arrow-left w-4 text-center text-slate-400" aria-hidden="true"></i>
-      Stock transfer
-    </a>
+    {# ── Sales ── #}
+    {% if perms.sales.view_quote or perms.sales.view_invoice %}
+    <details {% if ns == 'sales' %}open{% endif %} class="mt-3">
+      <summary class="flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+        Sales
+        <i class="fa-solid fa-chevron-right chevron text-[9px]" aria-hidden="true"></i>
+      </summary>
+      <div class="mt-0.5 space-y-0.5">
+        <a href="{% url 'sales:cart' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'sales' and 'cart' in u and 'quote' not in u and 'order' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-cart-shopping w-4 text-center {% if ns == 'sales' and 'cart' in u and 'quote' not in u and 'order' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Cart
+          {% if cart_item_count %}
+            <span class="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-nova-600 px-1 text-[10px] font-bold leading-none text-white">{{ cart_item_count }}</span>
+          {% endif %}
+        </a>
+        {% if perms.sales.view_quote %}
+          <a href="{% url 'sales:quote_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'sales' and 'quote' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-file-signature w-4 text-center {% if ns == 'sales' and 'quote' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Quotes
+          </a>
+        {% endif %}
+        {% if perms.sales.view_salesorder %}
+          <a href="{% url 'sales:order_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'sales' and 'order' in u and 'quote' not in u and 'fulfillment' not in u and 'invoice' not in u and 'shipping' not in u and 'cart' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-clipboard-list w-4 text-center {% if ns == 'sales' and 'order' in u and 'quote' not in u and 'fulfillment' not in u and 'invoice' not in u and 'shipping' not in u and 'cart' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Orders
+          </a>
+        {% endif %}
+        {% if perms.sales.view_fulfillmentorder %}
+          <a href="{% url 'sales:fulfillment_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'sales' and 'fulfillment' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-dolly w-4 text-center {% if ns == 'sales' and 'fulfillment' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Fulfillment
+          </a>
+        {% endif %}
+        {% if perms.sales.view_shippingorder %}
+          <a href="{% url 'sales:shipping_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'sales' and 'shipping' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-truck w-4 text-center {% if ns == 'sales' and 'shipping' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Shipping
+          </a>
+        {% endif %}
+        {% if perms.sales.view_invoice %}
+          <a href="{% url 'sales:invoice_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'sales' and 'invoice' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-file-invoice-dollar w-4 text-center {% if ns == 'sales' and 'invoice' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Invoices
+          </a>
+        {% endif %}
+        {% if perms.sales.view_creditnote %}
+          <a href="{% url 'sales:credit_note_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'sales' and 'credit_note' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-file-circle-minus w-4 text-center {% if ns == 'sales' and 'credit_note' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Credit notes
+          </a>
+        {% endif %}
+      </div>
+    </details>
+    {% endif %}
 
-    {# Assets #}
-    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Assets</p>
-    <a href="{% url 'assets:asset_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'assets' and 'asset' in u and 'recall' not in u and 'mjop' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-screwdriver-wrench w-4 text-center {% if ns == 'assets' and 'asset' in u and 'recall' not in u and 'mjop' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Assets
-    </a>
-    <a href="{% url 'assets:recall_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'assets' and 'recall' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-triangle-exclamation w-4 text-center {% if ns == 'assets' and 'recall' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Recalls
-    </a>
-    <a href="{% url 'assets:mjop_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'assets' and 'mjop' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-calendar-check w-4 text-center {% if ns == 'assets' and 'mjop' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Maint. plans
-    </a>
+    {# ── Procurement ── #}
+    {% if perms.procurement.view_purchaseorder %}
+    <details {% if ns == 'procurement' %}open{% endif %} class="mt-3">
+      <summary class="flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+        Procurement
+        <i class="fa-solid fa-chevron-right chevron text-[9px]" aria-hidden="true"></i>
+      </summary>
+      <div class="mt-0.5 space-y-0.5">
+        <a href="{% url 'procurement:po_list' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'procurement' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-file-circle-plus w-4 text-center {% if ns == 'procurement' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Purchase orders
+        </a>
+      </div>
+    </details>
+    {% endif %}
 
-    {# Contracts #}
-    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Contracts</p>
-    <a href="{% url 'contracts:contract_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'contracts' and 'template' not in u and 'rate' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-file-contract w-4 text-center {% if ns == 'contracts' and 'template' not in u and 'rate' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Contracts
-    </a>
-    <a href="{% url 'contracts:template_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'contracts' and 'template' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-scroll w-4 text-center {% if ns == 'contracts' and 'template' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Templates
-    </a>
-    <a href="{% url 'contracts:rate_list' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'contracts' and 'rate' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-clock w-4 text-center {% if ns == 'contracts' and 'rate' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Service rates
-    </a>
+    {# ── Inventory ── #}
+    {% if perms.inventory.view_warehouse or perms.inventory.view_stockentry %}
+    <details {% if ns == 'inventory' %}open{% endif %} class="mt-3">
+      <summary class="flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+        Inventory
+        <i class="fa-solid fa-chevron-right chevron text-[9px]" aria-hidden="true"></i>
+      </summary>
+      <div class="mt-0.5 space-y-0.5">
+        {% if perms.inventory.view_warehouse %}
+          <a href="{% url 'inventory:warehouse_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'inventory' and 'warehouse' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-warehouse w-4 text-center {% if ns == 'inventory' and 'warehouse' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Warehouses
+          </a>
+        {% endif %}
+        {% if perms.inventory.view_stockentry %}
+          <a href="{% url 'inventory:low_stock' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'inventory' and u == 'low_stock' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-circle-exclamation w-4 text-center {% if ns == 'inventory' and u == 'low_stock' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Low stock
+          </a>
+        {% endif %}
+        {% if perms.inventory.change_stockentry %}
+          <a href="{% url 'inventory:stock_adjust' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'inventory' and u == 'stock_adjust' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-sliders w-4 text-center {% if ns == 'inventory' and u == 'stock_adjust' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Stock adjustment
+          </a>
+          <a href="{% url 'inventory:stock_transfer' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'inventory' and u == 'stock_transfer' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-arrow-right-arrow-left w-4 text-center {% if ns == 'inventory' and u == 'stock_transfer' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Stock transfer
+          </a>
+        {% endif %}
+      </div>
+    </details>
+    {% endif %}
 
-    {# Relations #}
+    {# ── Assets ── #}
+    {% if perms.assets.view_asset or perms.assets.view_recallcampaign or perms.assets.view_maintenanceplan %}
+    <details {% if ns == 'assets' %}open{% endif %} class="mt-3">
+      <summary class="flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+        Assets
+        <i class="fa-solid fa-chevron-right chevron text-[9px]" aria-hidden="true"></i>
+      </summary>
+      <div class="mt-0.5 space-y-0.5">
+        {% if perms.assets.view_asset %}
+          <a href="{% url 'assets:asset_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'assets' and 'asset' in u and 'recall' not in u and 'mjop' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-screwdriver-wrench w-4 text-center {% if ns == 'assets' and 'asset' in u and 'recall' not in u and 'mjop' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Assets
+          </a>
+        {% endif %}
+        {% if perms.assets.view_recallcampaign %}
+          <a href="{% url 'assets:recall_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'assets' and 'recall' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-triangle-exclamation w-4 text-center {% if ns == 'assets' and 'recall' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Recalls
+          </a>
+        {% endif %}
+        {% if perms.assets.view_maintenanceplan %}
+          <a href="{% url 'assets:mjop_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'assets' and 'mjop' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-calendar-check w-4 text-center {% if ns == 'assets' and 'mjop' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Maint. plans
+          </a>
+        {% endif %}
+      </div>
+    </details>
+    {% endif %}
+
+    {# ── Contracts ── #}
+    {% if perms.contracts.view_contract or perms.contracts.view_contracttemplate or perms.contracts.view_servicerate %}
+    <details {% if ns == 'contracts' %}open{% endif %} class="mt-3">
+      <summary class="flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+        Contracts
+        <i class="fa-solid fa-chevron-right chevron text-[9px]" aria-hidden="true"></i>
+      </summary>
+      <div class="mt-0.5 space-y-0.5">
+        {% if perms.contracts.view_contract %}
+          <a href="{% url 'contracts:contract_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'contracts' and 'template' not in u and 'rate' not in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-file-contract w-4 text-center {% if ns == 'contracts' and 'template' not in u and 'rate' not in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Contracts
+          </a>
+        {% endif %}
+        {% if perms.contracts.view_contracttemplate %}
+          <a href="{% url 'contracts:template_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'contracts' and 'template' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-scroll w-4 text-center {% if ns == 'contracts' and 'template' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Templates
+          </a>
+        {% endif %}
+        {% if perms.contracts.view_servicerate %}
+          <a href="{% url 'contracts:rate_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'contracts' and 'rate' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-clock w-4 text-center {% if ns == 'contracts' and 'rate' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Service rates
+          </a>
+        {% endif %}
+      </div>
+    </details>
+    {% endif %}
+
+    {# ── Relations ── #}
     {% if perms.relations.view_organization or perms.relations.view_person %}
-      <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Relations</p>
-      {% if perms.relations.view_organization %}
-        <a href="{% url 'relations:organization_list' %}"
-           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-           {% if ns == 'relations' and 'organization' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-          <i class="fa-solid fa-building w-4 text-center {% if ns == 'relations' and 'organization' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-          Accounts
-        </a>
-      {% endif %}
-      {% if perms.relations.view_person %}
-        <a href="{% url 'relations:person_list' %}"
-           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-           {% if ns == 'relations' and 'person' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-          <i class="fa-solid fa-users w-4 text-center {% if ns == 'relations' and 'person' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-          Contacts
-        </a>
-      {% endif %}
+    <details {% if ns == 'relations' %}open{% endif %} class="mt-3">
+      <summary class="flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+        Relations
+        <i class="fa-solid fa-chevron-right chevron text-[9px]" aria-hidden="true"></i>
+      </summary>
+      <div class="mt-0.5 space-y-0.5">
+        {% if perms.relations.view_organization %}
+          <a href="{% url 'relations:organization_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'relations' and 'organization' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-building w-4 text-center {% if ns == 'relations' and 'organization' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Accounts
+          </a>
+        {% endif %}
+        {% if perms.relations.view_person %}
+          <a href="{% url 'relations:person_list' %}"
+             class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+             {% if ns == 'relations' and 'person' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+            <i class="fa-solid fa-users w-4 text-center {% if ns == 'relations' and 'person' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+            Contacts
+          </a>
+        {% endif %}
+      </div>
+    </details>
     {% endif %}
 
-    {# Reports #}
-    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Reports</p>
-    <a href="{% url 'core:report_sales' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
-      <i class="fa-solid fa-chart-bar w-4 text-center text-slate-400" aria-hidden="true"></i>
-      Sales
-    </a>
-    <a href="{% url 'core:report_aged_debtors' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
-      <i class="fa-solid fa-clock-rotate-left w-4 text-center text-slate-400" aria-hidden="true"></i>
-      Aged debtors
-    </a>
-    <a href="{% url 'core:report_inventory' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
-      <i class="fa-solid fa-scale-balanced w-4 text-center text-slate-400" aria-hidden="true"></i>
-      Inventory value
-    </a>
-
-    {# Search & Admin #}
-    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Tools</p>
-    <a href="{% url 'core:search' %}"
-       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-       {% if ns == 'core' and u == 'search' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-      <i class="fa-solid fa-magnifying-glass w-4 text-center {% if ns == 'core' and u == 'search' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-      Global search
-    </a>
-    {% if user.is_staff %}
-      <a href="{% url 'core:user_list' %}"
-         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-         {% if ns == 'core' and 'user' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-        <i class="fa-solid fa-user-gear w-4 text-center {% if ns == 'core' and 'user' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-        User management
-      </a>
-      <a href="{% url 'core:audit_log' %}"
-         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-         {% if ns == 'core' and 'audit' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
-        <i class="fa-solid fa-clock-rotate-left w-4 text-center {% if ns == 'core' and 'audit' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
-        Audit log
-      </a>
+    {# ── Reports ── #}
+    {% if perms.sales.view_invoice %}
+    <details {% if ns == 'core' and 'report' in u %}open{% endif %} class="mt-3">
+      <summary class="flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:bg-slate-50 hover:text-slate-600">
+        Reports
+        <i class="fa-solid fa-chevron-right chevron text-[9px]" aria-hidden="true"></i>
+      </summary>
+      <div class="mt-0.5 space-y-0.5">
+        <a href="{% url 'core:report_sales' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'core' and u == 'report_sales' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-chart-bar w-4 text-center {% if ns == 'core' and u == 'report_sales' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Sales
+        </a>
+        <a href="{% url 'core:report_aged_debtors' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'core' and u == 'report_aged_debtors' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-clock-rotate-left w-4 text-center {% if ns == 'core' and u == 'report_aged_debtors' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Aged debtors
+        </a>
+        <a href="{% url 'core:report_inventory' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'core' and u == 'report_inventory' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-scale-balanced w-4 text-center {% if ns == 'core' and u == 'report_inventory' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Inventory value
+        </a>
+      </div>
+    </details>
     {% endif %}
+
+    {# ── Tools — always visible ── #}
+    <div class="mt-3 space-y-0.5">
+      <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Tools</p>
+      <a href="{% url 'core:search' %}"
+         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+         {% if ns == 'core' and u == 'search' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+        <i class="fa-solid fa-magnifying-glass w-4 text-center {% if ns == 'core' and u == 'search' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+        Global search
+      </a>
+      {% if user.is_staff %}
+        <a href="{% url 'core:user_list' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'core' and 'user' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-user-gear w-4 text-center {% if ns == 'core' and 'user' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          User management
+        </a>
+        <a href="{% url 'core:audit_log' %}"
+           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+           {% if ns == 'core' and u == 'audit_log' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+          <i class="fa-solid fa-clock-rotate-left w-4 text-center {% if ns == 'core' and u == 'audit_log' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+          Audit log
+        </a>
+      {% endif %}
+    </div>
 
     {% endif %}{# /if user.is_authenticated #}
 
