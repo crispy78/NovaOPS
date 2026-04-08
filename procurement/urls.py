@@ -11,4 +11,5 @@ urlpatterns = [
     path('<uuid:pk>/edit/', views.POUpdateView.as_view(), name='po_edit'),
     path('<uuid:pk>/receive/', views.POReceiveView.as_view(), name='po_receive'),
     path('<uuid:pk>/cancel/', views.POCancelView.as_view(), name='po_cancel'),
+    path('<uuid:pk>/print/', views.POPrintView.as_view(), name='po_print'),
 ]

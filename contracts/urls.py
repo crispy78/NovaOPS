@@ -21,4 +21,5 @@ urlpatterns = [
     path('new/',                views.ContractCreateView.as_view(), name='contract_create'),
     path('<uuid:pk>/',          views.ContractDetailView.as_view(), name='contract_detail'),
     path('<uuid:pk>/edit/',     views.ContractUpdateView.as_view(), name='contract_update'),
+    path('<uuid:pk>/print/',    views.ContractPrintView.as_view(),  name='contract_print'),
 ]

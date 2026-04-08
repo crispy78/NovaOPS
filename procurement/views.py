@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 
 from audit.services import log_event
@@ -142,6 +142,16 @@ class POCancelView(LoginRequiredMixin, PermissionRequiredMixin, View):
         )
         messages.success(request, f'Purchase order {po.ref} cancelled.')
         return redirect(po.get_absolute_url())
+
+
+class POPrintView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    model = PurchaseOrder
+    template_name = 'procurement/po_print.html'
+    context_object_name = 'po'
+    permission_required = 'procurement.view_purchaseorder'
+
+    def get_queryset(self):
+        return PurchaseOrder.objects.select_related('supplier', 'created_by').prefetch_related('lines__product')
 
 
 class POReceiveView(LoginRequiredMixin, PermissionRequiredMixin, View):

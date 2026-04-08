@@ -49,6 +49,15 @@
           Refresh prices from catalog
         </button>
       </form>
+      {% if quote.status == 'draft' or quote.status == 'sent' %}
+        <form method="post" action="{% url 'sales:quote_mark_expired' pk=quote.pk %}"
+              onsubmit="return confirm('Mark this quote as expired?')">
+          {% csrf_token %}
+          <button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-800">
+            Mark expired
+          </button>
+        </form>
+      {% endif %}
     {% endif %}
   </div>
 </div>

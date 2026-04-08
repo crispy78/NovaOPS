@@ -12,7 +12,7 @@ from django.views.generic import DetailView, ListView
 
 from catalog.models import Product
 
-from .models import StockEntry, StockLocation, StockMovement, Warehouse
+from .models import MovementType, StockEntry, StockLocation, StockMovement, Warehouse
 from .services import adjust_stock
 
 
@@ -140,3 +140,98 @@ class LowStockListView(LoginRequiredMixin, ListView):
             .select_related('category')
             .order_by('name')
         )
+
+
+class StockTransferForm(forms.Form):
+    product = forms.ModelChoiceField(
+        queryset=Product.objects.filter(is_archived=False, inventory_tracked=True).order_by('name'),
+        label='Product',
+    )
+    from_location = forms.ModelChoiceField(
+        queryset=StockLocation.objects.filter(is_active=True).select_related('warehouse').order_by('warehouse__name', 'code'),
+        label='From location',
+    )
+    to_location = forms.ModelChoiceField(
+        queryset=StockLocation.objects.filter(is_active=True).select_related('warehouse').order_by('warehouse__name', 'code'),
+        label='To location',
+    )
+    quantity = forms.DecimalField(
+        max_digits=12,
+        decimal_places=3,
+        min_value=Decimal('0.001'),
+        label='Quantity to transfer',
+    )
+    notes = forms.CharField(
+        max_length=500,
+        required=False,
+        widget=forms.Textarea(attrs={'rows': 2}),
+        label='Notes / reason',
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        src = cleaned.get('from_location')
+        dst = cleaned.get('to_location')
+        if src and dst and src == dst:
+            raise forms.ValidationError('Source and destination locations must be different.')
+        return cleaned
+
+
+class StockTransferView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'inventory.change_stockentry'
+    template_name = 'inventory/stock_transfer.html'
+
+    def get(self, request):
+        return render(request, self.template_name, {'form': StockTransferForm()})
+
+    def post(self, request):
+        from django.db import transaction as db_tx
+        form = StockTransferForm(request.POST)
+        if form.is_valid():
+            product = form.cleaned_data['product']
+            src_loc = form.cleaned_data['from_location']
+            dst_loc = form.cleaned_data['to_location']
+            qty = form.cleaned_data['quantity']
+            notes = form.cleaned_data.get('notes', '')
+
+            with db_tx.atomic():
+                src_entry = (
+                    StockEntry.objects
+                    .select_for_update()
+                    .filter(product=product, location=src_loc)
+                    .first()
+                )
+                if not src_entry or src_entry.quantity_on_hand < qty:
+                    available = src_entry.quantity_on_hand if src_entry else Decimal('0')
+                    form.add_error('quantity', f'Insufficient stock at {src_loc}: {available:f} available.')
+                    return render(request, self.template_name, {'form': form})
+
+                src_entry.quantity_on_hand -= qty
+                src_entry.save(update_fields=['quantity_on_hand', 'last_updated'])
+
+                dst_entry, _ = StockEntry.objects.select_for_update().get_or_create(
+                    product=product,
+                    location=dst_loc,
+                    defaults={'quantity_on_hand': Decimal('0')},
+                )
+                dst_entry.quantity_on_hand += qty
+                dst_entry.save(update_fields=['quantity_on_hand', 'last_updated'])
+
+                ref = f'TRANSFER {src_loc} → {dst_loc}'
+                StockMovement.objects.create(
+                    product=product, location=src_loc,
+                    delta=-qty, movement_type=MovementType.TRANSFER,
+                    reference=ref, notes=notes, created_by=request.user,
+                )
+                StockMovement.objects.create(
+                    product=product, location=dst_loc,
+                    delta=qty, movement_type=MovementType.TRANSFER,
+                    reference=ref, notes=notes, created_by=request.user,
+                )
+
+            messages.success(
+                request,
+                f'Transferred {qty:f} × {product.sku} from {src_loc} to {dst_loc}.',
+            )
+            return redirect('inventory:stock_transfer')
+        return render(request, self.template_name, {'form': form})

@@ -21,6 +21,11 @@
       {% else %}bg-red-50 text-red-700{% endif %}">
       {{ contract.get_status_display }}
     </span>
+    <a href="{% url 'contracts:contract_print' pk=contract.pk %}" target="_blank"
+       class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+      <i class="fa-solid fa-print text-slate-400" aria-hidden="true"></i>
+      Print / PDF
+    </a>
     <a href="{% url 'contracts:contract_update' pk=contract.pk %}"
        class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
       <i class="fa-solid fa-pen text-xs" aria-hidden="true"></i>

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import reports, search, usermgmt
+from . import audit_views, reports, search, usermgmt
 
 app_name = 'core'
 
@@ -15,4 +15,5 @@ urlpatterns = [
     path('users/new/', usermgmt.UserCreateView.as_view(), name='user_create'),
     path('users/<int:pk>/', usermgmt.UserDetailView.as_view(), name='user_detail'),
     path('users/<int:pk>/permissions/', usermgmt.UserPermissionsView.as_view(), name='user_permissions'),
+    path('audit/', audit_views.AuditLogView.as_view(), name='audit_log'),
 ]

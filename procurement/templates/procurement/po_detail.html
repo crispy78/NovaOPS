@@ -25,6 +25,11 @@
     </h1>
   </div>
   <div class="flex flex-wrap gap-2">
+    <a href="{% url 'procurement:po_print' pk=po.pk %}" target="_blank"
+       class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+      <i class="fa-solid fa-print text-slate-400" aria-hidden="true"></i>
+      Print / PDF
+    </a>
     {% if po.can_receive and perms.procurement.change_purchaseorder %}
       <a href="{% url 'procurement:po_receive' pk=po.pk %}"
          class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">

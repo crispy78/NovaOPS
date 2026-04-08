@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ po.ref }} — Purchase order</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: #1e293b; margin: 0; padding: 32px; }
+    h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 2px; }
+    .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .meta-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+    .meta-box .value { font-weight: 600; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+    thead th { background: #f8fafc; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #64748b; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+    tbody td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+    tfoot td { padding: 8px 12px; }
+    tfoot tr:last-child td { border-top: 2px solid #e2e8f0; font-weight: 700; font-size: 14px; }
+    .text-right { text-align: right; }
+    .mono { font-family: 'SFMono-Regular', Consolas, monospace; }
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .print-btn { display: inline-block; margin-bottom: 24px; padding: 8px 18px; background: #0f6fec; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    @media print {
+      .print-btn { display: none; }
+      body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+
+<div class="header">
+  <div>
+    <div class="label">Purchase order</div>
+    <h1>{{ po.ref }}</h1>
+    <span class="status-badge" style="background:#f0fdf4;color:#166534;">{{ po.get_status_display }}</span>
+  </div>
+  <div style="text-align:right;">
+    <div class="label">Date</div>
+    <div class="value">{{ po.created_at|date:"Y-m-d" }}</div>
+  </div>
+</div>
+
+<div class="meta-grid">
+  <div class="meta-box">
+    <div class="label">Supplier</div>
+    <div class="value">{{ po.supplier|default:"—" }}</div>
+  </div>
+  <div class="meta-box">
+    <div class="label">Expected delivery</div>
+    <div class="value">{{ po.expected_delivery_date|default:"—" }}</div>
+  </div>
+  <div class="meta-box">
+    <div class="label">Created by</div>
+    <div class="value">{{ po.created_by|default:"—" }}</div>
+  </div>
+  <div class="meta-box">
+    <div class="label">Total cost</div>
+    <div class="value mono">{% if po.total_cost is not None %}{{ po.total_cost|floatformat:2 }}{% else %}—{% endif %}</div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>SKU</th>
+      <th>Product / description</th>
+      <th class="text-right">Ordered</th>
+      <th class="text-right">Received</th>
+      <th class="text-right">Outstanding</th>
+      <th class="text-right">Unit cost</th>
+      <th class="text-right">Line total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in po.lines.all %}
+      <tr>
+        <td class="mono" style="font-size:11px;color:#64748b;">{{ line.product.sku }}</td>
+        <td>{{ line.display_name }}</td>
+        <td class="text-right">{{ line.qty_ordered }}</td>
+        <td class="text-right">{{ line.qty_received }}</td>
+        <td class="text-right">{{ line.qty_outstanding }}</td>
+        <td class="text-right mono">{% if line.unit_cost %}{{ line.unit_cost|floatformat:2 }}{% else %}—{% endif %}</td>
+        <td class="text-right mono">{% if line.line_total %}{{ line.line_total|floatformat:2 }}{% else %}—{% endif %}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="6" class="text-right" style="color:#64748b;">Total</td>
+      <td class="text-right mono">{% if po.total_cost is not None %}{{ po.total_cost|floatformat:2 }}{% else %}—{% endif %}</td>
+    </tr>
+  </tfoot>
+</table>
+
+{% if po.notes %}
+<div style="margin-top:24px;font-size:12px;color:#475569;">
+  <div class="label" style="margin-bottom:4px;">Notes</div>
+  {{ po.notes|linebreaksbr }}
+</div>
+{% endif %}
+
+</body>
+</html>

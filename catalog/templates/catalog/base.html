@@ -164,6 +164,11 @@
       <i class="fa-solid fa-sliders w-4 text-center text-slate-400" aria-hidden="true"></i>
       Stock adjustment
     </a>
+    <a href="{% url 'inventory:stock_transfer' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
+      <i class="fa-solid fa-arrow-right-arrow-left w-4 text-center text-slate-400" aria-hidden="true"></i>
+      Stock transfer
+    </a>
 
     {# Assets #}
     <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Assets</p>
@@ -260,6 +265,12 @@
          {% if ns == 'core' and 'user' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
         <i class="fa-solid fa-user-gear w-4 text-center {% if ns == 'core' and 'user' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
         User management
+      </a>
+      <a href="{% url 'core:audit_log' %}"
+         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+         {% if ns == 'core' and 'audit' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+        <i class="fa-solid fa-clock-rotate-left w-4 text-center {% if ns == 'core' and 'audit' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+        Audit log
       </a>
     {% endif %}
 

@@ -249,6 +249,38 @@ class ContractCreateView(LoginRequiredMixin, CreateView):
         return ctx
 
 
+class ContractPrintView(LoginRequiredMixin, DetailView):
+    model = Contract
+    template_name = 'contracts/contract_print.html'
+    context_object_name = 'contract'
+
+    def get_queryset(self):
+        return Contract.objects.select_related(
+            'organization', 'template', 'quote', 'sales_order', 'asset',
+        ).prefetch_related('template__variables', 'variable_values__variable')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        contract = self.object
+        variables, missing = build_variable_context(contract)
+        rows = []
+        for var in contract.template.variables.select_related('service_rate').order_by('sort_order', 'name'):
+            value = variables.get(var.name)
+            rows.append({
+                'label': var.label,
+                'unit': var.unit,
+                'value': value,
+            })
+        ctx['variable_rows'] = rows
+        if contract.computed_result is not None:
+            ctx['computed_result'] = contract.computed_result
+        else:
+            from .services import compute_contract
+            result, _error = compute_contract(contract)
+            ctx['computed_result'] = result
+        return ctx
+
+
 class ContractUpdateView(LoginRequiredMixin, UpdateView):
     model         = Contract
     form_class    = ContractForm

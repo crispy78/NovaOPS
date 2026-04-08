@@ -861,6 +861,96 @@ class InvoiceDetailView(LoginRequiredMixin, DetailView):
         return redirect(inv)
 
 
+class InvoiceCancelView(LoginRequiredMixin, View):
+    """Cancel an issued invoice (no payments must exceed zero)."""
+
+    def post(self, request, pk):
+        inv = get_object_or_404(Invoice, pk=pk)
+        if inv.status == InvoiceStatus.CANCELLED:
+            messages.info(request, 'Invoice is already cancelled.')
+            return redirect(inv)
+        inv.status = InvoiceStatus.CANCELLED
+        inv.save(update_fields=['status', 'updated_at'])
+        log_event(
+            action='invoice.cancelled',
+            entity_type='Invoice',
+            entity_id=inv.id,
+            request=request,
+            metadata={'reference': inv.reference},
+        )
+        messages.success(request, f'Invoice {inv.reference} cancelled.')
+        return redirect(inv)
+
+
+class InvoiceDueDateView(LoginRequiredMixin, View):
+    """Set or update the due date on an invoice."""
+
+    def post(self, request, pk):
+        inv = get_object_or_404(Invoice, pk=pk)
+        due_date_str = request.POST.get('due_date', '').strip()
+        if not due_date_str:
+            messages.error(request, 'Please enter a valid date.')
+            return redirect(inv)
+        from datetime import date
+        try:
+            due = date.fromisoformat(due_date_str)
+        except ValueError:
+            messages.error(request, 'Invalid date format. Use YYYY-MM-DD.')
+            return redirect(inv)
+        inv.due_date = due
+        inv.save(update_fields=['due_date', 'updated_at'])
+        messages.success(request, f'Due date set to {due}.')
+        return redirect(inv)
+
+
+class QuoteMarkExpiredView(LoginRequiredMixin, View):
+    """Manually mark a quote as expired."""
+
+    def post(self, request, pk):
+        from .models import Quote, QuoteStatus
+        quote = get_object_or_404(Quote, pk=pk)
+        if quote.status not in (QuoteStatus.DRAFT, QuoteStatus.SENT):
+            messages.error(request, 'Only draft or sent quotes can be marked expired.')
+            return redirect(quote)
+        quote.status = QuoteStatus.EXPIRED
+        quote.save(update_fields=['status', 'updated_at'])
+        log_event(
+            action='quote.expired',
+            entity_type='Quote',
+            entity_id=quote.id,
+            request=request,
+            metadata={'reference': quote.reference},
+        )
+        messages.success(request, f'Quote {quote.reference} marked as expired.')
+        return redirect(quote)
+
+
+class ShipmentStatusUpdateView(LoginRequiredMixin, View):
+    """Update the status of a single Shipment (parcel) within a shipping order."""
+
+    _VALID_TRANSITIONS = {
+        'planned': {'in_transit', 'cancelled'},
+        'in_transit': {'delivered', 'cancelled'},
+    }
+
+    def post(self, request, shipping_pk, shipment_pk):
+        from .models import Shipment, ShipmentStatus
+        shipping = get_object_or_404(ShippingOrder, pk=shipping_pk)
+        shipment = get_object_or_404(Shipment, pk=shipment_pk, shipping_order=shipping)
+        new_status = request.POST.get('status', '')
+        allowed = self._VALID_TRANSITIONS.get(shipment.status, set())
+        if new_status not in allowed:
+            messages.error(request, f'Cannot transition from {shipment.get_status_display()} to {new_status}.')
+            return redirect(shipping)
+        from django.utils import timezone as tz
+        shipment.status = new_status
+        if new_status == 'in_transit':
+            shipment.shipped_at = tz.now()
+        shipment.save(update_fields=['status', 'shipped_at', 'updated_at'])
+        messages.success(request, f'Shipment #{shipment.sequence} marked as {shipment.get_status_display()}.')
+        return redirect(shipping)
+
+
 class InvoiceCsvExportView(LoginRequiredMixin, View):
     """Download all issued invoices as a flat CSV."""
 

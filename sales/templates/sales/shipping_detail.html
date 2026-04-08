@@ -95,6 +95,31 @@
               <li>{{ sl.shipping_order_line.fulfillment_line.product_name }} ({{ sl.shipping_order_line.fulfillment_line.sku }}) — {{ sl.quantity }}</li>
             {% endfor %}
           </ul>
+          {% if ship.status == 'planned' %}
+            <div class="mt-3 flex gap-2">
+              <form method="post" action="{% url 'sales:shipment_status_update' shipping_pk=shipping.pk shipment_pk=ship.pk %}">
+                {% csrf_token %}<input type="hidden" name="status" value="in_transit">
+                <button type="submit" class="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-700">Mark in transit</button>
+              </form>
+              <form method="post" action="{% url 'sales:shipment_status_update' shipping_pk=shipping.pk shipment_pk=ship.pk %}"
+                    onsubmit="return confirm('Cancel this shipment?')">
+                {% csrf_token %}<input type="hidden" name="status" value="cancelled">
+                <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-700">Cancel</button>
+              </form>
+            </div>
+          {% elif ship.status == 'in_transit' %}
+            <div class="mt-3 flex gap-2">
+              <form method="post" action="{% url 'sales:shipment_status_update' shipping_pk=shipping.pk shipment_pk=ship.pk %}">
+                {% csrf_token %}<input type="hidden" name="status" value="delivered">
+                <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">Mark delivered</button>
+              </form>
+              <form method="post" action="{% url 'sales:shipment_status_update' shipping_pk=shipping.pk shipment_pk=ship.pk %}"
+                    onsubmit="return confirm('Cancel this shipment?')">
+                {% csrf_token %}<input type="hidden" name="status" value="cancelled">
+                <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-700">Cancel</button>
+              </form>
+            </div>
+          {% endif %}
         </div>
       {% endfor %}
     </div>
