@@ -121,6 +121,29 @@ class POUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return self._render(request, po, form, formset)
 
 
+class POCancelView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Cancel a purchase order (only allowed when DRAFT or SENT)."""
+
+    permission_required = 'procurement.change_purchaseorder'
+
+    def post(self, request, pk):
+        po = get_object_or_404(PurchaseOrder, pk=pk)
+        if po.status not in (POStatus.DRAFT, POStatus.SENT):
+            messages.error(request, f'Cannot cancel a PO with status "{po.get_status_display()}".')
+            return redirect(po.get_absolute_url())
+        po.status = POStatus.CANCELLED
+        po.save(update_fields=['status'])
+        log_event(
+            action='purchase_order.cancelled',
+            entity_type='PurchaseOrder',
+            entity_id=po.pk,
+            request=request,
+            metadata={'ref': po.ref},
+        )
+        messages.success(request, f'Purchase order {po.ref} cancelled.')
+        return redirect(po.get_absolute_url())
+
+
 class POReceiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Show outstanding lines and let staff enter received quantities + destination locations."""
 

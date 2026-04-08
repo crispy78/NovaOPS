@@ -1,0 +1,123 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Search — NovaOPS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">Global search</h1>
+</div>
+
+<form method="get" class="mb-8 flex max-w-xl gap-3">
+  <input name="q" value="{{ q }}" type="search" placeholder="Search products, customers, orders, quotes, invoices…"
+    class="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500">
+  <button type="submit" class="rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white hover:bg-nova-700">Search</button>
+</form>
+
+{% if q %}
+
+  {% if not products and not organizations and not people and not quotes and not orders and not invoices %}
+    <p class="text-slate-500">No results found for <strong>{{ q }}</strong>.</p>
+  {% endif %}
+
+  {% if products %}
+    <section class="mb-8">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Products ({{ products|length }}{% if products|length == 10 %}+{% endif %})</h2>
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <ul class="divide-y divide-slate-100">
+          {% for p in products %}
+            <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
+              <span class="w-28 shrink-0 font-mono text-xs text-slate-400">{{ p.sku }}</span>
+              <a href="{{ p.get_absolute_url }}" class="flex-1 font-medium text-nova-700 hover:underline">{{ p.name }}</a>
+              <span class="text-xs text-slate-400">{{ p.category.name }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if organizations %}
+    <section class="mb-8">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Organizations ({{ organizations|length }}{% if organizations|length == 10 %}+{% endif %})</h2>
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <ul class="divide-y divide-slate-100">
+          {% for org in organizations %}
+            <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
+              <a href="{% url 'relations:organization_detail' pk=org.pk %}" class="flex-1 font-medium text-nova-700 hover:underline">{{ org.name }}</a>
+              <span class="text-xs text-slate-400">{{ org.unit_kind|default:"" }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if people %}
+    <section class="mb-8">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">People ({{ people|length }}{% if people|length == 10 %}+{% endif %})</h2>
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <ul class="divide-y divide-slate-100">
+          {% for person in people %}
+            <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
+              <a href="{% url 'relations:person_detail' pk=person.pk %}" class="flex-1 font-medium text-nova-700 hover:underline">{{ person }}</a>
+              <span class="text-xs text-slate-400">{{ person.email }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if quotes %}
+    <section class="mb-8">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Quotes ({{ quotes|length }}{% if quotes|length == 10 %}+{% endif %})</h2>
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <ul class="divide-y divide-slate-100">
+          {% for quote in quotes %}
+            <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
+              <a href="{{ quote.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ quote.reference }}</a>
+              <span class="flex-1 text-slate-500">{{ quote.relation_organization.name|default:"—" }}</span>
+              <span class="text-xs text-slate-400">{{ quote.get_status_display }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if orders %}
+    <section class="mb-8">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Orders ({{ orders|length }}{% if orders|length == 10 %}+{% endif %})</h2>
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <ul class="divide-y divide-slate-100">
+          {% for order in orders %}
+            <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
+              <a href="{{ order.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ order.reference }}</a>
+              <span class="flex-1 text-slate-500">{{ order.relation_organization.name|default:"—" }}</span>
+              <span class="text-xs text-slate-400">{{ order.get_status_display }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if invoices %}
+    <section class="mb-8">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Invoices ({{ invoices|length }}{% if invoices|length == 10 %}+{% endif %})</h2>
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <ul class="divide-y divide-slate-100">
+          {% for inv in invoices %}
+            <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
+              <a href="{{ inv.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ inv.reference }}</a>
+              <span class="flex-1 text-slate-500">{{ inv.relation_organization.name|default:"—" }}</span>
+              <span class="text-xs text-slate-400">{{ inv.get_status_display }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
+{% endif %}
+{% endblock %}

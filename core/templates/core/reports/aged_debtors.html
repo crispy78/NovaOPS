@@ -1,0 +1,93 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Aged Debtors — NovaOPS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">Aged debtors</h1>
+  <p class="mt-1 text-sm text-slate-500">Open invoice balances grouped by days overdue. As of {{ today|date:"Y-m-d" }}.</p>
+</div>
+
+{# Summary tiles #}
+<div class="mb-8 grid gap-4 sm:grid-cols-5">
+  {% with labels="Current,1–30 days,31–60 days,61–90 days,Over 90 days" keys="current,1_30,31_60,61_90,over_90" %}
+    {% for i in "01234" %}
+      {% if i == "0" %}
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Current</p>
+          <p class="mt-1 text-xl font-bold text-emerald-900">{{ totals.current|floatformat:0 }}</p>
+        </div>
+      {% elif i == "1" %}
+        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-amber-600">1–30 days</p>
+          <p class="mt-1 text-xl font-bold text-amber-900">{{ totals.1_30|floatformat:0 }}</p>
+        </div>
+      {% elif i == "2" %}
+        <div class="rounded-xl border border-orange-200 bg-orange-50 p-4 text-center shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-orange-600">31–60 days</p>
+          <p class="mt-1 text-xl font-bold text-orange-900">{{ totals.31_60|floatformat:0 }}</p>
+        </div>
+      {% elif i == "3" %}
+        <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-center shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-red-600">61–90 days</p>
+          <p class="mt-1 text-xl font-bold text-red-900">{{ totals.61_90|floatformat:0 }}</p>
+        </div>
+      {% elif i == "4" %}
+        <div class="rounded-xl border border-red-300 bg-red-100 p-4 text-center shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-red-700">Over 90 days</p>
+          <p class="mt-1 text-xl font-bold text-red-900">{{ totals.over_90|floatformat:0 }}</p>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<div class="mb-3 flex items-center justify-between">
+  <p class="text-sm font-semibold text-slate-700">Total outstanding: <span class="text-slate-900">EUR {{ grand_total|floatformat:2 }}</span></p>
+</div>
+
+{% for bucket_key, label, color_class in buckets|zip_with_labels %}
+{% endfor %}
+
+{% for bucket_name, invoices in buckets.items %}
+  {% if invoices %}
+    <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-4 py-3">
+        <h2 class="text-sm font-semibold text-slate-800">
+          {% if bucket_name == 'current' %}Current (not yet overdue)
+          {% elif bucket_name == '1_30' %}1–30 days overdue
+          {% elif bucket_name == '31_60' %}31–60 days overdue
+          {% elif bucket_name == '61_90' %}61–90 days overdue
+          {% else %}Over 90 days overdue{% endif %}
+        </h2>
+      </div>
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Invoice</th>
+            <th class="px-4 py-3">Customer</th>
+            <th class="px-4 py-3">Due date</th>
+            <th class="px-4 py-3 text-right">Days overdue</th>
+            <th class="px-4 py-3 text-right">Balance</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for inv in invoices %}
+            <tr>
+              <td class="px-4 py-2">
+                <a href="{{ inv.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ inv.reference }}</a>
+              </td>
+              <td class="px-4 py-2 text-slate-600">{{ inv.relation_organization.name|default:"—" }}</td>
+              <td class="px-4 py-2 text-slate-600">{{ inv.due_date|date:"Y-m-d"|default:"—" }}</td>
+              <td class="px-4 py-2 text-right {% if inv._age_days > 0 %}text-red-700 font-semibold{% else %}text-slate-400{% endif %}">
+                {% if inv._age_days > 0 %}{{ inv._age_days }}{% else %}—{% endif %}
+              </td>
+              <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ inv.currency }} {{ inv.balance|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+{% endfor %}
+{% endblock %}

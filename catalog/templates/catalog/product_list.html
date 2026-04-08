@@ -13,13 +13,18 @@
       {% endif %}
     </p>
   </div>
-  {% if perms.catalog.add_product %}
-    <a href="{% url 'catalog:product_create' %}"
-       class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
-      <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
-      New product
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="{% url 'catalog:product_csv_export' %}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+      <i class="fa-solid fa-download text-slate-400 text-xs" aria-hidden="true"></i>Export CSV
     </a>
-  {% endif %}
+    {% if perms.catalog.add_product %}
+      <a href="{% url 'catalog:product_create' %}"
+         class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+        <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+        New product
+      </a>
+    {% endif %}
+  </div>
 </div>
 
 <form method="get" id="catalog-filter-form" class="mb-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end">
@@ -118,9 +123,31 @@
 {% endif %}
 
 {% if products %}
+  {% if perms.catalog.archive_product %}
+    <form method="post" action="{% url 'catalog:product_bulk_archive' %}" id="bulk-archive-form" class="mb-4">
+      {% csrf_token %}
+      <div class="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 shadow-sm">
+        <label class="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+          <input type="checkbox" id="select-all-products" class="h-4 w-4 rounded border-slate-300 text-nova-600">
+          Select all
+        </label>
+        <span class="text-slate-300">|</span>
+        <button type="submit" name="bulk_action" value="archive" class="rounded-md px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100">
+          <i class="fa-solid fa-box-archive mr-1 text-xs text-slate-400" aria-hidden="true"></i>Archive selected
+        </button>
+        <button type="submit" name="bulk_action" value="unarchive" class="rounded-md px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100">
+          <i class="fa-solid fa-rotate-left mr-1 text-xs text-slate-400" aria-hidden="true"></i>Unarchive selected
+        </button>
+      </div>
+  {% endif %}
+
   <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
     {% for product in products %}
-      <li>
+      <li class="relative">
+        {% if perms.catalog.archive_product %}
+          <input type="checkbox" name="product_ids" value="{{ product.pk }}" form="bulk-archive-form"
+                 class="product-checkbox absolute left-2 top-2 z-10 h-4 w-4 rounded border-white bg-white/80 text-nova-600 shadow focus:ring-nova-500">
+        {% endif %}
         <a href="{{ product.get_absolute_url }}" class="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-nova-300 hover:shadow-md">
           <div class="relative aspect-[4/3] bg-slate-100">
             {% with img=product.images.all.0 %}
@@ -170,6 +197,15 @@
       </li>
     {% endfor %}
   </ul>
+
+  {% if perms.catalog.archive_product %}
+    </form>
+    <script>
+      document.getElementById('select-all-products').addEventListener('change', function() {
+        document.querySelectorAll('.product-checkbox').forEach(function(cb) { cb.checked = this.checked; }.bind(this));
+      });
+    </script>
+  {% endif %}
 
   {% if is_paginated %}
     <nav class="mt-10 flex items-center justify-center gap-2" aria-label="Pagination">

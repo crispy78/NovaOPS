@@ -38,14 +38,19 @@
       </p>
     {% endif %}
   </div>
-  {% if not quote.is_locked %}
-    <form method="post" action="{% url 'sales:quote_refresh_prices' pk=quote.pk %}">
-      {% csrf_token %}
-      <button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
-        Refresh prices from catalog
-      </button>
-    </form>
-  {% endif %}
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="{% url 'sales:quote_print' pk=quote.pk %}" target="_blank" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
+      <i class="fa-solid fa-print mr-1 text-xs" aria-hidden="true"></i>Print / PDF
+    </a>
+    {% if not quote.is_locked %}
+      <form method="post" action="{% url 'sales:quote_refresh_prices' pk=quote.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50">
+          Refresh prices from catalog
+        </button>
+      </form>
+    {% endif %}
+  </div>
 </div>
 
 {% if quote.valid_until and quote.valid_until < today and not quote.is_locked %}
@@ -107,12 +112,30 @@
       </tbody>
       <tfoot class="border-t-2 border-slate-200 bg-slate-50">
         <tr>
-          <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Quote total</td>
+          <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. tax)</td>
           <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ quote_total|floatformat:2 }}</td>
         </tr>
+        {% for row in tax_breakdown %}
+          {% if row.rate %}
+            <tr class="bg-slate-50">
+              <td colspan="5" class="px-4 py-2 text-right text-xs text-slate-500">BTW {{ row.rate }}%</td>
+              <td class="px-4 py-2 text-xs text-slate-700">{{ row.tax|floatformat:2 }}</td>
+            </tr>
+          {% endif %}
+        {% endfor %}
       </tfoot>
     </table>
   </div>
+
+  {% if can_accept %}
+    <form method="post" action="{% url 'sales:quote_accept' pk=quote.pk %}" class="mt-4 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/80 p-4">
+      {% csrf_token %}
+      <p class="flex-1 text-sm text-blue-900">Customer accepted verbally or by email? Mark the quote as accepted here without creating an order.</p>
+      <button type="submit" class="shrink-0 rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">
+        Mark as accepted
+      </button>
+    </form>
+  {% endif %}
 {% else %}
   <form method="post" class="space-y-6">
     {% csrf_token %}
@@ -193,9 +216,17 @@
         </tbody>
         <tfoot class="border-t-2 border-slate-200 bg-slate-50">
           <tr>
-            <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Quote total</td>
+            <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. tax)</td>
             <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ quote_total|floatformat:2 }}</td>
           </tr>
+          {% for row in tax_breakdown %}
+            {% if row.rate %}
+              <tr class="bg-slate-50">
+                <td colspan="5" class="px-4 py-2 text-right text-xs text-slate-500">BTW {{ row.rate }}%</td>
+                <td class="px-4 py-2 text-xs text-slate-700">{{ row.tax|floatformat:2 }}</td>
+              </tr>
+            {% endif %}
+          {% endfor %}
         </tfoot>
       </table>
     </div>

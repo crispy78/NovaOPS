@@ -1,0 +1,91 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Sales Report — NovaOPS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Sales report</h1>
+    <p class="mt-1 text-sm text-slate-500">Invoice line totals (excl. tax) for issued invoices.</p>
+  </div>
+  <a href="{% url 'core:report_sales_csv' %}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+    <i class="fa-solid fa-download text-slate-400" aria-hidden="true"></i>Export CSV
+  </a>
+</div>
+
+{% if monthly_revenue %}
+  <div class="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-4 py-3">
+      <h2 class="text-sm font-semibold text-slate-800">Monthly revenue</h2>
+    </div>
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Month</th>
+          <th class="px-4 py-3 text-right">Revenue (EUR)</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for row in monthly_revenue %}
+          <tr>
+            <td class="px-4 py-2">{{ row.month|date:"F Y" }}</td>
+            <td class="px-4 py-2 text-right font-mono">{{ row.revenue|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+<div class="grid gap-6 lg:grid-cols-2">
+
+  {% if top_products %}
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-4 py-3">
+        <h2 class="text-sm font-semibold text-slate-800">Top 10 products by revenue</h2>
+      </div>
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Product</th>
+            <th class="px-4 py-3 text-right">Revenue</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for p in top_products %}
+            <tr>
+              <td class="px-4 py-2">{{ p.product_name }}<span class="ml-2 font-mono text-xs text-slate-400">{{ p.sku }}</span></td>
+              <td class="px-4 py-2 text-right font-mono">{{ p.total|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {% if top_customers %}
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-4 py-3">
+        <h2 class="text-sm font-semibold text-slate-800">Top 10 customers by revenue</h2>
+      </div>
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Customer</th>
+            <th class="px-4 py-3 text-right">Revenue</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for c in top_customers %}
+            <tr>
+              <td class="px-4 py-2">{{ c.relation_organization__name }}</td>
+              <td class="px-4 py-2 text-right font-mono">{{ c.total|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,8 +1,11 @@
+import csv
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Case, F, IntegerField, Value, When
 from django.db.models import Prefetch, Q
+from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import DetailView, ListView, UpdateView
@@ -486,3 +489,70 @@ class ProductOptionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View)
         option.delete()
         messages.success(request, f'Option "{name}" removed.')
         return redirect(product.get_absolute_url() + '#options')
+
+
+class ProductCsvExportView(LoginRequiredMixin, View):
+    """Download the full (non-archived) product catalog as CSV."""
+
+    def get(self, request, *args, **kwargs):
+        qs = (
+            Product.objects.filter(is_archived=False)
+            .select_related('category', 'tax_rate')
+            .order_by('category__name', 'name')
+        )
+
+        def rows():
+            header = ['SKU', 'Name', 'Category', 'Status', 'Brand', 'List price', 'Currency', 'Tax rate', 'EAN/GTIN', 'MPN']
+            yield header
+            for p in qs:
+                yield [
+                    p.sku,
+                    p.name,
+                    p.category.name if p.category_id else '',
+                    p.get_status_display(),
+                    p.brand,
+                    str(p.list_price) if p.list_price is not None else '',
+                    p.currency,
+                    str(p.tax_rate.rate) if p.tax_rate_id else '',
+                    p.ean_gtin,
+                    p.mpn,
+                ]
+
+        def stream():
+            import io
+            buffer = io.StringIO()
+            writer = csv.writer(buffer)
+            for row in rows():
+                writer.writerow(row)
+                yield buffer.getvalue()
+                buffer.seek(0)
+                buffer.truncate(0)
+
+        response = StreamingHttpResponse(stream(), content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="products.csv"'
+        return response
+
+
+class ProductBulkArchiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Archive (or unarchive) multiple products at once via a checkbox form on the product list."""
+
+    permission_required = 'catalog.archive_product'
+
+    def post(self, request, *args, **kwargs):
+        from django.utils import timezone
+        action = request.POST.get('bulk_action')
+        pks = request.POST.getlist('product_ids')
+        if not pks:
+            messages.warning(request, 'No products selected.')
+            return redirect('catalog:index')
+        if action not in ('archive', 'unarchive'):
+            messages.error(request, 'Unknown action.')
+            return redirect('catalog:index')
+        qs = Product.objects.filter(pk__in=pks)
+        if action == 'archive':
+            count = qs.filter(is_archived=False).update(is_archived=True, archived_at=timezone.now())
+            messages.success(request, f'{count} product(s) archived.')
+        else:
+            count = qs.filter(is_archived=True).update(is_archived=False, archived_at=None)
+            messages.success(request, f'{count} product(s) unarchived.')
+        return redirect('catalog:index')

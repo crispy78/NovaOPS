@@ -48,6 +48,7 @@ urlpatterns = [
         name='password_change',
     ),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('', include('core.urls')),
     path('relations/', include('relations.urls')),
     path('assets/', include('assets.urls')),
     path('', include('catalog.urls')),

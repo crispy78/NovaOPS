@@ -148,6 +148,16 @@
       <i class="fa-solid fa-warehouse w-4 text-center {% if ns == 'inventory' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
       Warehouses
     </a>
+    <a href="{% url 'inventory:low_stock' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
+      <i class="fa-solid fa-circle-exclamation w-4 text-center text-slate-400" aria-hidden="true"></i>
+      Low stock
+    </a>
+    <a href="{% url 'inventory:stock_adjust' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
+      <i class="fa-solid fa-sliders w-4 text-center text-slate-400" aria-hidden="true"></i>
+      Stock adjustment
+    </a>
 
     {# Assets #}
     <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Assets</p>
@@ -210,6 +220,41 @@
           Contacts
         </a>
       {% endif %}
+    {% endif %}
+
+    {# Reports #}
+    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Reports</p>
+    <a href="{% url 'core:report_sales' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
+      <i class="fa-solid fa-chart-bar w-4 text-center text-slate-400" aria-hidden="true"></i>
+      Sales
+    </a>
+    <a href="{% url 'core:report_aged_debtors' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
+      <i class="fa-solid fa-clock-rotate-left w-4 text-center text-slate-400" aria-hidden="true"></i>
+      Aged debtors
+    </a>
+    <a href="{% url 'core:report_inventory' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-nova-700">
+      <i class="fa-solid fa-scale-balanced w-4 text-center text-slate-400" aria-hidden="true"></i>
+      Inventory value
+    </a>
+
+    {# Search & Admin #}
+    <p class="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Tools</p>
+    <a href="{% url 'core:search' %}"
+       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+       {% if ns == 'core' and u == 'search' %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+      <i class="fa-solid fa-magnifying-glass w-4 text-center {% if ns == 'core' and u == 'search' %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+      Global search
+    </a>
+    {% if user.is_staff %}
+      <a href="{% url 'core:user_list' %}"
+         class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+         {% if ns == 'core' and 'user' in u %}bg-nova-50 text-nova-700 font-semibold{% else %}text-slate-600 hover:bg-slate-50 hover:text-nova-700{% endif %}">
+        <i class="fa-solid fa-user-gear w-4 text-center {% if ns == 'core' and 'user' in u %}text-nova-600{% else %}text-slate-400{% endif %}" aria-hidden="true"></i>
+        User management
+      </a>
     {% endif %}
 
     {% endif %}{# /if user.is_authenticated #}

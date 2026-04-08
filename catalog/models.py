@@ -206,6 +206,12 @@ class Product(UUIDPrimaryKeyModel):
         help_text='e.g. piece, box (12), pallet.',
     )
     minimum_order_quantity = models.PositiveIntegerField(default=1, verbose_name='minimum order quantity (MOQ)')
+    reorder_point = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='reorder point',
+        help_text='Alert when total stock on hand falls at or below this quantity.',
+    )
     lead_time_days = models.PositiveIntegerField(null=True, blank=True, verbose_name='lead time (days)')
     lead_time_text = models.CharField(
         max_length=120,

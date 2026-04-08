@@ -156,6 +156,7 @@ class QuoteLine(UUIDPrimaryKeyModel):
     brand = models.CharField(max_length=120, blank=True)
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(**MONEY)
+    tax_rate_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='tax rate (%)')
     currency = models.CharField(max_length=3, default='EUR')
     line_total = models.DecimalField(**MONEY)
     sort_order = models.PositiveSmallIntegerField(default=0)
@@ -239,6 +240,7 @@ class OrderLine(UUIDPrimaryKeyModel):
     brand = models.CharField(max_length=120, blank=True)
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(**MONEY)
+    tax_rate_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='tax rate (%)')
     currency = models.CharField(max_length=3, default='EUR')
     line_total = models.DecimalField(**MONEY)
     sort_order = models.PositiveSmallIntegerField(default=0)
@@ -344,6 +346,7 @@ class InvoiceLine(UUIDPrimaryKeyModel):
     brand = models.CharField(max_length=120, blank=True)
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(**MONEY)
+    tax_rate_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='tax rate (%)')
     currency = models.CharField(max_length=3, default='EUR')
     line_total = models.DecimalField(**MONEY)
     sort_order = models.PositiveSmallIntegerField(default=0)
@@ -650,6 +653,7 @@ def next_shipping_order_reference() -> str:
 
 def snapshot_line_from_product(product: Product, quantity: int, sort_order: int = 0) -> dict:
     unit = product.list_price if product.list_price is not None else Decimal('0')
+    tax_pct = product.tax_rate.rate if product.tax_rate_id else None
     return {
         'product': product,
         'product_name': product.name,
@@ -657,6 +661,7 @@ def snapshot_line_from_product(product: Product, quantity: int, sort_order: int 
         'brand': product.brand or '',
         'quantity': quantity,
         'unit_price': unit,
+        'tax_rate_pct': tax_pct,
         'currency': product.currency,
         'line_total': unit * quantity,
         'sort_order': sort_order,

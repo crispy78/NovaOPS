@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ invoice.reference }} — Invoice</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #1e293b; background: #fff; }
+  .page { max-width: 780px; margin: 0 auto; padding: 32px 40px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
+  .company-name { font-size: 20pt; font-weight: 700; color: #1d4ed8; }
+  .doc-title { text-align: right; }
+  .doc-title h1 { font-size: 18pt; color: #1e293b; }
+  .doc-title .ref { font-size: 14pt; color: #64748b; margin-top: 4px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .meta-section h2 { font-size: 8pt; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #64748b; margin-bottom: 6px; }
+  .meta-section p { font-size: 10pt; color: #1e293b; line-height: 1.5; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  thead th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-size: 8.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #475569; border-bottom: 1px solid #cbd5e1; }
+  tbody td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 10pt; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  .opt-row td { background: #f8fafc; font-size: 9pt; color: #475569; padding: 5px 10px 5px 28px; }
+  .text-right { text-align: right; }
+  .text-mono { font-family: 'Courier New', monospace; font-size: 9pt; }
+  .totals-block { margin-left: auto; width: 300px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 24px; }
+  .totals-row { display: flex; justify-content: space-between; padding: 6px 12px; border-bottom: 1px solid #e2e8f0; font-size: 10pt; }
+  .totals-row:last-child { border-bottom: none; }
+  .totals-row.grand-total { font-weight: 700; font-size: 11pt; background: #f1f5f9; }
+  .totals-row.paid-row { color: #166534; }
+  .totals-row.balance-row { font-weight: 700; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 8.5pt; font-weight: 600; }
+  .badge-paid { background: #dcfce7; color: #166534; }
+  .badge-due { background: #fee2e2; color: #991b1b; }
+  .footer { margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 8.5pt; color: #94a3b8; }
+  .print-btn { position: fixed; top: 16px; right: 16px; background: #1d4ed8; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 11pt; cursor: pointer; }
+  @media print {
+    .print-btn { display: none; }
+    body { font-size: 10pt; }
+    .page { padding: 0; max-width: none; }
+    @page { margin: 18mm 20mm; }
+  }
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+<div class="page">
+  <div class="header">
+    <div>
+      <div class="company-name">NovaOPS</div>
+    </div>
+    <div class="doc-title">
+      <h1>INVOICE</h1>
+      <div class="ref">{{ invoice.reference }}</div>
+      {% if invoice_is_paid %}
+        <div style="margin-top:6px"><span class="badge badge-paid">PAID</span></div>
+      {% else %}
+        <div style="margin-top:6px"><span class="badge badge-due">UNPAID</span></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="meta-grid">
+    <div class="meta-section">
+      <h2>Bill to</h2>
+      {% if invoice.relation_organization %}
+        <p><strong>{{ invoice.relation_organization.name }}</strong></p>
+      {% else %}
+        <p>—</p>
+      {% endif %}
+    </div>
+    <div class="meta-section">
+      <h2>Invoice details</h2>
+      <p>Date: {{ invoice.created_at|date:"Y-m-d" }}</p>
+      {% if invoice.due_date %}<p>Due: {{ invoice.due_date|date:"Y-m-d" }}</p>{% endif %}
+      <p>Order: {{ invoice.order.reference }}</p>
+      {% if invoice.order.quote %}<p>Quote: {{ invoice.order.quote.reference }}</p>{% endif %}
+    </div>
+  </div>
+
+  {% if invoice.notes %}
+    <p style="margin-bottom:16px; font-size:10pt; color:#475569; white-space:pre-wrap;">{{ invoice.notes }}</p>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>SKU</th>
+        <th class="text-right">Qty</th>
+        <th class="text-right">Unit price</th>
+        <th class="text-right">Tax</th>
+        <th class="text-right">Line total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in main_lines %}
+        <tr>
+          <td>{{ line.product_name }}</td>
+          <td class="text-mono">{{ line.sku }}</td>
+          <td class="text-right">{{ line.quantity }}</td>
+          <td class="text-right">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+          <td class="text-right">{% if line.tax_rate_pct %}{{ line.tax_rate_pct }}%{% else %}—{% endif %}</td>
+          <td class="text-right">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+        </tr>
+        {% for opt in line.option_lines.all %}
+          <tr class="opt-row">
+            <td>+ {{ opt.product_name }}</td>
+            <td class="text-mono">{{ opt.sku }}</td>
+            <td class="text-right">{{ opt.quantity }}</td>
+            <td class="text-right">{{ opt.currency }} {{ opt.unit_price|floatformat:2 }}</td>
+            <td class="text-right">{% if opt.tax_rate_pct %}{{ opt.tax_rate_pct }}%{% else %}—{% endif %}</td>
+            <td class="text-right">{{ opt.currency }} {{ opt.line_total|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totals-block">
+    <div class="totals-row">
+      <span>Subtotal (excl. tax)</span>
+      <span>{{ invoice.currency }} {{ invoice_total|floatformat:2 }}</span>
+    </div>
+    {% for row in tax_breakdown %}
+      {% if row.rate %}
+        <div class="totals-row">
+          <span>BTW {{ row.rate }}%</span>
+          <span>{{ invoice.currency }} {{ row.tax|floatformat:2 }}</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+    <div class="totals-row grand-total">
+      <span>Total incl. tax</span>
+      <span>{{ invoice.currency }} {{ grand_total|floatformat:2 }}</span>
+    </div>
+    {% if invoice_paid %}
+      <div class="totals-row paid-row">
+        <span>Amount paid</span>
+        <span>- {{ invoice.currency }} {{ invoice_paid|floatformat:2 }}</span>
+      </div>
+      <div class="totals-row balance-row">
+        <span>Balance due</span>
+        <span>{{ invoice.currency }} {{ invoice_balance|floatformat:2 }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if invoice.payments.all %}
+    <p style="font-size:9pt; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#64748b; margin-bottom:6px;">Payment history</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Reference</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in invoice.payments.all %}
+          <tr>
+            <td>{{ p.created_at|date:"Y-m-d" }}</td>
+            <td>{{ invoice.currency }} {{ p.amount|floatformat:2 }}</td>
+            <td>{{ p.reference_note|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  <div class="footer">
+    <p>Please reference {{ invoice.reference }} with your payment. Thank you for your business.</p>
+  </div>
+</div>
+</body>
+</html>

@@ -98,6 +98,51 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             unpaid_qs.select_related('order', 'relation_organization').order_by('-created_at')[:5]
         )
 
+        # ── Revenue this month ───────────────────────────────────────────────
+        from django.db.models import Sum as Sum2
+        from django.db.models.functions import TruncMonth
+        month_start = today.replace(day=1)
+        ctx['revenue_this_month'] = (
+            Invoice.objects.filter(
+                status=InvoiceStatus.ISSUED, created_at__date__gte=month_start
+            ).aggregate(s=Sum('lines__line_total'))['s'] or Decimal('0')
+        )
+
+        # ── Low stock count ──────────────────────────────────────────────────
+        try:
+            from django.db.models import DecimalField as DF, F, OuterRef, Subquery
+            from django.db.models.functions import Coalesce
+            from inventory.models import StockEntry
+            from catalog.models import Product
+            total_qs = (
+                StockEntry.objects
+                .filter(product=OuterRef('pk'))
+                .values('product')
+                .annotate(total=Sum('quantity_on_hand'))
+                .values('total')
+            )
+            money2 = DF(max_digits=14, decimal_places=3)
+            ctx['low_stock_count'] = (
+                Product.objects
+                .filter(is_archived=False, inventory_tracked=True, reorder_point__isnull=False)
+                .annotate(
+                    total_on_hand=Coalesce(Subquery(total_qs, output_field=money2), Decimal('0'), output_field=money2)
+                )
+                .filter(total_on_hand__lte=F('reorder_point'))
+                .count()
+            )
+        except Exception:
+            ctx['low_stock_count'] = 0
+
+        # ── Open POs count ───────────────────────────────────────────────────
+        try:
+            from procurement.models import PurchaseOrder, POStatus
+            ctx['open_pos_count'] = PurchaseOrder.objects.filter(
+                status__in=[POStatus.DRAFT, POStatus.SENT, POStatus.PARTIAL]
+            ).count()
+        except Exception:
+            ctx['open_pos_count'] = 0
+
         ctx['today'] = today
         return ctx
 

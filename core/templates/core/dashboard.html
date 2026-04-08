@@ -58,6 +58,45 @@
 
 </div>
 
+{# ── Secondary KPI row ─────────────────────────────────────────────────── #}
+<div class="mb-8 grid gap-4 sm:grid-cols-3">
+
+  <div class="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+      <i class="fa-solid fa-euro-sign text-xl" aria-hidden="true"></i>
+    </span>
+    <div>
+      <p class="text-2xl font-bold text-slate-900">{{ revenue_this_month|floatformat:0 }}</p>
+      <p class="text-sm text-slate-500">Revenue this month (EUR)</p>
+    </div>
+  </div>
+
+  <a href="{% url 'procurement:po_list' %}"
+     class="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-nova-300 hover:shadow-md">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600 group-hover:bg-orange-100">
+      <i class="fa-solid fa-file-circle-plus text-xl" aria-hidden="true"></i>
+    </span>
+    <div>
+      <p class="text-2xl font-bold text-slate-900">{{ open_pos_count }}</p>
+      <p class="text-sm text-slate-500">Open purchase orders</p>
+    </div>
+  </a>
+
+  <a href="{% url 'inventory:low_stock' %}"
+     class="group flex items-center gap-4 rounded-xl border p-5 shadow-sm transition
+       {% if low_stock_count > 0 %}border-red-200 bg-red-50 hover:border-red-300{% else %}border-slate-200 bg-white hover:border-nova-300{% endif %}">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl
+      {% if low_stock_count > 0 %}bg-red-100 text-red-600{% else %}bg-slate-100 text-slate-400{% endif %} group-hover:opacity-80">
+      <i class="fa-solid fa-boxes-stacked text-xl" aria-hidden="true"></i>
+    </span>
+    <div>
+      <p class="text-2xl font-bold {% if low_stock_count > 0 %}text-red-900{% else %}text-slate-900{% endif %}">{{ low_stock_count }}</p>
+      <p class="text-sm {% if low_stock_count > 0 %}text-red-700{% else %}text-slate-500{% endif %}">Products below reorder point</p>
+    </div>
+  </a>
+
+</div>
+
 {# ── Three-column activity ─────────────────────────────────────────────── #}
 <div class="grid gap-6 lg:grid-cols-3">
 

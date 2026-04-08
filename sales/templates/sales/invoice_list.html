@@ -10,6 +10,9 @@
     <p class="mt-1 text-sm text-slate-600">Issued invoices and payment status.</p>
   </div>
   <div class="flex flex-wrap gap-2">
+    <a href="{% url 'sales:invoice_csv_export' %}" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+      <i class="fa-solid fa-download text-slate-400 text-xs" aria-hidden="true"></i>Export CSV
+    </a>
     <a href="{% url 'sales:order_list' %}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">Orders</a>
     <a href="{% url 'sales:fulfillment_list' %}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">Fulfillment</a>
     <a href="{% url 'sales:quote_list' %}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">Quotes</a>

@@ -1,0 +1,39 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Stock Adjustment{% endblock %}
+
+{% block content %}
+<nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+  <a href="{% url 'inventory:warehouse_list' %}" class="hover:text-nova-700">Inventory</a>
+  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+  <span class="font-medium text-slate-900">Stock adjustment</span>
+</nav>
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">Stock adjustment</h1>
+  <p class="mt-1 text-sm text-slate-500">Manually add or remove stock at a specific location. A movement record is written for every adjustment.</p>
+</div>
+
+<div class="max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="block text-xs font-medium uppercase tracking-wide text-slate-500">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+          <p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>
+        {% endif %}
+        {% for err in field.errors %}
+          <p class="mt-1 text-sm text-red-600">{{ err }}</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+      Apply adjustment
+    </button>
+  </form>
+</div>
+{% endblock %}

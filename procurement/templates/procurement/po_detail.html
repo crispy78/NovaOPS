@@ -39,6 +39,19 @@
         Edit
       </a>
     {% endif %}
+    {% if po.status == 'draft' or po.status == 'sent' %}
+      {% if perms.procurement.change_purchaseorder %}
+        <form method="post" action="{% url 'procurement:po_cancel' pk=po.pk %}">
+          {% csrf_token %}
+          <button type="submit"
+                  onclick="return confirm('Cancel this purchase order?')"
+                  class="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
+            <i class="fa-solid fa-ban text-red-400" aria-hidden="true"></i>
+            Cancel PO
+          </button>
+        </form>
+      {% endif %}
+    {% endif %}
   </div>
 </div>
 

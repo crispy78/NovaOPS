@@ -1,0 +1,60 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ target_user.username }} — Users{% endblock %}
+
+{% block content %}
+<nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+  <a href="{% url 'core:user_list' %}" class="hover:text-nova-700">Users</a>
+  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+  <span class="font-medium text-slate-900">{{ target_user.username }}</span>
+</nav>
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">{{ target_user.get_full_name|default:target_user.username }}</h1>
+  <p class="mt-1 text-sm text-slate-500">{{ target_user.email }}</p>
+  <div class="mt-2 flex flex-wrap gap-2">
+    {% if target_user.is_superuser %}
+      <span class="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800">Superuser</span>
+    {% endif %}
+    {% if target_user.is_staff %}
+      <span class="inline-flex rounded-full bg-nova-100 px-2 py-0.5 text-xs font-semibold text-nova-800">Staff</span>
+    {% endif %}
+    {% if not target_user.is_active %}
+      <span class="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">Inactive</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if target_user.is_superuser %}
+  <div class="mb-6 rounded-xl border border-purple-200 bg-purple-50 px-5 py-4 text-sm text-purple-900">
+    <i class="fa-solid fa-shield-halved mr-2" aria-hidden="true"></i>
+    Superusers have all permissions automatically. Individual permission toggles are not applicable.
+  </div>
+{% else %}
+  <form method="post" action="{% url 'core:user_permissions' pk=target_user.pk %}">
+    {% csrf_token %}
+    <div class="mb-4 space-y-4">
+      {% for group_name, perms in permission_matrix.items %}
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <h2 class="text-sm font-semibold text-slate-800">{{ group_name }}</h2>
+          </div>
+          <div class="grid gap-3 px-4 py-4 sm:grid-cols-2 lg:grid-cols-3">
+            {% for item in perms %}
+              <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="permissions" value="{{ item.perm }}"
+                  {% if item.has %}checked{% endif %}
+                  class="h-4 w-4 rounded border-slate-300 text-nova-600 focus:ring-nova-500">
+                <span class="text-sm text-slate-700">{{ item.label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <button type="submit" class="rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">
+      Save permissions
+    </button>
+  </form>
+{% endif %}
+{% endblock %}

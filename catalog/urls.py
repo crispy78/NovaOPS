@@ -31,4 +31,6 @@ urlpatterns = [
         views.ProductOptionDeleteView.as_view(),
         name='product_option_delete',
     ),
+    path('products/bulk-archive/', views.ProductBulkArchiveView.as_view(), name='product_bulk_archive'),
+    path('products/export.csv', views.ProductCsvExportView.as_view(), name='product_csv_export'),
 ]

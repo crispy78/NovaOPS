@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import csv
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Prefetch, Sum, Value
 from django.db.models.functions import Coalesce
+from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
@@ -62,6 +64,24 @@ from .services import (
     refresh_quote_prices_from_catalog,
     set_cart_line_quantity,
 )
+
+
+def _tax_breakdown(lines):
+    """
+    Given a list/queryset of document lines (QuoteLine / OrderLine / InvoiceLine),
+    return a list of dicts: [{'rate': Decimal, 'base': Decimal, 'tax': Decimal}, ...]
+    sorted by rate. Lines without a tax_rate_pct are grouped under rate=None.
+    """
+    from collections import defaultdict
+    buckets = defaultdict(Decimal)
+    for line in lines:
+        rate = getattr(line, 'tax_rate_pct', None)
+        buckets[rate] += line.line_total
+    result = []
+    for rate, base in sorted(buckets.items(), key=lambda x: (x[0] is None, x[0] or 0)):
+        tax = (base * rate / 100).quantize(Decimal('0.01')) if rate is not None else Decimal('0')
+        result.append({'rate': rate, 'base': base, 'tax': tax})
+    return result
 
 
 class CartAddView(LoginRequiredMixin, View):
@@ -257,6 +277,8 @@ class QuoteDetailView(LoginRequiredMixin, DetailView):
         )
         ctx['primary_order'] = q.orders.order_by('created_at').first()
         ctx['quote_total'] = q.lines.aggregate(s=Sum('line_total'))['s'] or Decimal('0')
+        ctx['tax_breakdown'] = _tax_breakdown(q.main_lines)
+        ctx['can_accept'] = q.status in (QuoteStatus.DRAFT, QuoteStatus.SENT) and not q.is_locked
         main_line_qs = q.lines.filter(parent_line__isnull=True)
         if q.is_locked:
             ctx['header_form'] = None
@@ -320,6 +342,27 @@ class QuoteCreateOrderView(LoginRequiredMixin, View):
         except ValueError as exc:
             messages.error(request, str(exc))
             return redirect('sales:quote_detail', pk=quote.pk)
+
+
+class QuoteAcceptView(LoginRequiredMixin, View):
+    """Mark a quote as Accepted without creating an order (e.g. verbal/email acceptance)."""
+
+    def post(self, request, pk, *args, **kwargs):
+        quote = get_object_or_404(Quote, pk=pk)
+        if quote.status not in (QuoteStatus.DRAFT, QuoteStatus.SENT):
+            messages.error(request, f'Cannot accept a quote with status "{quote.get_status_display()}".')
+            return redirect('sales:quote_detail', pk=quote.pk)
+        quote.status = QuoteStatus.ACCEPTED
+        quote.save(update_fields=['status', 'updated_at'])
+        log_event(
+            action='quote.accepted',
+            entity_type='Quote',
+            entity_id=quote.id,
+            request=request,
+            metadata={'reference': quote.reference},
+        )
+        messages.success(request, f'Quote {quote.reference} marked as accepted.')
+        return redirect('sales:quote_detail', pk=quote.pk)
 
 
 class SalesOrderListView(LoginRequiredMixin, ListView):
@@ -519,6 +562,33 @@ class FulfillmentOrderDetailView(LoginRequiredMixin, DetailView):
         ]
         ctx['line_remaining'] = [(line, fulfillment_line_unallocated_quantity(line)) for line in lines]
         return ctx
+
+
+class FulfillmentOrderCompleteView(LoginRequiredMixin, View):
+    """Mark a fulfillment order as Completed and decrement inventory stock."""
+
+    def post(self, request, pk, *args, **kwargs):
+        fo = get_object_or_404(FulfillmentOrder, pk=pk)
+        if fo.status == FulfillmentOrderStatus.COMPLETED:
+            messages.info(request, 'Already completed.')
+            return redirect(fo)
+        if fo.status == FulfillmentOrderStatus.CANCELLED:
+            messages.error(request, 'Cannot complete a cancelled fulfillment order.')
+            return redirect(fo)
+        fo.status = FulfillmentOrderStatus.COMPLETED
+        fo.save(update_fields=['status', 'updated_at'])
+        # Decrement stock for each fulfillment line that has inventory-tracked products
+        from inventory.services import decrement_stock_for_fulfillment
+        decrement_stock_for_fulfillment(fo, request.user)
+        log_event(
+            action='fulfillment_order.completed',
+            entity_type='FulfillmentOrder',
+            entity_id=fo.id,
+            request=request,
+            metadata={'reference': fo.reference},
+        )
+        messages.success(request, f'Fulfillment order {fo.reference} marked as completed. Stock decremented.')
+        return redirect(fo)
 
 
 class ShippingOrderCreateFromFulfillmentView(LoginRequiredMixin, View):
@@ -745,6 +815,7 @@ class InvoiceDetailView(LoginRequiredMixin, DetailView):
         ctx['invoice_paid'] = inv_paid
         ctx['invoice_balance'] = inv_balance
         ctx['invoice_is_paid'] = inv_is_paid
+        ctx['tax_breakdown'] = _tax_breakdown(inv.main_lines)
         ctx['payment_form'] = InvoicePaymentForm(max_amount=inv_balance if not inv_is_paid else None)
         ctx['can_record_payment'] = inv.status != InvoiceStatus.CANCELLED and not inv_is_paid
         return ctx
@@ -783,3 +854,97 @@ class InvoiceDetailView(LoginRequiredMixin, DetailView):
             ctx['payment_form'] = form
             return self.render_to_response(ctx)
         return redirect(inv)
+
+
+class InvoiceCsvExportView(LoginRequiredMixin, View):
+    """Download all issued invoices as a flat CSV."""
+
+    def get(self, request, *args, **kwargs):
+        money = DecimalField(max_digits=14, decimal_places=2)
+        qs = (
+            Invoice.objects
+            .filter(status=InvoiceStatus.ISSUED)
+            .select_related('relation_organization', 'order')
+            .annotate(
+                inv_total=Coalesce(Sum('lines__line_total'), Value(Decimal('0')), output_field=money),
+                inv_paid=Coalesce(Sum('payments__amount'), Value(Decimal('0')), output_field=money),
+            )
+            .annotate(balance=ExpressionWrapper(F('inv_total') - F('inv_paid'), output_field=money))
+            .order_by('-created_at')
+        )
+
+        def stream():
+            import io
+            buf = io.StringIO()
+            w = csv.writer(buf)
+            w.writerow(['Reference', 'Date', 'Due date', 'Customer', 'Order', 'Currency', 'Total', 'Paid', 'Balance'])
+            yield buf.getvalue(); buf.seek(0); buf.truncate()
+            for inv in qs:
+                w.writerow([
+                    inv.reference,
+                    inv.created_at.date(),
+                    inv.due_date or '',
+                    inv.relation_organization.name if inv.relation_organization_id else '',
+                    inv.order.reference,
+                    inv.currency,
+                    str(inv.inv_total),
+                    str(inv.inv_paid),
+                    str(inv.balance),
+                ])
+                yield buf.getvalue(); buf.seek(0); buf.truncate()
+
+        response = StreamingHttpResponse(stream(), content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="invoices.csv"'
+        return response
+
+
+class QuotePrintView(LoginRequiredMixin, DetailView):
+    model = Quote
+    template_name = 'sales/quote_print.html'
+    context_object_name = 'quote'
+
+    def get_queryset(self):
+        from .models import QuoteLine as QL
+        return Quote.objects.select_related('created_by', 'relation_organization').prefetch_related(
+            'lines__product',
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        q = self.object
+        main_lines = list(q.lines.filter(parent_line__isnull=True).select_related('product').prefetch_related('option_lines'))
+        ctx['main_lines'] = main_lines
+        ctx['quote_total'] = q.lines.aggregate(s=Sum('line_total'))['s'] or Decimal('0')
+        ctx['tax_breakdown'] = _tax_breakdown(main_lines)
+        tax_total = sum(row['tax'] for row in ctx['tax_breakdown'])
+        ctx['tax_total'] = tax_total
+        ctx['grand_total'] = ctx['quote_total'] + tax_total
+        return ctx
+
+
+class InvoicePrintView(LoginRequiredMixin, DetailView):
+    model = Invoice
+    template_name = 'sales/invoice_print.html'
+    context_object_name = 'invoice'
+
+    def get_queryset(self):
+        from .models import InvoiceLine as IL
+        return Invoice.objects.select_related('order', 'relation_organization', 'created_by').prefetch_related(
+            'lines__product',
+            'payments',
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        inv = self.object
+        main_lines = list(inv.lines.filter(parent_line__isnull=True).select_related('product').prefetch_related('option_lines'))
+        ctx['main_lines'] = main_lines
+        ctx['invoice_total'] = inv.total()
+        ctx['invoice_paid'] = inv.amount_paid()
+        ctx['invoice_balance'] = inv.total() - inv.amount_paid()
+        ctx['invoice_is_paid'] = ctx['invoice_balance'] <= Decimal('0')
+        ctx['tax_breakdown'] = _tax_breakdown(main_lines)
+        tax_total = sum(row['tax'] for row in ctx['tax_breakdown'])
+        ctx['tax_total'] = tax_total
+        ctx['grand_total'] = ctx['invoice_total'] + tax_total
+        return ctx
