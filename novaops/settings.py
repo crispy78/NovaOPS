@@ -32,8 +32,18 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 _allowed = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()] or ['localhost', '127.0.0.1', 'testserver']
 
-_origins = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in _origins.split(',') if o.strip()]
+# CSRF trusted origins: explicit list takes priority; otherwise auto-derived from
+# ALLOWED_HOSTS by prepending both http:// and https:// to every real hostname.
+_origins_raw = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+if _origins_raw.strip():
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _origins_raw.split(',') if o.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        f'{scheme}://{host}'
+        for host in ALLOWED_HOSTS
+        if host not in ('*', 'testserver')
+        for scheme in ('http', 'https')
+    ]
 
 
 # Application definition
@@ -152,8 +162,12 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_REFERRER_POLICY = 'same-origin'
 
+# Trust the X-Forwarded-Proto header set by Nginx so Django knows the request
+# arrived over HTTPS even though Gunicorn itself speaks plain HTTP.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 if not DEBUG:
-    SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SSL_REDIRECT', 'false').lower() == 'true'
+    SECURE_SSL_REDIRECT = _https
     if SECURE_SSL_REDIRECT:
         SECURE_HSTS_SECONDS = 60 * 60 * 24 * 7  # 1 week (raise after verifying HTTPS)
         SECURE_HSTS_INCLUDE_SUBDOMAINS = True
