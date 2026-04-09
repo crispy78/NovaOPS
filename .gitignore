@@ -41,7 +41,8 @@ Thumbs.db
 
 # Secrets / environment
 .env
-.env.*
+.env.local
+.env.production
 secrets.json
 
 # Claude Code
