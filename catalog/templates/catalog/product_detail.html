@@ -137,13 +137,13 @@
       <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">List price</p>
       <p class="mt-1 text-3xl font-bold text-slate-900">
         {% if product.list_price is not None %}
-          {{ product.currency }} {{ product.list_price|floatformat:2 }}
+          {{ SITE_CURRENCY }} {{ product.list_price|floatformat:2 }}
         {% else %}
           <span class="text-lg font-medium text-slate-500">On request</span>
         {% endif %}
       </p>
       {% if product.msrp %}
-        <p class="mt-1.5 text-sm text-slate-500">MSRP {{ product.currency }} {{ product.msrp|floatformat:2 }}</p>
+        <p class="mt-1.5 text-sm text-slate-500">MSRP {{ SITE_CURRENCY }} {{ product.msrp|floatformat:2 }}</p>
       {% endif %}
       {% if product.minimum_order_quantity > 1 or product.lead_time_days or product.lead_time_text %}
         <div class="mt-3 flex flex-wrap gap-3 border-t border-slate-100 pt-3 text-sm text-slate-600">
@@ -193,7 +193,7 @@
                     </span>
                   </label>
                   <span class="shrink-0 font-semibold text-slate-700 option-price-label">
-                    {% if opt.display_price %}+ {{ product.currency }} {{ opt.display_price|floatformat:2 }}{% else %}Included{% endif %}
+                    {% if opt.display_price %}+ {{ SITE_CURRENCY }} {{ opt.display_price|floatformat:2 }}{% else %}Included{% endif %}
                   </span>
                 </li>
               {% endfor %}
@@ -222,7 +222,7 @@
                   class="flex-1 rounded-lg bg-nova-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
             <i class="fa-solid fa-cart-plus mr-1.5" aria-hidden="true"></i>Add to cart
             {% if product.list_price is not None %}
-              - <span id="total-price-label">{{ product.currency }} {{ product.list_price|floatformat:2 }}</span>
+              - <span id="total-price-label">{{ SITE_CURRENCY }} {{ product.list_price|floatformat:2 }}</span>
             {% endif %}
           </button>
         </div>
@@ -300,7 +300,7 @@
       {% if product_page_permissions.can_view_purchase_price and product.purchase_price is not None %}
         <div class="flex justify-between gap-4 py-2">
           <dt class="text-slate-500">Purchase price</dt>
-          <dd class="text-right font-medium text-slate-900">{{ product.currency }} {{ product.purchase_price|floatformat:2 }}</dd>
+          <dd class="text-right font-medium text-slate-900">{{ SITE_CURRENCY }} {{ product.purchase_price|floatformat:2 }}</dd>
         </div>
       {% endif %}
       {% if product.tax_rate %}
@@ -315,7 +315,7 @@
           <dd class="text-right font-medium text-slate-900">{{ product.discount_group.name }}</dd>
         </div>
       {% endif %}
-      {% include "catalog/_dl_row.html" with label="Currency" value=product.currency %}
+      {% include "catalog/_dl_row.html" with label="Currency" value=SITE_CURRENCY %}
     </dl>
   </section>
 
@@ -362,7 +362,7 @@
   <section class="mt-12 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
     <div class="border-b border-slate-200 px-6 py-4">
       <h2 class="text-lg font-semibold text-slate-900">Price tiers</h2>
-      <p class="text-sm text-slate-500">Quantity breaks in {{ product.currency }}</p>
+      <p class="text-sm text-slate-500">Quantity breaks in {{ SITE_CURRENCY }}</p>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full text-left text-sm">
@@ -378,7 +378,7 @@
             <tr>
               <td class="px-6 py-3 font-mono">{{ tier.min_quantity }}</td>
               <td class="px-6 py-3 font-mono">{% if tier.max_quantity %}{{ tier.max_quantity }}{% else %}-{% endif %}</td>
-              <td class="px-6 py-3 font-medium">{{ product.currency }} {{ tier.unit_price|floatformat:2 }}</td>
+              <td class="px-6 py-3 font-medium">{{ SITE_CURRENCY }} {{ tier.unit_price|floatformat:2 }}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -622,7 +622,7 @@
                 <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ opt.display_sku|default:"-" }}</td>
                 <td class="px-4 py-3 text-slate-700">
                   {% if opt.display_price %}
-                    + {{ product.currency }} {{ opt.display_price|floatformat:2 }}
+                    + {{ SITE_CURRENCY }} {{ opt.display_price|floatformat:2 }}
                   {% else %}
                     Included
                   {% endif %}
@@ -757,7 +757,7 @@
 <script>
 (function () {
   const basePrice = {{ product.list_price }};
-  const currency  = '{{ product.currency }}';
+  const currency  = '{{ SITE_CURRENCY }}';
   const label     = document.getElementById('total-price-label');
 
   function recalc() {

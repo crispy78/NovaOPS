@@ -181,7 +181,7 @@
               <div>
                 <p class="text-base font-bold text-slate-900">
                   {% if product.list_price is not None %}
-                    {{ product.currency }} {{ product.list_price|floatformat:2 }}
+                    {{ SITE_CURRENCY }} {{ product.list_price|floatformat:2 }}
                   {% else %}
                     <span class="text-sm font-normal text-slate-400">On request</span>
                   {% endif %}
