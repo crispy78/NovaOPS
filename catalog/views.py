@@ -391,8 +391,6 @@ class ProductUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
         return Product.objects.select_related('category', 'tax_rate', 'discount_group')
 
     def form_valid(self, form):
-        from core.models import SiteSettings
-        form.instance.currency = SiteSettings.get().currency
         changed = list(form.changed_data)
         before = {k: getattr(self.object, k) for k in changed}
         response = super().form_valid(form)
@@ -441,8 +439,10 @@ class ProductCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return kwargs
 
     def form_valid(self, form):
-        from core.models import SiteSettings
-        form.instance.currency = SiteSettings.get().currency
+        # Default to site currency only if the field was left blank
+        if not form.instance.currency:
+            from core.models import SiteSettings
+            form.instance.currency = SiteSettings.get().currency
         response = super().form_valid(form)
         from audit.services import log_event
         log_event(

@@ -4,6 +4,8 @@ from typing import Any, Iterator
 
 from django import forms
 
+from core.models import CURRENCY_CHOICES
+
 from .models import Product, ProductImage, ProductOption
 from .permissions import get_product_page_permissions
 
@@ -57,6 +59,7 @@ _PRODUCT_FIELD_SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
             'purchase_price',
             'list_price',
             'msrp',
+            'currency',
             'tax_rate',
             'discount_group',
         ),
@@ -94,6 +97,10 @@ class ProductForm(forms.ModelForm):
         widgets = {
             'short_description': forms.Textarea(attrs={'rows': 2, 'class': _input_classes()}),
             'long_description': forms.Textarea(attrs={'rows': 6, 'class': _input_classes()}),
+            'currency': forms.Select(
+                choices=CURRENCY_CHOICES,
+                attrs={'class': _input_classes()},
+            ),
         }
 
     def __init__(self, *args: Any, user: Any | None = None, **kwargs: Any) -> None:
@@ -119,6 +126,7 @@ class ProductForm(forms.ModelForm):
                 for fname in (
                     'list_price',
                     'msrp',
+                    'currency',
                     'tax_rate',
                     'discount_group',
                 ):
