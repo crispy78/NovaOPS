@@ -250,6 +250,8 @@ def _clear_all() -> None:
         Contract, ContractTemplate, ContractTemplateVariable, ContractVariableValue, ServiceRate,
     )
     from pricing.models import PricingRule, PricingRuleAssignment
+    from procurement.models import PurchaseOrder, PurchaseOrderLine
+    from catalog.models import ProductOption
 
     ContractVariableValue.objects.all().delete()
     Contract.objects.all().delete()
@@ -258,6 +260,10 @@ def _clear_all() -> None:
     ServiceRate.objects.all().delete()
     PricingRuleAssignment.objects.all().delete()
     PricingRule.objects.all().delete()
+
+    # Purchase orders reference Product via PROTECT - must go before products.
+    PurchaseOrderLine.objects.all().delete()
+    PurchaseOrder.objects.all().delete()
 
     ShipmentLine.objects.all().delete()
     Shipment.objects.all().delete()
@@ -298,6 +304,8 @@ def _clear_all() -> None:
             break
     OrganizationCategoryTag.objects.all().delete()
 
+    # ProductOption references Product via PROTECT - must go before products.
+    ProductOption.objects.all().delete()
     ProductImage.objects.all().delete()
     ProductDocument.objects.all().delete()
     ProductBOMLine.objects.all().delete()
