@@ -13,3 +13,9 @@ def site_currency(request):
     """Inject the site-wide currency code into every template context."""
     from .models import SiteSettings
     return {"SITE_CURRENCY": SiteSettings.get().currency}
+
+
+def demo_mode(request):
+    """Inject DEMO_MODE flag into every template context."""
+    from django.conf import settings
+    return {"DEMO_MODE": getattr(settings, 'DEMO_MODE', False)}

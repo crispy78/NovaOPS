@@ -68,8 +68,11 @@ INSTALLED_APPS = [
     'procurement',
 ]
 
+DEMO_MODE = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.DemoSecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,6 +96,7 @@ TEMPLATES = [
                 'sales.context_processors.cart_item_count',
                 'core.context_processors.app_version',
                 'core.context_processors.site_currency',
+                'core.context_processors.demo_mode',
             ],
         },
     },

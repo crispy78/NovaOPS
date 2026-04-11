@@ -1,0 +1,14 @@
+[Unit]
+Description=NovaOPS demo environment reset
+After=network.target novaops.service
+
+[Service]
+Type=oneshot
+User=novaops
+Group=novaops
+WorkingDirectory=/home/novaops/app
+EnvironmentFile=/home/novaops/app/.env
+ExecStart=/home/novaops/app/.venv/bin/python manage.py reset_demo --skip-images
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=novaops-demo-reset

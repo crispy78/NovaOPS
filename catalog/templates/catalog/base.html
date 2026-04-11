@@ -44,11 +44,65 @@
 <body class="bg-slate-50 text-slate-900">
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
+{% if DEMO_MODE %}
+{# ── Demo bar ── #}
+<div id="demo-bar" class="fixed inset-x-0 top-0 z-50 h-10 bg-amber-400 shadow-md">
+  <div class="flex h-full items-center justify-between px-4">
+    <div class="flex items-center gap-2 text-sm font-semibold text-amber-950">
+      <i class="fa-solid fa-flask-vial shrink-0 text-amber-700" aria-hidden="true"></i>
+      <span>Demo environment - data resets every 30 minutes</span>
+      <button type="button" id="demo-creds-toggle"
+              onclick="document.getElementById('demo-creds').classList.toggle('hidden')"
+              class="ml-1 rounded bg-amber-500 px-2 py-0.5 text-xs font-semibold hover:bg-amber-600 focus:outline-none">
+        Show logins
+      </button>
+    </div>
+    <button type="button" onclick="hideDemoBar()" aria-label="Dismiss demo banner"
+            class="rounded p-1 text-amber-700 hover:text-amber-950 focus:outline-none">
+      <i class="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div id="demo-creds" class="hidden absolute inset-x-0 top-10 z-50 border-t border-amber-300 bg-amber-50 px-4 py-4 shadow-lg">
+    <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-amber-800">
+      All accounts use password:
+      <span class="ml-1 rounded bg-white px-1.5 py-0.5 font-mono text-slate-800 border border-amber-200">Demo1234!</span>
+    </p>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div class="rounded-lg border border-amber-200 bg-white p-3 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Admin</p>
+        <p class="mt-1 font-mono text-xs font-bold text-slate-800">admin@demo.com</p>
+        <p class="mt-1 text-xs text-slate-500">Full access - all modules, settings, reports</p>
+      </div>
+      <div class="rounded-lg border border-amber-200 bg-white p-3 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sales</p>
+        <p class="mt-1 font-mono text-xs font-bold text-slate-800">sales@demo.com</p>
+        <p class="mt-1 text-xs text-slate-500">Quotes, orders, invoices, customers</p>
+      </div>
+      <div class="rounded-lg border border-amber-200 bg-white p-3 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Viewer</p>
+        <p class="mt-1 font-mono text-xs font-bold text-slate-800">viewer@demo.com</p>
+        <p class="mt-1 text-xs text-slate-500">Read-only access to all data</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function hideDemoBar() {
+    document.getElementById('demo-bar').style.display = 'none';
+    sessionStorage.setItem('demoBarHidden', '1');
+    document.getElementById('sidebar').classList.remove('top-10');
+    document.getElementById('sidebar').classList.add('top-0');
+    document.querySelector('.demo-pt')?.classList.remove('pt-10');
+  }
+  if (sessionStorage.getItem('demoBarHidden')) hideDemoBar();
+</script>
+{% endif %}
+
 {# Mobile overlay #}
 <div id="nav-overlay" class="fixed inset-0 z-30 hidden bg-slate-900/50 lg:hidden" onclick="closeSidebar()"></div>
 
 {# ── Sidebar ── #}
-<aside id="sidebar" class="fixed inset-y-0 left-0 z-40 flex w-56 -translate-x-full flex-col overflow-y-auto border-r border-slate-200 bg-white shadow-xl lg:translate-x-0 lg:shadow-none">
+<aside id="sidebar" class="fixed {% if DEMO_MODE %}top-10{% else %}top-0{% endif %} bottom-0 left-0 z-40 flex w-56 -translate-x-full flex-col overflow-y-auto border-r border-slate-200 bg-white shadow-xl lg:translate-x-0 lg:shadow-none">
 
   {# Logo #}
   <div class="flex h-16 shrink-0 items-center border-b border-slate-200 px-4">
@@ -419,7 +473,7 @@
         <i class="fa-solid fa-circle-user w-4 shrink-0 text-center text-slate-400" aria-hidden="true"></i>
         <span class="truncate">{{ user.get_full_name|default:user.email }}</span>
       </a>
-      {% if user.is_staff %}
+      {% if user.is_staff and not DEMO_MODE %}
         <a href="{% url 'admin:index' %}"
            class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-nova-700">
           <i class="fa-solid fa-gears w-4 text-center text-slate-400" aria-hidden="true"></i>
@@ -446,10 +500,10 @@
 </aside>
 
 {# ── Content area (pushed right by sidebar on desktop) ── #}
-<div class="flex min-h-screen flex-col lg:pl-56">
+<div class="demo-pt flex min-h-screen flex-col lg:pl-56 {% if DEMO_MODE %}pt-10{% endif %}">
 
   {# Mobile topbar #}
-  <div class="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm lg:hidden">
+  <div class="sticky {% if DEMO_MODE %}top-10{% else %}top-0{% endif %} z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm lg:hidden">
     <button type="button" onclick="openSidebar()" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500" aria-label="Open menu">
       <i class="fa-solid fa-bars text-lg" aria-hidden="true"></i>
     </button>
