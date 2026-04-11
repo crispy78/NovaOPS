@@ -36,7 +36,7 @@
           <td class="px-4 py-3 font-semibold"><a href="{{ p.get_absolute_url }}" class="text-nova-700 hover:underline">{{ p.reference }}</a></td>
           <td class="px-4 py-3">{{ p.name }}</td>
           <td class="px-4 py-3"><a href="{% url 'relations:organization_detail' pk=p.organization.pk %}" class="text-nova-700 hover:underline">{{ p.organization.name }}</a></td>
-          <td class="px-4 py-3 text-slate-600">{{ p.valid_from|date:"Y-m-d" }}{% if p.valid_until %} — {{ p.valid_until|date:"Y-m-d" }}{% endif %}</td>
+          <td class="px-4 py-3 text-slate-600">{{ p.valid_from|date:"Y-m-d" }}{% if p.valid_until %} - {{ p.valid_until|date:"Y-m-d" }}{% endif %}</td>
           <td class="px-4 py-3">{{ p.get_status_display }}</td>
         </tr>
       {% empty %}

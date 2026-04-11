@@ -237,7 +237,7 @@ class Contract(UUIDPrimaryKeyModel):
         ordering            = ['-created_at']
 
     def __str__(self) -> str:
-        return f'{self.reference} — {self.organization}'
+        return f'{self.reference} - {self.organization}'
 
     def get_absolute_url(self) -> str:
         from django.urls import reverse

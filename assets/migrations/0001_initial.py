@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 ('installation_date', models.DateField(blank=True, null=True)),
                 ('warranty_end_date', models.DateField(blank=True, null=True)),
                 ('expected_end_of_life_date', models.DateField(blank=True, help_text='Planned replacement horizon for MJOP and sales advice.', null=True, verbose_name='expected end of life')),
-                ('status', models.CharField(choices=[('pending_install', 'Pending installation'), ('in_service', 'In service'), ('under_repair', 'Under repair'), ('warranty', 'In warranty'), ('eol_near', 'End of life — plan replacement'), ('retired', 'Retired'), ('disposed', 'Disposed')], db_index=True, default='in_service', max_length=24)),
+                ('status', models.CharField(choices=[('pending_install', 'Pending installation'), ('in_service', 'In service'), ('under_repair', 'Under repair'), ('warranty', 'In warranty'), ('eol_near', 'End of life - plan replacement'), ('retired', 'Retired'), ('disposed', 'Disposed')], db_index=True, default='in_service', max_length=24)),
                 ('location_note', models.CharField(blank=True, help_text='Site, room, rack, etc.', max_length=255, verbose_name='location')),
                 ('notes', models.TextField(blank=True)),
                 ('is_archived', models.BooleanField(db_index=True, default=False)),

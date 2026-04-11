@@ -1,5 +1,5 @@
 """
-Report views — read-only aggregated data pages.
+Report views - read-only aggregated data pages.
 All views require login; most require staff status.
 """
 from __future__ import annotations

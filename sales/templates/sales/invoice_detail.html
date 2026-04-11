@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{{ invoice.reference }} — Invoice{% endblock %}
+{% block title %}{{ invoice.reference }} - Invoice{% endblock %}
 
 {% block content %}
 <nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
@@ -92,7 +92,7 @@
   <div class="border-t border-slate-100 px-4 pb-4 pt-3">
     <div class="mb-1.5 flex items-center justify-between text-xs text-slate-500">
       <span>Payment progress</span>
-      <span id="payment-pct-label">—</span>
+      <span id="payment-pct-label">-</span>
     </div>
     <div class="h-2 overflow-hidden rounded-full bg-slate-100">
       <div id="payment-progress-bar" class="h-2 rounded-full bg-emerald-500 transition-all duration-500" style="width:0%"></div>
@@ -211,7 +211,7 @@
                 <a href="{{ cn.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ cn.reference }}</a>
               </td>
               <td class="px-4 py-3 text-slate-600">{{ cn.created_at|date:"Y-m-d" }}</td>
-              <td class="px-4 py-3 text-slate-600">{{ cn.reason|default:"—" }}</td>
+              <td class="px-4 py-3 text-slate-600">{{ cn.reason|default:"-" }}</td>
               <td class="px-4 py-3 text-right font-mono font-semibold text-red-700">−{{ invoice.currency }} {{ cn.total|floatformat:2 }}</td>
             </tr>
           {% endfor %}
@@ -245,7 +245,7 @@
             <tr>
               <td class="px-4 py-3 text-slate-600">{{ p.created_at|date:"Y-m-d H:i" }}</td>
               <td class="px-4 py-3 font-medium">{{ invoice.currency }} {{ p.amount|floatformat:2 }}</td>
-              <td class="px-4 py-3 text-slate-600">{{ p.reference_note|default:"—" }}</td>
+              <td class="px-4 py-3 text-slate-600">{{ p.reference_note|default:"-" }}</td>
               <td class="px-4 py-3 text-slate-600">{{ p.created_by.get_username }}</td>
             </tr>
           {% endfor %}

@@ -46,9 +46,9 @@ def resolve_sales_relation_org_ids(get_params: QueryDict | dict[str, Any]) -> fr
     Combine optional account (org) and contact (person) filters for sales documents.
 
     Returns:
-        None — no org/person filter (show all).
-        frozenset() — impossible match (e.g. person not employed at selected subtree).
-        non-empty frozenset — filter ``relation_organization_id__in=...`` (or prefixed lookup).
+        None - no org/person filter (show all).
+        frozenset() - impossible match (e.g. person not employed at selected subtree).
+        non-empty frozenset - filter ``relation_organization_id__in=...`` (or prefixed lookup).
     """
 
     def _get(key: str) -> str:

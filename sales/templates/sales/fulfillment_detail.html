@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{{ fulfillment.reference }} — Fulfillment{% endblock %}
+{% block title %}{{ fulfillment.reference }} - Fulfillment{% endblock %}
 
 {% block content %}
 <nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
@@ -115,7 +115,7 @@
           <td class="px-4 py-3 font-medium">{{ line.product_name }}</td>
           <td class="px-4 py-3 font-mono text-xs">{{ line.sku }}</td>
           <td class="px-4 py-3">{{ line.quantity }}</td>
-          <td class="px-4 py-3 text-slate-600">{{ line.warehouse_location|default:"—" }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ line.warehouse_location|default:"-" }}</td>
         </tr>
       {% endfor %}
     </tbody>

@@ -32,7 +32,7 @@
         {% for tr in tax_rates %}
           <tr class="hover:bg-slate-50">
             <td class="px-4 py-3 font-medium text-slate-900">{{ tr.name }}</td>
-            <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ tr.code|default:"—" }}</td>
+            <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ tr.code|default:"-" }}</td>
             <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ tr.rate }}%</td>
             <td class="px-4 py-3 text-right">
               <div class="flex items-center justify-end gap-2">

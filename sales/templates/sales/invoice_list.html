@@ -47,7 +47,7 @@
             {% if inv.relation_organization %}
               <a href="{% url 'relations:organization_detail' pk=inv.relation_organization.pk %}" class="font-medium text-nova-700 hover:underline">{{ inv.relation_organization.name }}</a>
             {% else %}
-              <span class="text-slate-400">—</span>
+              <span class="text-slate-400">-</span>
             {% endif %}
           </td>
           <td class="px-4 py-3">

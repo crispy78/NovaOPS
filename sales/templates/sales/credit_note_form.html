@@ -1,13 +1,13 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}New credit note — {{ invoice.reference }} — NovaOPS{% endblock %}
+{% block title %}New credit note - {{ invoice.reference }} - NovaOPS{% endblock %}
 
 {% block content %}
 <div class="mb-6">
   <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Credit note</p>
   <h1 class="text-2xl font-bold text-slate-900">New credit note against {{ invoice.reference }}</h1>
   <p class="mt-1 text-sm text-slate-500">
-    Customer: <strong>{{ invoice.relation_organization.name|default:"—" }}</strong>
+    Customer: <strong>{{ invoice.relation_organization.name|default:"-" }}</strong>
   </p>
 </div>
 

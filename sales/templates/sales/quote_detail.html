@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{{ quote.reference }} — Quote{% endblock %}
+{% block title %}{{ quote.reference }} - Quote{% endblock %}
 
 {% block content %}
 <nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
@@ -73,10 +73,10 @@
   <section class="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
     <h2 class="text-lg font-semibold text-slate-900">Quote details</h2>
     <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-      <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Customer / prospect</dt><dd class="mt-0.5 text-slate-800">{% if quote.relation_organization %}{{ quote.relation_organization.name }}{% else %}—{% endif %}</dd></div>
+      <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Customer / prospect</dt><dd class="mt-0.5 text-slate-800">{% if quote.relation_organization %}{{ quote.relation_organization.name }}{% else %}-{% endif %}</dd></div>
       <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Status</dt><dd class="mt-0.5">{{ quote.get_status_display }}</dd></div>
-      <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Valid until</dt><dd class="mt-0.5">{% if quote.valid_until %}{{ quote.valid_until|date:"Y-m-d" }}{% else %}—{% endif %}</dd></div>
-      <div class="sm:col-span-2"><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Notes</dt><dd class="mt-0.5 whitespace-pre-wrap text-slate-800">{{ quote.notes|default:"—" }}</dd></div>
+      <div><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Valid until</dt><dd class="mt-0.5">{% if quote.valid_until %}{{ quote.valid_until|date:"Y-m-d" }}{% else %}-{% endif %}</dd></div>
+      <div class="sm:col-span-2"><dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Notes</dt><dd class="mt-0.5 whitespace-pre-wrap text-slate-800">{{ quote.notes|default:"-" }}</dd></div>
     </dl>
   </section>
 

@@ -752,7 +752,7 @@ class PersonDetailView(LoginRequiredMixin, DetailView):
         for aff in person.affiliations.all():
             oid = aff.organization_id
             if oid in seen_org_ids:
-                # Additional role at the same org — append to existing block
+                # Additional role at the same org - append to existing block
                 for block in blocks:
                     if block['org'] and block['org'].pk == oid:
                         block['affiliations'].append(aff)

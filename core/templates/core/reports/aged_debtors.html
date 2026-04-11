@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}Aged Debtors — NovaOPS{% endblock %}
+{% block title %}Aged Debtors - NovaOPS{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -74,10 +74,10 @@
               <td class="px-4 py-2">
                 <a href="{{ inv.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ inv.reference }}</a>
               </td>
-              <td class="px-4 py-2 text-slate-600">{{ inv.relation_organization.name|default:"—" }}</td>
-              <td class="px-4 py-2 text-slate-600">{{ inv.due_date|date:"Y-m-d"|default:"—" }}</td>
+              <td class="px-4 py-2 text-slate-600">{{ inv.relation_organization.name|default:"-" }}</td>
+              <td class="px-4 py-2 text-slate-600">{{ inv.due_date|date:"Y-m-d"|default:"-" }}</td>
               <td class="px-4 py-2 text-right {% if inv.age_days > 0 %}text-red-700 font-semibold{% else %}text-slate-400{% endif %}">
-                {% if inv.age_days > 0 %}{{ inv.age_days }}{% else %}—{% endif %}
+                {% if inv.age_days > 0 %}{{ inv.age_days }}{% else %}-{% endif %}
               </td>
               <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ inv.currency }} {{ inv.balance|floatformat:2 }}</td>
             </tr>

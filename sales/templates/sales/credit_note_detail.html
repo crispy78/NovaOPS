@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{{ credit_note.reference }} — NovaOPS{% endblock %}
+{% block title %}{{ credit_note.reference }} - NovaOPS{% endblock %}
 
 {% block content %}
 <div class="mb-6 flex items-center justify-between">
@@ -26,7 +26,7 @@
   </div>
   <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Customer</p>
-    <p class="mt-1 font-semibold text-slate-800">{{ credit_note.relation_organization.name|default:"—" }}</p>
+    <p class="mt-1 font-semibold text-slate-800">{{ credit_note.relation_organization.name|default:"-" }}</p>
   </div>
   <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Date</p>
@@ -68,7 +68,7 @@
           <td class="px-4 py-2 text-slate-800">{{ line.product_name }}</td>
           <td class="px-4 py-2 text-right text-slate-600">{{ line.quantity }}</td>
           <td class="px-4 py-2 text-right font-mono text-slate-600">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
-          <td class="px-4 py-2 text-right text-slate-500">{% if line.tax_rate_pct %}{{ line.tax_rate_pct }}%{% else %}—{% endif %}</td>
+          <td class="px-4 py-2 text-right text-slate-500">{% if line.tax_rate_pct %}{{ line.tax_rate_pct }}%{% else %}-{% endif %}</td>
           <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
         </tr>
       {% endfor %}

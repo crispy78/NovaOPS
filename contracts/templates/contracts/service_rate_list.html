@@ -37,7 +37,7 @@
               {{ rate.currency }} {{ rate.rate_per_hour|floatformat:2 }}
             </td>
             <td class="px-5 py-3 text-slate-500 hidden md:table-cell max-w-xs truncate">
-              {{ rate.description|default:"—" }}
+              {{ rate.description|default:"-" }}
             </td>
             <td class="px-5 py-3 text-center">
               {% if rate.is_active %}

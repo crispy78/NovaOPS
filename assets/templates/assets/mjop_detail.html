@@ -16,7 +16,7 @@
     <p class="mt-2 text-sm text-slate-600">
       <a href="{% url 'relations:organization_detail' pk=plan.organization.pk %}" class="font-semibold text-nova-700 hover:underline">{{ plan.organization.name }}</a>
     </p>
-    <p class="mt-1 text-sm text-slate-600">{{ plan.valid_from|date:"Y-m-d" }}{% if plan.valid_until %} — {{ plan.valid_until|date:"Y-m-d" }}{% endif %} · {{ plan.get_status_display }}</p>
+    <p class="mt-1 text-sm text-slate-600">{{ plan.valid_from|date:"Y-m-d" }}{% if plan.valid_until %} - {{ plan.valid_until|date:"Y-m-d" }}{% endif %} · {{ plan.get_status_display }}</p>
   </div>
   <div class="flex flex-wrap gap-2">
     <a href="{% url 'assets:mjop_update' pk=plan.pk %}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">Edit header</a>
@@ -53,9 +53,9 @@
             {% if line.description %}<p class="mt-0.5 text-xs text-slate-600">{{ line.description|truncatewords:24 }}</p>{% endif %}
             {% if line.estimated_cost_note %}<p class="mt-0.5 text-xs text-slate-500">Est.: {{ line.estimated_cost_note }}</p>{% endif %}
           </td>
-          <td class="px-4 py-3">{% if line.related_asset %}<a href="{{ line.related_asset.get_absolute_url }}" class="text-nova-700 hover:underline">{{ line.related_asset.display_name }}</a>{% else %}—{% endif %}</td>
-          <td class="px-4 py-3">{% if line.recommended_product %}<a href="{{ line.recommended_product.get_absolute_url }}" class="font-mono text-xs text-nova-700 hover:underline">{{ line.recommended_product.sku }}</a>{% else %}—{% endif %}</td>
-          <td class="px-4 py-3">{% if line.is_promoted %}<span class="rounded-full bg-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-900">Yes</span>{% else %}—{% endif %}</td>
+          <td class="px-4 py-3">{% if line.related_asset %}<a href="{{ line.related_asset.get_absolute_url }}" class="text-nova-700 hover:underline">{{ line.related_asset.display_name }}</a>{% else %}-{% endif %}</td>
+          <td class="px-4 py-3">{% if line.recommended_product %}<a href="{{ line.recommended_product.get_absolute_url }}" class="font-mono text-xs text-nova-700 hover:underline">{{ line.recommended_product.sku }}</a>{% else %}-{% endif %}</td>
+          <td class="px-4 py-3">{% if line.is_promoted %}<span class="rounded-full bg-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-900">Yes</span>{% else %}-{% endif %}</td>
           <td class="px-4 py-3">{{ line.get_line_status_display }}</td>
         </tr>
       {% empty %}

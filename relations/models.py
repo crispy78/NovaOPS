@@ -243,7 +243,7 @@ class OrganizationLink(UUIDPrimaryKeyModel):
         ]
 
     def __str__(self) -> str:
-        return f'{self.from_organization} — {self.link_type} → {self.to_organization}'
+        return f'{self.from_organization} - {self.link_type} → {self.to_organization}'
 
 
 class AddressType(models.TextChoices):

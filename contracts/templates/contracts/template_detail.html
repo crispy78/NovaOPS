@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{{ tmpl.name }} — Contract template{% endblock %}
+{% block title %}{{ tmpl.name }} - Contract template{% endblock %}
 
 {% block content %}
 <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -106,10 +106,10 @@
                   {% elif var.default_value is not None %}
                     default: {{ var.default_value }}
                   {% else %}
-                    <span class="text-slate-300">—</span>
+                    <span class="text-slate-300">-</span>
                   {% endif %}
                 </td>
-                <td class="px-5 py-3 text-xs text-slate-500 hidden md:table-cell">{{ var.unit|default:"—" }}</td>
+                <td class="px-5 py-3 text-xs text-slate-500 hidden md:table-cell">{{ var.unit|default:"-" }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -152,7 +152,7 @@
                   </span>
                 </td>
                 <td class="px-5 py-3 text-right font-mono text-xs text-nova-700">
-                  {% if c.computed_result is not None %}{{ c.computed_result|floatformat:2 }}{% else %}<span class="text-slate-300">—</span>{% endif %}
+                  {% if c.computed_result is not None %}{{ c.computed_result|floatformat:2 }}{% else %}<span class="text-slate-300">-</span>{% endif %}
                 </td>
               </tr>
             {% endfor %}

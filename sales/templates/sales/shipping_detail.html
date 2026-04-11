@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{{ shipping.reference }} — Shipping{% endblock %}
+{% block title %}{{ shipping.reference }} - Shipping{% endblock %}
 
 {% block content %}
 <nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
@@ -92,7 +92,7 @@
           {% if ship.notes %}<p class="mt-2 text-sm text-slate-600 whitespace-pre-wrap">{{ ship.notes }}</p>{% endif %}
           <ul class="mt-2 list-inside list-disc text-sm text-slate-700">
             {% for sl in ship.lines.all %}
-              <li>{{ sl.shipping_order_line.fulfillment_line.product_name }} ({{ sl.shipping_order_line.fulfillment_line.sku }}) — {{ sl.quantity }}</li>
+              <li>{{ sl.shipping_order_line.fulfillment_line.product_name }} ({{ sl.shipping_order_line.fulfillment_line.sku }}) - {{ sl.quantity }}</li>
             {% endfor %}
           </ul>
           {% if ship.status == 'planned' %}

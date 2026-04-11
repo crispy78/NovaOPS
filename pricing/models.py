@@ -157,7 +157,7 @@ class PricingRuleAssignment(UUIDPrimaryKeyModel):
         ordering            = ['priority', 'rule__name']
 
     def __str__(self) -> str:
-        target = self.product or self.category or '—'
+        target = self.product or self.category or '-'
         return f'{self.rule.name} → {target}'
 
     def clean(self) -> None:
@@ -165,7 +165,7 @@ class PricingRuleAssignment(UUIDPrimaryKeyModel):
         has_product  = bool(self.product_id)
         has_category = bool(self.category_id)
         if has_product and has_category:
-            raise ValidationError('Set either a product or a category — not both.')
+            raise ValidationError('Set either a product or a category - not both.')
         if not has_product and not has_category:
             raise ValidationError('Set either a product or a category.')
         if has_product:

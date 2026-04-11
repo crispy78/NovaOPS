@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}Credit notes — NovaOPS{% endblock %}
+{% block title %}Credit notes - NovaOPS{% endblock %}
 
 {% block content %}
 <div class="mb-6 flex items-center justify-between">
@@ -28,8 +28,8 @@
           <td class="px-4 py-2">
             <a href="{{ cn.invoice.get_absolute_url }}" class="text-nova-700 hover:underline">{{ cn.invoice.reference }}</a>
           </td>
-          <td class="px-4 py-2 text-slate-600">{{ cn.relation_organization.name|default:"—" }}</td>
-          <td class="px-4 py-2 text-slate-600">{{ cn.reason|default:"—" }}</td>
+          <td class="px-4 py-2 text-slate-600">{{ cn.relation_organization.name|default:"-" }}</td>
+          <td class="px-4 py-2 text-slate-600">{{ cn.reason|default:"-" }}</td>
           <td class="px-4 py-2 text-slate-500">{{ cn.created_at|date:"Y-m-d" }}</td>
         </tr>
       {% endfor %}

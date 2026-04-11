@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ contract.reference }} — Contract</title>
+  <title>{{ contract.reference }} - Contract</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: #1e293b; margin: 0; padding: 32px; }
@@ -55,7 +55,7 @@
   <div class="meta-box">
     <div class="label">Valid</div>
     <div class="value">
-      {% if contract.start_date %}{{ contract.start_date|date:"Y-m-d" }}{% else %}—{% endif %}
+      {% if contract.start_date %}{{ contract.start_date|date:"Y-m-d" }}{% else %}-{% endif %}
       {% if contract.end_date %} – {{ contract.end_date|date:"Y-m-d" }}{% endif %}
     </div>
   </div>
@@ -74,7 +74,7 @@
     {% for row in variable_rows %}
       <tr>
         <td>{{ row.label }}</td>
-        <td class="text-right" style="font-family:monospace;">{{ row.value|default:"—" }}</td>
+        <td class="text-right" style="font-family:monospace;">{{ row.value|default:"-" }}</td>
         <td style="color:#64748b;">{{ row.unit|default:"" }}</td>
       </tr>
     {% endfor %}

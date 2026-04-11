@@ -252,7 +252,7 @@
                 <div>
                   <a class="font-semibold text-nova-700 hover:underline" href="{% url 'relations:person_detail' pk=a.person.pk %}">{{ a.person }}</a>
                   {% if a.organization.pk != org.pk %}
-                    <span class="ml-1 text-slate-500">— {{ a.organization.name }}</span>
+                    <span class="ml-1 text-slate-500">- {{ a.organization.name }}</span>
                   {% endif %}
                   {% if a.job_title %}<div class="text-slate-600">{{ a.job_title }}</div>{% endif %}
                 </div>

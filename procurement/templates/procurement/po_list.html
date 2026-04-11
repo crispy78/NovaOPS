@@ -49,7 +49,7 @@
             <td class="px-6 py-3 font-mono font-semibold text-slate-900">
               <a href="{{ po.get_absolute_url }}" class="hover:text-nova-700">{{ po.ref }}</a>
             </td>
-            <td class="px-6 py-3 text-slate-700">{{ po.supplier|default:"—" }}</td>
+            <td class="px-6 py-3 text-slate-700">{{ po.supplier|default:"-" }}</td>
             <td class="px-6 py-3">
               <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold
                 {% if po.status == 'draft' %}bg-slate-100 text-slate-700
@@ -60,7 +60,7 @@
                 {{ po.get_status_display }}
               </span>
             </td>
-            <td class="px-6 py-3 text-slate-500">{{ po.expected_delivery_date|default:"—" }}</td>
+            <td class="px-6 py-3 text-slate-500">{{ po.expected_delivery_date|default:"-" }}</td>
             <td class="px-6 py-3 text-slate-400 text-xs">{{ po.created_at|date:"Y-m-d" }}</td>
             <td class="px-6 py-3 text-right">
               <a href="{{ po.get_absolute_url }}" class="text-xs font-semibold text-nova-600 hover:text-nova-700">View →</a>

@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}Dashboard — NovaOPS{% endblock %}
+{% block title %}Dashboard - NovaOPS{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -180,7 +180,7 @@
             {% endif %}
             {% if inv.due_date %}
               <p class="mt-0.5 text-xs {% if inv.due_date < today %}text-red-600 font-semibold{% else %}text-slate-400{% endif %}">
-                Due {{ inv.due_date|date:"d M Y" }}{% if inv.due_date < today %} — overdue{% endif %}
+                Due {{ inv.due_date|date:"d M Y" }}{% if inv.due_date < today %} - overdue{% endif %}
               </p>
             {% endif %}
           </li>

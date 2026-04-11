@@ -66,7 +66,7 @@ class ReceiveLineForm(forms.Form):
     location = forms.ModelChoiceField(
         queryset=StockLocation.objects.filter(is_active=True).select_related('warehouse'),
         required=False,
-        empty_label='— select location —',
+        empty_label='- select location -',
     )
 
     def __init__(self, *args, **kwargs):

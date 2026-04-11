@@ -1,4 +1,4 @@
-# Generated manually — ensure Prospect tag exists for quoting (demo / upgrades).
+# Generated manually - ensure Prospect tag exists for quoting (demo / upgrades).
 
 from django.db import migrations
 

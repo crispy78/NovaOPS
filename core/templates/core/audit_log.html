@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}Audit log — NovaOPS{% endblock %}
+{% block title %}Audit log - NovaOPS{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -47,7 +47,7 @@
         {% for event in events %}
           <tr class="hover:bg-slate-50">
             <td class="px-4 py-2 font-mono text-xs text-slate-500 whitespace-nowrap">{{ event.created_at|date:"Y-m-d H:i:s" }}</td>
-            <td class="px-4 py-2 text-slate-600">{{ event.actor.email|default:"—" }}</td>
+            <td class="px-4 py-2 text-slate-600">{{ event.actor.email|default:"-" }}</td>
             <td class="px-4 py-2 font-mono text-xs text-nova-700">{{ event.action }}</td>
             <td class="px-4 py-2 text-slate-600">{{ event.entity_type }}</td>
             <td class="px-4 py-2 text-xs text-slate-500">
@@ -55,7 +55,7 @@
                 {% for k, v in event.metadata.items %}
                   <span class="mr-2"><span class="font-medium text-slate-700">{{ k }}:</span> {{ v }}</span>
                 {% endfor %}
-              {% else %}—{% endif %}
+              {% else %}-{% endif %}
             </td>
           </tr>
         {% endfor %}

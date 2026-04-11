@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{{ order.reference }} — Order{% endblock %}
+{% block title %}{{ order.reference }} - Order{% endblock %}
 
 {% block content %}
 <nav class="mb-4 flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
@@ -36,7 +36,7 @@
       </div>
     {% endif %}
   </div>
-  {# Status actions — only available for actionable statuses #}
+  {# Status actions - only available for actionable statuses #}
   {% if order.status == 'draft' or order.status == 'confirmed' %}
     <div class="flex shrink-0 flex-wrap gap-2">
       {% if order.status == 'draft' %}
@@ -159,7 +159,7 @@
       </div>
     {% elif can_create_invoice %}
       <div class="px-5 py-4">
-        <p class="text-sm text-slate-600">No invoice yet. Create one to bill the customer — line amounts will be snapshot from this order.</p>
+        <p class="text-sm text-slate-600">No invoice yet. Create one to bill the customer - line amounts will be snapshot from this order.</p>
         <form method="post" action="{% url 'sales:order_create_invoice' pk=order.pk %}" class="mt-3">
           {% csrf_token %}
           <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white hover:bg-nova-700">

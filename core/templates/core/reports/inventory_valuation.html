@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}Inventory Valuation — NovaOPS{% endblock %}
+{% block title %}Inventory Valuation - NovaOPS{% endblock %}
 
 {% block content %}
 <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -48,9 +48,9 @@
             <td class="px-4 py-2 font-mono text-xs text-slate-500">{{ row.product.sku }}</td>
             <td class="px-4 py-2 text-slate-600">{{ row.location }}</td>
             <td class="px-4 py-2 text-right">{{ row.qty|floatformat:0 }}</td>
-            <td class="px-4 py-2 text-right text-slate-600">{% if row.purchase_price %}{{ row.purchase_price|floatformat:2 }}{% else %}—{% endif %}</td>
+            <td class="px-4 py-2 text-right text-slate-600">{% if row.purchase_price %}{{ row.purchase_price|floatformat:2 }}{% else %}-{% endif %}</td>
             <td class="px-4 py-2 text-right font-semibold">{{ row.cost_value|floatformat:2 }}</td>
-            <td class="px-4 py-2 text-right text-slate-600">{% if row.list_price %}{{ row.list_price|floatformat:2 }}{% else %}—{% endif %}</td>
+            <td class="px-4 py-2 text-right text-slate-600">{% if row.list_price %}{{ row.list_price|floatformat:2 }}{% else %}-{% endif %}</td>
             <td class="px-4 py-2 text-right font-semibold">{{ row.retail_value|floatformat:2 }}</td>
           </tr>
         {% endfor %}

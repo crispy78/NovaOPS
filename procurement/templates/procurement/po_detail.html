@@ -64,11 +64,11 @@
 <div class="mb-8 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
   <div>
     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Supplier</p>
-    <p class="mt-1 font-medium text-slate-900">{{ po.supplier|default:"—" }}</p>
+    <p class="mt-1 font-medium text-slate-900">{{ po.supplier|default:"-" }}</p>
   </div>
   <div>
     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Expected delivery</p>
-    <p class="mt-1 font-medium text-slate-900">{{ po.expected_delivery_date|default:"—" }}</p>
+    <p class="mt-1 font-medium text-slate-900">{{ po.expected_delivery_date|default:"-" }}</p>
   </div>
   <div>
     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Created</p>
@@ -78,7 +78,7 @@
   <div>
     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total cost</p>
     <p class="mt-1 font-medium text-slate-900">
-      {% if po.total_cost is not None %}{{ po.total_cost|floatformat:2 }}{% else %}—{% endif %}
+      {% if po.total_cost is not None %}{{ po.total_cost|floatformat:2 }}{% else %}-{% endif %}
     </p>
   </div>
 </div>
@@ -123,10 +123,10 @@
                 {{ line.qty_outstanding|floatformat:"-3" }}
               </td>
               <td class="px-6 py-3 text-right text-slate-700">
-                {% if line.unit_cost %}{{ line.unit_cost|floatformat:2 }}{% else %}—{% endif %}
+                {% if line.unit_cost %}{{ line.unit_cost|floatformat:2 }}{% else %}-{% endif %}
               </td>
               <td class="px-6 py-3 text-right font-medium text-slate-900">
-                {% if line.line_total %}{{ line.line_total|floatformat:2 }}{% else %}—{% endif %}
+                {% if line.line_total %}{{ line.line_total|floatformat:2 }}{% else %}-{% endif %}
               </td>
             </tr>
           {% endfor %}

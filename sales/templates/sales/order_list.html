@@ -36,7 +36,7 @@
             {% if o.relation_organization %}
               <a href="{% url 'relations:organization_detail' pk=o.relation_organization.pk %}" class="font-medium text-nova-700 hover:underline">{{ o.relation_organization.name }}</a>
             {% else %}
-              <span class="text-slate-400">—</span>
+              <span class="text-slate-400">-</span>
             {% endif %}
           </td>
           <td class="px-4 py-3">
@@ -53,7 +53,7 @@
             {% if o.quote %}
               <a href="{{ o.quote.get_absolute_url }}" class="text-nova-700 hover:underline">{{ o.quote.reference }}</a>
             {% else %}
-              <span class="text-slate-400">—</span>
+              <span class="text-slate-400">-</span>
             {% endif %}
           </td>
           <td class="px-4 py-3 text-slate-500">{{ o.created_at|date:"Y-m-d" }}</td>

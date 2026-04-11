@@ -1,4 +1,4 @@
-# Human-readable version — bump this manually when releasing a new version.
+# Human-readable version - bump this manually when releasing a new version.
 VERSION = "0.1"
 
 _build_cache: str | None = None
@@ -11,7 +11,7 @@ def get_build_hash() -> str:
 
     Computed once per process start (cached in ``_build_cache``), so there is
     no file-system overhead after the first call.  The value changes whenever
-    any source file is saved and the development server reloads — giving an
+    any source file is saved and the development server reloads - giving an
     automatic, zero-effort build indicator.
     """
     global _build_cache
@@ -22,7 +22,7 @@ def get_build_hash() -> str:
 
     project_root = Path(__file__).resolve().parent.parent
 
-    # Directories that contain generated or third-party files — skip them so
+    # Directories that contain generated or third-party files - skip them so
     # only project source influences the build hash.
     _SKIP = {".venv", "__pycache__", "node_modules", "staticfiles", "media"}
 

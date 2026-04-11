@@ -414,7 +414,7 @@ class ProductRelation(UUIDPrimaryKeyModel):
         ]
 
     def __str__(self) -> str:
-        return f'{self.from_product.sku} —{self.relation_type}→ {self.to_product.sku}'
+        return f'{self.from_product.sku} -{self.relation_type}→ {self.to_product.sku}'
 
     def clean(self) -> None:
         super().clean()

@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{{ rule.name }} — Pricing{% endblock %}
+{% block title %}{{ rule.name }} - Pricing{% endblock %}
 
 {% block content %}
 {# Breadcrumb + header #}
@@ -123,7 +123,7 @@
   <div class="lg:col-span-2">
     <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div class="border-b border-slate-100 px-5 py-4">
-        <h2 class="font-semibold text-slate-900">Covered products — price preview</h2>
+        <h2 class="font-semibold text-slate-900">Covered products - price preview</h2>
         <p class="mt-0.5 text-xs text-slate-500">
           All products reached by this rule's assignments.
           <span class="rounded bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700">N/A</span>
@@ -153,14 +153,14 @@
                     {% if row.product.purchase_price is not None %}
                       {{ row.product.currency }} {{ row.product.purchase_price|floatformat:2 }}
                     {% else %}
-                      <span class="text-slate-300">—</span>
+                      <span class="text-slate-300">-</span>
                     {% endif %}
                   </td>
                   <td class="px-5 py-3 text-right font-mono text-xs text-slate-500 hidden md:table-cell">
                     {% if row.product.list_price is not None %}
                       {{ row.product.currency }} {{ row.product.list_price|floatformat:2 }}
                     {% else %}
-                      <span class="text-slate-300">—</span>
+                      <span class="text-slate-300">-</span>
                     {% endif %}
                   </td>
                   <td class="px-5 py-3 text-right">

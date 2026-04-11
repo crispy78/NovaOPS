@@ -7,7 +7,7 @@
 <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
     <h1 class="text-2xl font-bold tracking-tight text-slate-900">Accounts</h1>
-    <p class="mt-1 text-sm text-slate-500">Customers, prospects, suppliers, partners — all organisations you interact with.</p>
+    <p class="mt-1 text-sm text-slate-500">Customers, prospects, suppliers, partners - all organisations you interact with.</p>
   </div>
   <a href="{% url 'relations:organization_create' %}" class="inline-flex items-center gap-2 rounded-lg bg-nova-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
     <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
@@ -125,7 +125,7 @@
             {% if org.parent %}
               <a href="{% url 'relations:organization_detail' pk=org.parent.pk %}" class="text-nova-700 hover:underline">{{ org.parent.name }}</a>
             {% else %}
-              <span class="text-slate-400">—</span>
+              <span class="text-slate-400">-</span>
             {% endif %}
           </td>
           <td class="px-4 py-3 hidden xl:table-cell">
@@ -140,7 +140,7 @@
                   {% endfor %}
                 </div>
               {% else %}
-                <span class="text-slate-400">—</span>
+                <span class="text-slate-400">-</span>
               {% endif %}
             {% endwith %}
           </td>

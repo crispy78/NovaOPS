@@ -7,7 +7,7 @@
   <div>
     <h1 class="text-2xl font-bold text-slate-900">Assets</h1>
     <p class="mt-1 max-w-2xl text-sm text-slate-500">
-      Installed equipment tracked per customer — lifespan, repairs, recalls, and replacement advice.
+      Installed equipment tracked per customer - lifespan, repairs, recalls, and replacement advice.
       Use <a href="{% url 'assets:mjop_list' %}" class="font-medium text-nova-700 hover:underline">maintenance plans</a>
       for long-range schedules and
       <a href="{% url 'assets:recall_list' %}" class="font-medium text-nova-700 hover:underline">recalls</a>
@@ -87,14 +87,14 @@
             <a href="{% url 'relations:organization_detail' pk=a.organization.pk %}" class="text-nova-700 hover:underline">{{ a.organization.name }}</a>
           </td>
           <td class="px-4 py-3 font-mono text-xs text-slate-600">
-            {% if a.product %}{{ a.product.sku }}{% else %}—{% endif %}
+            {% if a.product %}{{ a.product.sku }}{% else %}-{% endif %}
             {% if a.serial_number %}<span class="text-slate-400"> · {{ a.serial_number }}</span>{% endif %}
           </td>
           <td class="px-4 py-3">
             <span class="text-slate-700">{{ a.get_status_display }}</span>
           </td>
           <td class="px-4 py-3 text-slate-500">
-            {% if a.expected_end_of_life_date %}{{ a.expected_end_of_life_date|date:"Y-m-d" }}{% else %}—{% endif %}
+            {% if a.expected_end_of_life_date %}{{ a.expected_end_of_life_date|date:"Y-m-d" }}{% else %}-{% endif %}
           </td>
         </tr>
       {% empty %}

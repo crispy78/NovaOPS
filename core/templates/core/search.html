@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}Search — NovaOPS{% endblock %}
+{% block title %}Search - NovaOPS{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -76,7 +76,7 @@
           {% for quote in quotes %}
             <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
               <a href="{{ quote.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ quote.reference }}</a>
-              <span class="flex-1 text-slate-500">{{ quote.relation_organization.name|default:"—" }}</span>
+              <span class="flex-1 text-slate-500">{{ quote.relation_organization.name|default:"-" }}</span>
               <span class="text-xs text-slate-400">{{ quote.get_status_display }}</span>
             </li>
           {% endfor %}
@@ -93,7 +93,7 @@
           {% for order in orders %}
             <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
               <a href="{{ order.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ order.reference }}</a>
-              <span class="flex-1 text-slate-500">{{ order.relation_organization.name|default:"—" }}</span>
+              <span class="flex-1 text-slate-500">{{ order.relation_organization.name|default:"-" }}</span>
               <span class="text-xs text-slate-400">{{ order.get_status_display }}</span>
             </li>
           {% endfor %}
@@ -110,7 +110,7 @@
           {% for inv in invoices %}
             <li class="flex items-center gap-4 px-5 py-3 text-sm hover:bg-slate-50">
               <a href="{{ inv.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ inv.reference }}</a>
-              <span class="flex-1 text-slate-500">{{ inv.relation_organization.name|default:"—" }}</span>
+              <span class="flex-1 text-slate-500">{{ inv.relation_organization.name|default:"-" }}</span>
               <span class="text-xs text-slate-400">{{ inv.get_status_display }}</span>
             </li>
           {% endfor %}

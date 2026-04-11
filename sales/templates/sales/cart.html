@@ -100,7 +100,7 @@
                 {% if line.product.list_price is not None %}
                   {{ line.product.currency }} {{ line.line_total_with_options|floatformat:2 }}
                 {% else %}
-                  <span class="font-normal text-slate-400">—</span>
+                  <span class="font-normal text-slate-400">-</span>
                 {% endif %}
               </td>
 

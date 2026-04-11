@@ -341,7 +341,7 @@ class Invoice(UUIDPrimaryKeyModel):
         )
 
     def grand_total(self) -> Decimal:
-        """Total including VAT — the amount the customer pays."""
+        """Total including VAT - the amount the customer pays."""
         return self.total() + self.tax_total()
 
     def amount_paid(self) -> Decimal:

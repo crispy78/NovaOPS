@@ -254,7 +254,7 @@ def make_shipment_lines_form(shipping_order: ShippingOrder) -> type[forms.Form]:
             min_value=0,
             max_value=max(unsh, 0),
             initial=unsh if unsh > 0 else 0,
-            label=f'{fl.product_name} ({fl.sku}) — line qty {sol.quantity}',
+            label=f'{fl.product_name} ({fl.sku}) - line qty {sol.quantity}',
             help_text=f'Up to {unsh} not yet assigned to a parcel/shipment.',
             widget=forms.NumberInput(
                 attrs={'class': _sales_input_class(), 'min': 0, 'max': max(unsh, 0), 'style': 'max-width:8rem'},

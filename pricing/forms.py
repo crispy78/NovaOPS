@@ -68,8 +68,8 @@ class PricingRuleAssignmentForm(forms.ModelForm):
                 field.widget.attrs.setdefault('class', cls)
         self.fields['product'].required  = False
         self.fields['category'].required = False
-        self.fields['product'].empty_label  = '— select product —'
-        self.fields['category'].empty_label = '— select category —'
+        self.fields['product'].empty_label  = '- select product -'
+        self.fields['category'].empty_label = '- select category -'
 
 
 AssignmentFormSet = inlineformset_factory(

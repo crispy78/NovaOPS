@@ -222,7 +222,7 @@
                   class="flex-1 rounded-lg bg-nova-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-nova-700 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:ring-offset-2">
             <i class="fa-solid fa-cart-plus mr-1.5" aria-hidden="true"></i>Add to cart
             {% if product.list_price is not None %}
-              — <span id="total-price-label">{{ product.currency }} {{ product.list_price|floatformat:2 }}</span>
+              - <span id="total-price-label">{{ product.currency }} {{ product.list_price|floatformat:2 }}</span>
             {% endif %}
           </button>
         </div>
@@ -275,7 +275,7 @@
         <div class="flex justify-between gap-4 py-2">
           <dt class="text-slate-500">L × W × H</dt>
           <dd class="text-right font-medium text-slate-900">
-            {{ product.length|default:"—" }} × {{ product.width|default:"—" }} × {{ product.height|default:"—" }}
+            {{ product.length|default:"-" }} × {{ product.width|default:"-" }} × {{ product.height|default:"-" }}
             {% if product.dimension_unit %}<span class="text-slate-500"> {{ product.dimension_unit }}</span>{% endif %}
           </dd>
         </div>
@@ -377,7 +377,7 @@
           {% for tier in product.price_tiers.all %}
             <tr>
               <td class="px-6 py-3 font-mono">{{ tier.min_quantity }}</td>
-              <td class="px-6 py-3 font-mono">{% if tier.max_quantity %}{{ tier.max_quantity }}{% else %}—{% endif %}</td>
+              <td class="px-6 py-3 font-mono">{% if tier.max_quantity %}{{ tier.max_quantity }}{% else %}-{% endif %}</td>
               <td class="px-6 py-3 font-medium">{{ product.currency }} {{ tier.unit_price|floatformat:2 }}</td>
             </tr>
           {% endfor %}
@@ -539,7 +539,7 @@
                 <td class="px-6 py-3 font-medium text-slate-900">
                   <a href="{{ entry.location.warehouse.get_absolute_url }}" class="hover:text-nova-700">{{ entry.location.warehouse.name }}</a>
                 </td>
-                <td class="px-6 py-3 font-mono text-xs text-slate-500">{{ entry.location.code }} — {{ entry.location.name }}</td>
+                <td class="px-6 py-3 font-mono text-xs text-slate-500">{{ entry.location.code }} - {{ entry.location.name }}</td>
                 <td class="px-6 py-3 text-right font-semibold text-slate-900">{{ entry.quantity_on_hand|floatformat:"-3" }}</td>
                 <td class="px-6 py-3 text-right text-xs text-slate-400">{{ entry.last_updated|date:"Y-m-d H:i" }}</td>
               </tr>
@@ -619,7 +619,7 @@
                     {{ opt.display_name }}
                   {% endif %}
                 </td>
-                <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ opt.display_sku|default:"—" }}</td>
+                <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ opt.display_sku|default:"-" }}</td>
                 <td class="px-4 py-3 text-slate-700">
                   {% if opt.display_price %}
                     + {{ product.currency }} {{ opt.display_price|floatformat:2 }}

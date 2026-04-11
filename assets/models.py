@@ -18,7 +18,7 @@ class AssetStatus(models.TextChoices):
     IN_SERVICE = 'in_service', 'In service'
     UNDER_REPAIR = 'under_repair', 'Under repair'
     WARRANTY = 'warranty', 'In warranty'
-    END_OF_LIFE_NEAR = 'eol_near', 'End of life — plan replacement'
+    END_OF_LIFE_NEAR = 'eol_near', 'End of life - plan replacement'
     RETIRED = 'retired', 'Retired'
     DISPOSED = 'disposed', 'Disposed'
 
@@ -335,7 +335,7 @@ class RecallCampaign(UUIDPrimaryKeyModel):
         verbose_name_plural = 'recall campaigns'
 
     def __str__(self) -> str:
-        return f'{self.reference} — {self.title}'
+        return f'{self.reference} - {self.title}'
 
     def get_absolute_url(self) -> str:
         from django.urls import reverse
@@ -438,7 +438,7 @@ class MaintenancePlan(UUIDPrimaryKeyModel):
         verbose_name_plural = 'multi-year maintenance plans (MJOP)'
 
     def __str__(self) -> str:
-        return f'{self.reference} — {self.name}'
+        return f'{self.reference} - {self.name}'
 
     def get_absolute_url(self) -> str:
         from django.urls import reverse

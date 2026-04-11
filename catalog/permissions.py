@@ -2,11 +2,11 @@
 Permission helpers for the catalog frontend.
 
 Django model permissions used today:
-  - catalog.change_product — edit product via the public edit form (and admin).
+  - catalog.change_product - edit product via the public edit form (and admin).
 
 Custom permissions (see Product.Meta.permissions) for future RBAC:
-  - catalog.view_product_purchase_price — show purchase price on detail / form.
-  - catalog.edit_product_pricing — edit commercial price fields (list, MSRP, tax, discount).
+  - catalog.view_product_purchase_price - show purchase price on detail / form.
+  - catalog.edit_product_pricing - edit commercial price fields (list, MSRP, tax, discount).
 
 Until roles are assigned, users with ``change_product`` keep full edit access; granular
 perms can later revoke slices without changing view code.

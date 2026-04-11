@@ -148,7 +148,7 @@ _REFS = {
     'inv3':       'INV-DEMO-0003',
 }
 
-# ── Product image URLs (loremflickr.com — CC-licensed, keyword-matched) ─────────
+# ── Product image URLs (loremflickr.com - CC-licensed, keyword-matched) ─────────
 # loremflickr returns a consistent photo for each lock seed.
 _IMAGE_URLS: dict[str, str] = {
     'NEW-MT93-4G':         'https://loremflickr.com/800/600/handheld,terminal,scanner?lock=401',
@@ -449,7 +449,7 @@ class Command(BaseCommand):
 
         mt93 = p('NEW-MT93-4G',
             name='Newland MT93 Falcon mobile data terminal (4G)', category=terminals, brand='Newland',
-            short='Rugged Android 13 mobile computer with 2D imager, Wi-Fi 6, 4G, NFC — events & retail.',
+            short='Rugged Android 13 mobile computer with 2D imager, Wi-Fi 6, 4G, NFC - events & retail.',
             long_desc=(
                 'The MT93 Falcon is suited for scan-intensive workflows: ticketing, access control, and '
                 'line busting. Supports GS1 barcodes and QR from phone screens. Includes enterprise '
@@ -460,7 +460,7 @@ class Command(BaseCommand):
             lead_time_text='Usually 5–7 business days from NL stock',
             purchase=Decimal('485.00'), list_price=Decimal('749.00'), msrp=Decimal('799.00'),
             discount_group=dg_retail, serial_req=True, warranty=36,
-            maintenance='Every 12 months — battery check & cleaning recommended',
+            maintenance='Every 12 months - battery check & cleaning recommended',
             depreciation=36, asset_type=AssetType.SOLD,
             length=Decimal('165'), width=Decimal('78'), height=Decimal('24'),
             w_net=Decimal('285'), w_gross=Decimal('520'),
@@ -469,7 +469,7 @@ class Command(BaseCommand):
         )
         hr15 = p('NEW-HR15-W',
             name='Newland HR15 Marlin wired 2D scanner', category=scanners, brand='Newland',
-            short='Handheld USB 2D imager — strong performance on phone-screen QR and damaged labels.',
+            short='Handheld USB 2D imager - strong performance on phone-screen QR and damaged labels.',
             long_desc='Ideal companion for fixed POS: lightweight, desk stand optional, USB-HID keyboard wedge.',
             ean='8719324001456', mpn='HR15-W1-USB', upc='843849012401',
             lead_time_text='1–3 business days when in stock',
@@ -522,16 +522,16 @@ class Command(BaseCommand):
         )
         hp_eol = p('HP-ENGAGE-ONE-PRIME',
             name='HP Engage One Prime (legacy) all-in-one POS', category=terminals, brand='HP',
-            short='End-of-life all-in-one — stock only for existing installed base spares.',
+            short='End-of-life all-in-one - stock only for existing installed base spares.',
             long_desc='Use for like-for-like replacements where the customer standardises on this chassis.',
             status=ProductStatus.END_OF_LIFE, mpn='Engage-One-Prime-EOL', upc='889894123456',
-            lead_time_text='EOL — remaining stock only; confirm availability before quoting',
+            lead_time_text='EOL - remaining stock only; confirm availability before quoting',
             purchase=Decimal('220.00'), list_price=Decimal('399.00'), warranty=0,
-            maintenance='EOL — advise customer migration path', serial_req=True,
+            maintenance='EOL - advise customer migration path', serial_req=True,
             asset_type=AssetType.SOLD, fetch_image=True,
         )
         minipc = p('SYS-MINIPC-I5',
-            name='Industrial mini PC — Intel Core i5, 8GB RAM, 256GB NVMe',
+            name='Industrial mini PC - Intel Core i5, 8GB RAM, 256GB NVMe',
             category=terminals, brand='Durapos',
             short='Fanless mini PC for POS back-office or kiosk; Windows 11 IoT ready.',
             long_desc=(
@@ -574,10 +574,10 @@ class Command(BaseCommand):
         )
         bundle = p('BUNDLE-WKP-BASIC',
             name='Basic POS workstation bundle', category=bundles, brand='Workshop',
-            short='Mini PC + 15.6" touch monitor + Bluetooth scanner — quoted as one SKU.',
+            short='Mini PC + 15.6" touch monitor + Bluetooth scanner - quoted as one SKU.',
             long_desc='Components ship together; serial numbers captured per line on delivery.',
             upc='843849099001',
-            lead_time_text='Ships when all components available — usually within 5 business days',
+            lead_time_text='Ships when all components available - usually within 5 business days',
             purchase=Decimal('733.00'), list_price=Decimal('1149.00'),
             discount_group=dg_partner, serial_req=True, warranty=36, lead_days=5,
             fetch_image=True,
@@ -592,7 +592,7 @@ class Command(BaseCommand):
         )
         p('LEGACY-PINPAD-X',
             name='Legacy PIN pad model X (discontinued)', category=hardware, brand='Generic',
-            short='No longer orderable — reference only.',
+            short='No longer orderable - reference only.',
             status=ProductStatus.UNAVAILABLE, purchase=None, list_price=None,
             inventory_tracked=False,
         )
@@ -639,12 +639,12 @@ class Command(BaseCommand):
 
         # ── Demo documents ─────────────────────────────────────────────────────
         for prod, doc_type, title, fname in [
-            (mt93,    ProductDocumentType.DATASHEET,     'MT93 Falcon — spec sheet (demo)',     'mt93-datasheet-demo.txt'),
-            (mt93,    ProductDocumentType.MANUAL,        'MT93 — quick start guide (demo)',     'mt93-quickstart-demo.txt'),
-            (mt93,    ProductDocumentType.CERTIFICATION, 'MT93 — CE / RED declaration (demo)', 'mt93-ce-demo.txt'),
-            (boca,    ProductDocumentType.DATASHEET,     'Lemur-X — technical summary (demo)', 'lemur-x-datasheet-demo.txt'),
-            (durapos, ProductDocumentType.DATASHEET,     'DPT-201 — specifications (demo)',    'dpt201-datasheet-demo.txt'),
-            (minipc,  ProductDocumentType.CERTIFICATION, 'Mini PC — CE declaration (demo)',    'minipc-ce-demo.txt'),
+            (mt93,    ProductDocumentType.DATASHEET,     'MT93 Falcon - spec sheet (demo)',     'mt93-datasheet-demo.txt'),
+            (mt93,    ProductDocumentType.MANUAL,        'MT93 - quick start guide (demo)',     'mt93-quickstart-demo.txt'),
+            (mt93,    ProductDocumentType.CERTIFICATION, 'MT93 - CE / RED declaration (demo)', 'mt93-ce-demo.txt'),
+            (boca,    ProductDocumentType.DATASHEET,     'Lemur-X - technical summary (demo)', 'lemur-x-datasheet-demo.txt'),
+            (durapos, ProductDocumentType.DATASHEET,     'DPT-201 - specifications (demo)',    'dpt201-datasheet-demo.txt'),
+            (minipc,  ProductDocumentType.CERTIFICATION, 'Mini PC - CE declaration (demo)',    'minipc-ce-demo.txt'),
         ]:
             ProductDocument.objects.update_or_create(
                 product=prod, title=title,
@@ -654,7 +654,7 @@ class Command(BaseCommand):
 
         # ── Technical specs ────────────────────────────────────────────────────
         ProductITSpec.objects.update_or_create(product=mt93, defaults={
-            'operating_system': 'Android 13 (GMS) — enterprise lifecycle per vendor program',
+            'operating_system': 'Android 13 (GMS) - enterprise lifecycle per vendor program',
             'cpu': 'Qualcomm octa-core (variant per MT93 revision)',
             'ram': '4 GB LPDDR4', 'storage': '64 GB eMMC',
         })
@@ -664,7 +664,7 @@ class Command(BaseCommand):
         })
         ProductScannerSpec.objects.update_or_create(product=mt93, defaults={
             'scan_engine': '2D CMOS imager (high density, mobile screen friendly)',
-            'drop_spec': '1.5 m to concrete (with protective boot — verify SKU variant)',
+            'drop_spec': '1.5 m to concrete (with protective boot - verify SKU variant)',
             'ip_rating': 'IP65', 'battery_mah': 5000, 'battery_hours': Decimal('10.00'),
         })
         ProductScannerSpec.objects.update_or_create(product=hr15, defaults={
@@ -672,7 +672,7 @@ class Command(BaseCommand):
             'ip_rating': 'IP42', 'battery_mah': None, 'battery_hours': None,
         })
         ProductConnectivitySpec.objects.update_or_create(product=hr15, defaults={
-            'io_ports': 'USB-A captive cable (~1.8 m); HID keyboard wedge — bus powered',
+            'io_ports': 'USB-A captive cable (~1.8 m); HID keyboard wedge - bus powered',
             'wireless': 'N/A (wired USB)',
         })
         ProductConnectivitySpec.objects.update_or_create(product=hr22, defaults={
@@ -812,7 +812,7 @@ class Command(BaseCommand):
             legal_name='Metro Arena N.V.',
             industry='Sports & entertainment venue',
             website='https://metroarena.example',
-            notes='Evaluating mobile POS and access control for concourse upgrade — RFP expected Q3.',
+            notes='Evaluating mobile POS and access control for concourse upgrade - RFP expected Q3.',
         )
 
         qsr = org('org:quickserve-restaurants', 'QuickServe Restaurant Group',
@@ -895,7 +895,7 @@ class Command(BaseCommand):
         chloe = person('person:chloe-de-vries', 'Chloë', 'de Vries',
             title_prefix='Ms.', date_of_birth=date(1992, 7, 21),
             bio='Owns hardware tenders and framework agreements for the venue group.',
-            notes='Procurement contact — prefers formal quotation on letterhead.',
+            notes='Procurement contact - prefers formal quotation on letterhead.',
         )
         marc = person('person:marc-keller', 'Marc', 'Keller',
             title_prefix='Mr.', date_of_birth=date(1979, 5, 30), pronouns='he/him',
@@ -930,7 +930,7 @@ class Command(BaseCommand):
         for p_obj, o_obj, title, start, end, primary, notes in [
             (alice,  seg_boxoffice, 'Box Office Manager',              date(2022, 4, 1),  None,             True,  ''),
             (alice,  rvta,          'Working Group Delegate',          date(2019, 3, 1),  date(2022, 3, 31),False,
-             'Delegate during the ticketing interoperability WG — ended when she joined SEG full-time.'),
+             'Delegate during the ticketing interoperability WG - ended when she joined SEG full-time.'),
             (bob,    seg_it,        'IT Security Lead',                date(2021, 9, 1),  None,             True,  ''),
             (chloe,  customer,      'Procurement Specialist',          date(2023, 2, 1),  None,             True,  ''),
             (marc,   vendor_nl,     'Account Manager',                 date(2020, 1, 1),  None,             True,  ''),
@@ -947,7 +947,7 @@ class Command(BaseCommand):
             )
 
         SpecialEvent.objects.update_or_create(person=alice, name='Dietary preference',
-            defaults={'event_date': None, 'notes': 'Vegetarian — avoid fish and meat.'},
+            defaults={'event_date': None, 'notes': 'Vegetarian - avoid fish and meat.'},
         )
         SpecialEvent.objects.update_or_create(person=bob, name='Wedding anniversary',
             defaults={'event_date': date(2019, 6, 14), 'notes': ''},
@@ -1053,13 +1053,13 @@ class Command(BaseCommand):
         User = get_user_model()
         user = User.objects.filter(is_superuser=True).first() or User.objects.order_by('id').first()
         if not user:
-            self.stdout.write(self.style.WARNING('    No user found — skipping assets.'))
+            self.stdout.write(self.style.WARNING('    No user found - skipping assets.'))
             return
 
         customer = Organization.objects.filter(pk=_rel_uuid('org:stadium-events-group')).first()
         qsr      = Organization.objects.filter(pk=_rel_uuid('org:quickserve-restaurants')).first()
         if not customer or not qsr:
-            self.stdout.write(self.style.WARNING('    Demo organisations missing — run relations first.'))
+            self.stdout.write(self.style.WARNING('    Demo organisations missing - run relations first.'))
             return
 
         def prod(sku): return Product.objects.filter(sku=sku).first()
@@ -1077,7 +1077,7 @@ class Command(BaseCommand):
             defaults={
                 'reference':          _REFS['recall_1'],
                 'title':              'Demo: thermal printhead inspection (fictional)',
-                'description':        'Illustrative recall for demo UI — not a real manufacturer notice.',
+                'description':        'Illustrative recall for demo UI - not a real manufacturer notice.',
                 'remedy_description': 'Inspect printhead; replace if streaking persists after cleaning.',
                 'product':            dpt201,
                 'announced_date':     date(2026, 1, 15),
@@ -1121,11 +1121,11 @@ class Command(BaseCommand):
             'asset:seg:dpt201-01', customer, dpt201,
             'DPT-DEMO-SN-0001', 'SEG-POS-R1-04',
             date(2024, 6, 1), date(2024, 6, 10), date(2026, 6, 1), date(2029, 6, 1),
-            AssetStatus.IN_SERVICE, 'Box office — lane 4',
+            AssetStatus.IN_SERVICE, 'Box office - lane 4',
             'Demo asset: maintenance plans and replacement scenarios.',
             [
                 ('install',   AssetEventType.INSTALLATION, 'Installed and configured',          'Ethernet + USB failover tested.',                              date(2024, 6, 10)),
-                ('clean-jan', AssetEventType.REPAIR,       'Annual cleaning — printhead check', 'Light streaking noted; printhead cleaned; monitoring.',         date(2025, 1, 20)),
+                ('clean-jan', AssetEventType.REPAIR,       'Annual cleaning - printhead check', 'Light streaking noted; printhead cleaned; monitoring.',         date(2025, 1, 20)),
                 ('recall-chk',AssetEventType.INSPECTION,  'Recall check in progress',          'Waiting for tech availability to perform inspection.',           date(2026, 2, 5)),
             ],
         )
@@ -1133,7 +1133,7 @@ class Command(BaseCommand):
             'asset:seg:dpt201-02', customer, dpt201,
             'DPT-DEMO-SN-0002', 'SEG-POS-R1-05',
             date(2024, 6, 1), date(2024, 6, 10), date(2026, 6, 1), date(2029, 6, 1),
-            AssetStatus.IN_SERVICE, 'Box office — lane 5',
+            AssetStatus.IN_SERVICE, 'Box office - lane 5',
             '',
             [
                 ('install',   AssetEventType.INSTALLATION, 'Installed and configured', 'Setup identical to lane 4 unit.', date(2024, 6, 10)),
@@ -1143,7 +1143,7 @@ class Command(BaseCommand):
             'asset:seg:minipc-01', customer, minipc,
             'MINI-DEMO-SN-0001', 'SEG-BK-01',
             date(2026, 3, 14), date(2026, 3, 14), date(2029, 3, 14), date(2031, 3, 14),
-            AssetStatus.IN_SERVICE, 'Back office — server shelf A',
+            AssetStatus.IN_SERVICE, 'Back office - server shelf A',
             'Installed as part of SO-DEMO-0001 deployment.',
             [
                 ('install', AssetEventType.INSTALLATION, 'POS back-office compute installed',
@@ -1154,8 +1154,8 @@ class Command(BaseCommand):
             'asset:seg:hp-eol-01', customer, prod('HP-ENGAGE-ONE-PRIME'),
             'HP-DEMO-SN-0001', 'SEG-KIOSK-02',
             date(2019, 4, 1), date(2019, 4, 10), None, date(2026, 12, 31),
-            AssetStatus.END_OF_LIFE_NEAR, 'Ticketing kiosk — concourse B',
-            'EOL device — flagged for replacement in MJOP 2027.',
+            AssetStatus.END_OF_LIFE_NEAR, 'Ticketing kiosk - concourse B',
+            'EOL device - flagged for replacement in MJOP 2027.',
             [
                 ('install',  AssetEventType.INSTALLATION,   'Installed',          '', date(2019, 4, 10)),
                 ('inspect',  AssetEventType.INSPECTION,     'Annual check',       'Screen calibration needed; power supply warm.', date(2025, 3, 1)),
@@ -1168,7 +1168,7 @@ class Command(BaseCommand):
             'asset:qsr:hr15-01', qsr, hr15,
             'HR15-DEMO-SN-0101', 'QSR-SCAN-001',
             date(2025, 2, 1), date(2025, 2, 5), date(2027, 2, 1), date(2030, 2, 1),
-            AssetStatus.IN_SERVICE, 'Rotterdam HQ — front counter',
+            AssetStatus.IN_SERVICE, 'Rotterdam HQ - front counter',
             'Pilot unit for QSR fixed-scanner deployment.',
             [
                 ('install', AssetEventType.INSTALLATION, 'Pilot scanner installed at HQ', '', date(2025, 2, 5)),
@@ -1178,8 +1178,8 @@ class Command(BaseCommand):
             'asset:qsr:dpt201-01', qsr, dpt201,
             'DPT-DEMO-SN-0101', 'QSR-PRINT-001',
             date(2025, 2, 1), date(2025, 2, 5), date(2027, 2, 1), date(2030, 2, 1),
-            AssetStatus.IN_SERVICE, 'Rotterdam HQ — till 1',
-            'Receipt printer — part of QSR pilot.',
+            AssetStatus.IN_SERVICE, 'Rotterdam HQ - till 1',
+            'Receipt printer - part of QSR pilot.',
             [
                 ('install', AssetEventType.INSTALLATION, 'Printer installed', 'Configured for ESC/POS.', date(2025, 2, 5)),
                 ('paper',   AssetEventType.NOTE,         'Paper jam report',  'Staff resolved; no damage.', date(2025, 8, 12)),
@@ -1201,7 +1201,7 @@ class Command(BaseCommand):
                     'asset': Asset.objects.filter(pk=_ast_uuid('asset:seg:hp-eol-01')).first(),
                     'suggested_product': minipc,
                     'rationale': (
-                        'HP Engage One Prime is EOL — recommend industrial mini PC with separate '
+                        'HP Engage One Prime is EOL - recommend industrial mini PC with separate '
                         '15.6" touch monitor for modern compute baseline and longer lifecycle.'
                     ),
                     'priority':   ReplacementPriority.HIGH,
@@ -1216,7 +1216,7 @@ class Command(BaseCommand):
             defaults={
                 'reference':   _REFS['mjop_1'],
                 'organization': customer,
-                'name':        'Stadium Events — infrastructure maintenance plan 2026–2030 (demo)',
+                'name':        'Stadium Events - infrastructure maintenance plan 2026–2030 (demo)',
                 'valid_from':  date(2026, 1, 1),
                 'valid_until': date(2030, 12, 31),
                 'status':      MaintenancePlanStatus.ACTIVE,
@@ -1233,15 +1233,15 @@ class Command(BaseCommand):
              'Same scope as 2026 visit. Assess wear on cutter blade.',
              a_dpt_01, None, False, 'Approx. €200 incl. parts + travel', MaintenancePlanLineStatus.PLANNED),
             ('line:2027:kiosk-repl', 2027, 2, 'Kiosk compute refresh (PROMOTED)',
-             'HP Engage One Prime reaching EOL — replace with Mini PC + touch monitor.',
-             hp_eol_asset, minipc, True, 'Budget holder approval required — use formal quote',
+             'HP Engage One Prime reaching EOL - replace with Mini PC + touch monitor.',
+             hp_eol_asset, minipc, True, 'Budget holder approval required - use formal quote',
              MaintenancePlanLineStatus.PLANNED),
             ('line:2028:scanner',    2028, 1, 'Handheld scanner estate review',
              'Assess battery health on all MT93 units; replace worn units.',
              None, mt93, False, 'Indicative 6–8 units; TBD after survey', MaintenancePlanLineStatus.PLANNED),
             ('line:2029:pos-refresh',2029, 1, 'Full POS hardware refresh (PROMOTED)',
              'End-of-lifecycle refresh for all remaining POS compute and display hardware.',
-             None, minipc, True, 'Major capital line — initiate RFP 18 months prior',
+             None, minipc, True, 'Major capital line - initiate RFP 18 months prior',
              MaintenancePlanLineStatus.PLANNED),
         ]:
             MaintenancePlanLine.objects.update_or_create(
@@ -1268,14 +1268,14 @@ class Command(BaseCommand):
         User = get_user_model()
         user = User.objects.filter(is_superuser=True).first() or User.objects.order_by('id').first()
         if not user:
-            self.stdout.write(self.style.WARNING('    No user found — skipping sales.'))
+            self.stdout.write(self.style.WARNING('    No user found - skipping sales.'))
             return
 
         customer = Organization.objects.filter(pk=_rel_uuid('org:stadium-events-group')).first()
         prospect = Organization.objects.filter(pk=_rel_uuid('org:metro-arena-prospect')).first()
         qsr      = Organization.objects.filter(pk=_rel_uuid('org:quickserve-restaurants')).first()
         if not customer or not prospect or not qsr:
-            self.stdout.write(self.style.WARNING('    Demo organisations missing — run relations first.'))
+            self.stdout.write(self.style.WARNING('    Demo organisations missing - run relations first.'))
             return
 
         def prod(sku): return Product.objects.filter(sku=sku).first()
@@ -1321,7 +1321,7 @@ class Command(BaseCommand):
             return fl
 
         # ────────────────────────────────────────────────────────────────────────
-        # Q1 — DRAFT: Metro Arena mobile POS proposal
+        # Q1 - DRAFT: Metro Arena mobile POS proposal
         # ────────────────────────────────────────────────────────────────────────
         q1, _ = Quote.objects.update_or_create(
             pk=_sal_uuid('quote:metro-arena-mobile-pos'),
@@ -1338,7 +1338,7 @@ class Command(BaseCommand):
         qline(q1, mt93, 12, 0); qline(q1, hr22, 6, 1); qline(q1, bundle, 3, 2)
 
         # ────────────────────────────────────────────────────────────────────────
-        # Q2 — SENT: Stadium Events printer refresh
+        # Q2 - SENT: Stadium Events printer refresh
         # ────────────────────────────────────────────────────────────────────────
         q2, _ = Quote.objects.update_or_create(
             pk=_sal_uuid('quote:stadium-printer-refresh'),
@@ -1353,7 +1353,7 @@ class Command(BaseCommand):
         qline(q2, dpt201, 6, 0); qline(q2, roll, 200, 1); qline(q2, boca, 2, 2)
 
         # ────────────────────────────────────────────────────────────────────────
-        # Q3 — ACCEPTED (locked → SO1): Stadium Events mini PC deployment
+        # Q3 - ACCEPTED (locked → SO1): Stadium Events mini PC deployment
         # ────────────────────────────────────────────────────────────────────────
         q3, _ = Quote.objects.update_or_create(
             pk=_sal_uuid('quote:stadium-minipc-deploy'),
@@ -1368,7 +1368,7 @@ class Command(BaseCommand):
         qline(q3, minipc, 5, 0); qline(q3, mon_touch, 5, 1)
 
         # ────────────────────────────────────────────────────────────────────────
-        # Q4 — DRAFT: QuickServe annual scanner order
+        # Q4 - DRAFT: QuickServe annual scanner order
         # ────────────────────────────────────────────────────────────────────────
         q4, _ = Quote.objects.update_or_create(
             pk=_sal_uuid('quote:qsr-scanner-refresh-2026'),
@@ -1385,7 +1385,7 @@ class Command(BaseCommand):
         qline(q4, hr15, 20, 0); qline(q4, roll, 500, 1)
 
         # ────────────────────────────────────────────────────────────────────────
-        # Q5 — EXPIRED: Old Metro Arena quick scan quote
+        # Q5 - EXPIRED: Old Metro Arena quick scan quote
         # ────────────────────────────────────────────────────────────────────────
         q5, _ = Quote.objects.update_or_create(
             pk=_sal_uuid('quote:metro-arena-quick-scan-expired'),
@@ -1393,13 +1393,13 @@ class Command(BaseCommand):
                 'reference': _REFS['q5'], 'created_by': user,
                 'relation_organization': prospect, 'status': QuoteStatus.EXPIRED,
                 'valid_until': date(2025, 12, 31), 'internal_reference': 'CRM-MA-000',
-                'notes': 'Preliminary scope — superseded by Q-DEMO-0001 which covers full concourse.',
+                'notes': 'Preliminary scope - superseded by Q-DEMO-0001 which covers full concourse.',
             },
         )
         qline(q5, hr22, 4, 0)
 
         # ────────────────────────────────────────────────────────────────────────
-        # SO1 — FULFILLED: Mini PC deployment (from Q3)
+        # SO1 - FULFILLED: Mini PC deployment (from Q3)
         # Full pipeline: FO (completed) → SHO (shipped) → Shipment (delivered)
         # Invoice: partial payment
         # ────────────────────────────────────────────────────────────────────────
@@ -1451,7 +1451,7 @@ class Command(BaseCommand):
             defaults={
                 'shipping_order': sho1, 'sequence': 1, 'carrier': 'DHL Freight',
                 'tracking_number': 'JD0123456789012', 'status': ShipmentStatus.DELIVERED,
-                'notes': 'Delivered 2026-03-14 — signed by B. Janssen.',
+                'notes': 'Delivered 2026-03-14 - signed by B. Janssen.',
             },
         )
         for shol in [shol_minipc, shol_mon]:
@@ -1485,13 +1485,13 @@ class Command(BaseCommand):
             defaults={
                 'invoice': inv1,
                 'amount': (inv1_total * Decimal('0.5')).quantize(Decimal('0.01')),
-                'reference_note': 'Bank transfer — 50% advance per contract terms',
+                'reference_note': 'Bank transfer - 50% advance per contract terms',
                 'created_by': user,
             },
         )
 
         # ────────────────────────────────────────────────────────────────────────
-        # SO2 — CONFIRMED: Wired scanners (no quote) — fulfillment pending
+        # SO2 - CONFIRMED: Wired scanners (no quote) - fulfillment pending
         # Invoice: overdue, unpaid
         # ────────────────────────────────────────────────────────────────────────
         so2, _ = SalesOrder.objects.update_or_create(
@@ -1499,7 +1499,7 @@ class Command(BaseCommand):
             defaults={
                 'reference': _REFS['so2'], 'created_by': user, 'quote': None,
                 'relation_organization': customer, 'status': OrderStatus.CONFIRMED,
-                'notes': 'Repeat standing order — wired scanners for seasonal event staff. No quote needed.',
+                'notes': 'Repeat standing order - wired scanners for seasonal event staff. No quote needed.',
             },
         )
         ol_hr15 = oline(so2, hr15, 20, 0)
@@ -1533,10 +1533,10 @@ class Command(BaseCommand):
                     'line_total': ol_hr15.line_total, 'sort_order': 0,
                 },
             )
-        # No payment recorded — invoice is overdue (due 2026-03-15)
+        # No payment recorded - invoice is overdue (due 2026-03-15)
 
         # ────────────────────────────────────────────────────────────────────────
-        # SO3 — CONFIRMED: QuickServe pilot order — fulfillment in progress
+        # SO3 - CONFIRMED: QuickServe pilot order - fulfillment in progress
         # Invoice: paid in full
         # ────────────────────────────────────────────────────────────────────────
         so3, _ = SalesOrder.objects.update_or_create(
@@ -1580,7 +1580,7 @@ class Command(BaseCommand):
                 defaults={
                     'shipping_order': sho2, 'sequence': 1, 'carrier': 'PostNL',
                     'tracking_number': '3SYZKA123456789', 'status': ShipmentStatus.IN_TRANSIT,
-                    'notes': 'Scanners dispatched — estimated delivery tomorrow.',
+                    'notes': 'Scanners dispatched - estimated delivery tomorrow.',
                 },
             )
             ShipmentLine.objects.update_or_create(
@@ -1618,14 +1618,14 @@ class Command(BaseCommand):
         )
 
         # ────────────────────────────────────────────────────────────────────────
-        # SO4 — DRAFT: Metro Arena scanner order
+        # SO4 - DRAFT: Metro Arena scanner order
         # ────────────────────────────────────────────────────────────────────────
         so4, _ = SalesOrder.objects.update_or_create(
             pk=_sal_uuid('order:metro-arena-draft'),
             defaults={
                 'reference': _REFS['so4'], 'created_by': user, 'quote': None,
                 'relation_organization': prospect, 'status': OrderStatus.DRAFT,
-                'notes': 'Quick order raised ahead of quote — for internal budget tracking. Needs confirmation.',
+                'notes': 'Quick order raised ahead of quote - for internal budget tracking. Needs confirmation.',
             },
         )
         oline(so4, hr22, 4, 0)
@@ -1656,7 +1656,7 @@ class Command(BaseCommand):
         def prod(sku): return Product.objects.filter(sku=sku).first()
 
         rule1, _ = PricingRule.objects.get_or_create(
-            name='Standard reseller markup — POS hardware',
+            name='Standard reseller markup - POS hardware',
             defaults={
                 'description': 'Applies a 55% cost-plus markup across all point-of-sale hardware categories.',
                 'method': PricingMethod.COST_MARKUP, 'value': Decimal('55.000000'),
@@ -1672,7 +1672,7 @@ class Command(BaseCommand):
             )
 
         rule2, _ = PricingRule.objects.get_or_create(
-            name='Consumables — 40% gross margin',
+            name='Consumables - 40% gross margin',
             defaults={
                 'description': 'Thermal roll consumables carry a 40% gross margin target.',
                 'method': PricingMethod.GROSS_MARGIN, 'value': Decimal('40.000000'),
@@ -1687,7 +1687,7 @@ class Command(BaseCommand):
             )
 
         rule3, _ = PricingRule.objects.get_or_create(
-            name='MT93 enterprise pricing — 10% off MSRP',
+            name='MT93 enterprise pricing - 10% off MSRP',
             defaults={
                 'description': 'Specific pricing for the Newland MT93 when sold into enterprise channel.',
                 'method': PricingMethod.MSRP_DISCOUNT, 'value': Decimal('10.000000'),
@@ -1701,7 +1701,7 @@ class Command(BaseCommand):
             )
 
         rule4, _ = PricingRule.objects.get_or_create(
-            name='Partner bundle pricing — fixed multiplier 0.88',
+            name='Partner bundle pricing - fixed multiplier 0.88',
             defaults={
                 'description': 'Applies an 0.88 list-price multiplier for partner/integrator bundles.',
                 'method': PricingMethod.FIXED_MULTIPLIER, 'value': Decimal('0.880000'),
@@ -1737,7 +1737,7 @@ class Command(BaseCommand):
             code='field_engineer',
             defaults={
                 'name': 'Field engineer',
-                'description': 'Senior field engineer — on-site installation, diagnosis, and complex repairs.',
+                'description': 'Senior field engineer - on-site installation, diagnosis, and complex repairs.',
                 'rate_per_hour': Decimal('85.00'), 'currency': 'EUR', 'is_active': True,
             },
         )
@@ -1765,7 +1765,7 @@ class Command(BaseCommand):
                 'description': (
                     'Annual cost model for hardware maintenance SLAs. Covers a percentage of the '
                     'original order value, a fixed assistance allowance, and repair hours at the '
-                    'field engineer rate — spread across the contract duration.'
+                    'field engineer rate - spread across the contract duration.'
                 ),
                 'formula':      '(order_total * contract_pct / 100 + assistance_fee + repair_hours * engineer_rate) / duration_years',
                 'result_label': 'Annual SLA cost (EUR)',
@@ -1859,7 +1859,7 @@ class Command(BaseCommand):
                 'SVC-DEMO-0003', qsr, tmpl2, so3,
                 date(2026, 3, 1), date(2027, 2, 28), ContractStatus.ACTIVE,
                 {'annual_rolls': Decimal('2400'), 'roll_unit_price': Decimal('0.95'), 'logistics_flat_fee': Decimal('480')},
-                'Annual consumables supply agreement — 84 outlets across NL/BE. Deliveries coordinated with Frank Willems.',
+                'Annual consumables supply agreement - 84 outlets across NL/BE. Deliveries coordinated with Frank Willems.',
             )
 
         from contracts.models import Contract as C

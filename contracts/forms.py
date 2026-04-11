@@ -129,12 +129,12 @@ class ContractForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Limit to active templates only
         self.fields['template'].queryset = ContractTemplate.objects.filter(is_active=True)
-        self.fields['template'].empty_label = '— select template —'
-        self.fields['organization'].empty_label = '— select organisation —'
-        self.fields['tax_rate'].empty_label = '— no VAT —'
-        self.fields['quote'].empty_label = '— none —'
-        self.fields['sales_order'].empty_label = '— none —'
-        self.fields['asset'].empty_label = '— none —'
+        self.fields['template'].empty_label = '- select template -'
+        self.fields['organization'].empty_label = '- select organisation -'
+        self.fields['tax_rate'].empty_label = '- no VAT -'
+        self.fields['quote'].empty_label = '- none -'
+        self.fields['sales_order'].empty_label = '- none -'
+        self.fields['asset'].empty_label = '- none -'
 
 
 class ContractVariableValueForm(forms.ModelForm):
