@@ -37,6 +37,7 @@ _DEMO_ACCOUNTS = [
         'last_name': 'Admin',
         'password': 'Demo1234!',
         'is_staff': True,
+        'is_superuser': True,  # needed so create_demo_data seeder finds this user
         'role': 'admin',
     },
     {
@@ -116,7 +117,7 @@ def _reset_demo_users() -> None:
                 'first_name': spec['first_name'],
                 'last_name': spec['last_name'],
                 'is_staff': spec['is_staff'],
-                'is_superuser': False,
+                'is_superuser': spec.get('is_superuser', False),
                 'is_active': True,
             },
         )
@@ -125,7 +126,7 @@ def _reset_demo_users() -> None:
             user.first_name = spec['first_name']
             user.last_name = spec['last_name']
             user.is_staff = spec['is_staff']
-            user.is_superuser = False
+            user.is_superuser = spec.get('is_superuser', False)
             user.is_active = True
             user.save()
         user.set_password(spec['password'])
@@ -168,18 +169,19 @@ class Command(BaseCommand):
         start = datetime.now()
         self.stdout.write(f'[{start:%H:%M:%S}] Starting demo reset...')
 
-        # 1. Wipe all business data then immediately re-seed.
+        # 1. Create / reset demo users FIRST so the seeder has a user for
+        #    created_by fields (create_demo_data uses first available user).
+        self.stdout.write('  Resetting demo user accounts...')
+        _reset_demo_users()
+
+        # 2. Wipe all business data and re-seed with the demo users now present.
         self.stdout.write('  Clearing and re-seeding business data...')
         seed_args = ['--clear']
         if options['skip_images']:
             seed_args.append('--skip-images')
         call_command('create_demo_data', *seed_args, verbosity=0)
 
-        # 2. Reset / create demo user accounts.
-        self.stdout.write('  Resetting demo user accounts...')
-        _reset_demo_users()
-
-        # 3. Clear all active sessions so users must re-login.
+        # 3. Clear all active sessions so visitors must re-login after reset.
         self.stdout.write('  Clearing active sessions...')
         _clear_sessions()
 
