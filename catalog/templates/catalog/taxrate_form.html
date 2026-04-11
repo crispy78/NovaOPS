@@ -1,0 +1,64 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if is_create %}New VAT Rate{% else %}Edit {{ object.name }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <nav class="flex items-center gap-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+    <a href="{% url 'catalog:taxrate_list' %}" class="hover:text-nova-700">VAT Rates</a>
+    <i class="fa-solid fa-chevron-right text-[10px] text-slate-400" aria-hidden="true"></i>
+    <span class="font-medium text-slate-700">{% if is_create %}New{% else %}Edit{% endif %}</span>
+  </nav>
+  <h1 class="mt-2 text-2xl font-bold text-slate-900">
+    {% if is_create %}New VAT Rate{% else %}Edit {{ object.name }}{% endif %}
+  </h1>
+</div>
+
+<div class="max-w-md">
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      {% if form.non_field_errors %}
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div class="space-y-4">
+        <div>
+          <label for="{{ form.name.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Name <span class="text-red-500">*</span>
+          </label>
+          {{ form.name }}
+          <p class="mt-1 text-xs text-slate-400">e.g. "Standard Rate" or "Reduced Rate"</p>
+          {% for err in form.name.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+        </div>
+        <div>
+          <label for="{{ form.rate.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Rate (%) <span class="text-red-500">*</span>
+          </label>
+          {{ form.rate }}
+          <p class="mt-1 text-xs text-slate-400">Enter the percentage, e.g. 20.00 for 20%</p>
+          {% for err in form.rate.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+        </div>
+        <div>
+          <label for="{{ form.code.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Code
+          </label>
+          {{ form.code }}
+          <p class="mt-1 text-xs text-slate-400">Optional short code for integrations, e.g. "GB_STD"</p>
+          {% for err in form.code.errors %}<p class="mt-1 text-sm text-red-600">{{ err }}</p>{% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <div class="flex items-center gap-3">
+      <button type="submit"
+              class="rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+        {% if is_create %}Create VAT rate{% else %}Save changes{% endif %}
+      </button>
+      <a href="{% url 'catalog:taxrate_list' %}"
+         class="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

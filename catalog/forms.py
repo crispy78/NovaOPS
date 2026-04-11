@@ -57,7 +57,6 @@ _PRODUCT_FIELD_SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
             'purchase_price',
             'list_price',
             'msrp',
-            'currency',
             'tax_rate',
             'discount_group',
         ),
@@ -120,7 +119,6 @@ class ProductForm(forms.ModelForm):
                 for fname in (
                     'list_price',
                     'msrp',
-                    'currency',
                     'tax_rate',
                     'discount_group',
                 ):

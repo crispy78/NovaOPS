@@ -92,6 +92,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'sales.context_processors.cart_item_count',
                 'core.context_processors.app_version',
+                'core.context_processors.site_currency',
             ],
         },
     },

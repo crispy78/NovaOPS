@@ -22,8 +22,10 @@ from .models import (
     ProductRelation,
     ProductRelationType,
     ProductStatus,
+    TaxRate,
 )
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, DeleteView
+from django.urls import reverse_lazy
 from .permissions import get_product_page_permissions
 
 
@@ -389,6 +391,8 @@ class ProductUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
         return Product.objects.select_related('category', 'tax_rate', 'discount_group')
 
     def form_valid(self, form):
+        from core.models import SiteSettings
+        form.instance.currency = SiteSettings.get().currency
         changed = list(form.changed_data)
         before = {k: getattr(self.object, k) for k in changed}
         response = super().form_valid(form)
@@ -437,6 +441,8 @@ class ProductCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return kwargs
 
     def form_valid(self, form):
+        from core.models import SiteSettings
+        form.instance.currency = SiteSettings.get().currency
         response = super().form_valid(form)
         from audit.services import log_event
         log_event(
@@ -557,3 +563,66 @@ class ProductBulkArchiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
             count = qs.filter(is_archived=True).update(is_archived=False, archived_at=None)
             messages.success(request, f'{count} product(s) unarchived.')
         return redirect('catalog:index')
+
+
+# ── VAT / Tax Rate management ─────────────────────────────────────────────────
+
+class TaxRateListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = TaxRate
+    template_name = 'catalog/taxrate_list.html'
+    context_object_name = 'tax_rates'
+    permission_required = 'catalog.view_product'
+    ordering = ['name']
+
+
+class TaxRateCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = TaxRate
+    template_name = 'catalog/taxrate_form.html'
+    permission_required = 'catalog.add_product'
+    fields = ['name', 'code', 'rate']
+    success_url = reverse_lazy('catalog:taxrate_list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['is_create'] = True
+        return ctx
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        _css = (
+            'mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm '
+            'shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500'
+        )
+        for field in form.fields.values():
+            field.widget.attrs.setdefault('class', _css)
+        return form
+
+
+class TaxRateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = TaxRate
+    template_name = 'catalog/taxrate_form.html'
+    permission_required = 'catalog.change_product'
+    fields = ['name', 'code', 'rate']
+    success_url = reverse_lazy('catalog:taxrate_list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['is_create'] = False
+        return ctx
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        _css = (
+            'mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm '
+            'shadow-sm focus:border-nova-500 focus:outline-none focus:ring-1 focus:ring-nova-500'
+        )
+        for field in form.fields.values():
+            field.widget.attrs.setdefault('class', _css)
+        return form
+
+
+class TaxRateDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = TaxRate
+    template_name = 'catalog/taxrate_confirm_delete.html'
+    permission_required = 'catalog.delete_product'
+    success_url = reverse_lazy('catalog:taxrate_list')

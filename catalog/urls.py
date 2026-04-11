@@ -33,4 +33,9 @@ urlpatterns = [
     ),
     path('products/bulk-archive/', views.ProductBulkArchiveView.as_view(), name='product_bulk_archive'),
     path('products/export.csv', views.ProductCsvExportView.as_view(), name='product_csv_export'),
+    # VAT rates
+    path('vat-rates/', views.TaxRateListView.as_view(), name='taxrate_list'),
+    path('vat-rates/new/', views.TaxRateCreateView.as_view(), name='taxrate_create'),
+    path('vat-rates/<uuid:pk>/edit/', views.TaxRateUpdateView.as_view(), name='taxrate_update'),
+    path('vat-rates/<uuid:pk>/delete/', views.TaxRateDeleteView.as_view(), name='taxrate_delete'),
 ]

@@ -1,0 +1,43 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Site Settings{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">Site Settings</h1>
+  <p class="mt-1 text-sm text-slate-500">Global configuration applied across the entire application.</p>
+</div>
+
+<div class="max-w-lg">
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-base font-semibold text-slate-900">Currency</h2>
+      <p class="mt-1 text-sm text-slate-500">
+        This currency is applied to all new products and documents. Existing historical documents are not affected.
+      </p>
+      <div class="mt-4">
+        <label for="{{ form.currency.id_for_label }}"
+               class="block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {{ form.currency.label }}
+        </label>
+        {{ form.currency }}
+        {% if form.currency.help_text %}
+          <p class="mt-1 text-xs text-slate-400">{{ form.currency.help_text }}</p>
+        {% endif %}
+        {% for err in form.currency.errors %}
+          <p class="mt-1 text-sm text-red-600">{{ err }}</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div>
+      <button type="submit"
+              class="rounded-lg bg-nova-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-nova-700">
+        Save settings
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

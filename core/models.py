@@ -2,6 +2,20 @@ import uuid
 
 from django.db import models, transaction
 
+# Common ISO 4217 currency choices shown in the site-settings picker
+CURRENCY_CHOICES = [
+    ('GBP', 'GBP — British Pound'),
+    ('EUR', 'EUR — Euro'),
+    ('USD', 'USD — US Dollar'),
+    ('CHF', 'CHF — Swiss Franc'),
+    ('SEK', 'SEK — Swedish Krona'),
+    ('NOK', 'NOK — Norwegian Krone'),
+    ('DKK', 'DKK — Danish Krone'),
+    ('PLN', 'PLN — Polish Zloty'),
+    ('AUD', 'AUD — Australian Dollar'),
+    ('CAD', 'CAD — Canadian Dollar'),
+]
+
 
 class UUIDPrimaryKeyModel(models.Model):
     """Base for domain models: primary key is a non-editable UUID v4."""
@@ -28,6 +42,30 @@ class ReferenceSequence(models.Model):
 
     def __str__(self) -> str:
         return f'{self.key} (last={self.last_n})'
+
+
+class SiteSettings(models.Model):
+    """Singleton table that stores site-wide configuration (always pk=1)."""
+
+    currency = models.CharField(
+        max_length=3,
+        default='GBP',
+        choices=CURRENCY_CHOICES,
+        verbose_name='default currency',
+        help_text='ISO 4217 code used across all products and documents.',
+    )
+
+    class Meta:
+        verbose_name = 'site settings'
+
+    def __str__(self) -> str:
+        return f'Site settings (currency={self.currency})'
+
+    @classmethod
+    def get(cls) -> 'SiteSettings':
+        """Return the single settings row, creating it with defaults if needed."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
 
 
 def next_reference(prefix: str, year: int, pad: int = 5) -> str:

@@ -1,10 +1,11 @@
 from django.urls import path
 
-from . import audit_views, reports, search, usermgmt
+from . import audit_views, reports, search, site_settings_views, usermgmt
 
 app_name = 'core'
 
 urlpatterns = [
+    path('settings/', site_settings_views.SiteSettingsView.as_view(), name='site_settings'),
     path('reports/sales/', reports.SalesReportView.as_view(), name='report_sales'),
     path('reports/sales/export.csv', reports.SalesReportCsvView.as_view(), name='report_sales_csv'),
     path('reports/aged-debtors/', reports.AgedDebtorsReportView.as_view(), name='report_aged_debtors'),
