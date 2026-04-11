@@ -36,9 +36,9 @@ class SiteSettings(models.Model):
 
     currency = models.CharField(
         max_length=10,
-        default='GBP',
+        default='€',
         verbose_name='default currency',
-        help_text='Currency code or symbol, e.g. GBP, €, $, ₿.',
+        help_text='Currency code or symbol, e.g. GBP, EUR, £, €, ₿.',
     )
 
     class Meta:

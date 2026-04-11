@@ -18,10 +18,10 @@ class SiteSettingsForm(forms.Form):
         max_length=10,
         label='Default currency',
         help_text=(
-            'Enter any currency code or symbol — e.g. GBP, EUR, USD, £, €, $, ₿, USDT. '
+            'Enter any currency code or symbol - e.g. GBP, EUR, £, €, ₿. '
             'This is shown on all quotes, invoices, and documents.'
         ),
-        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'e.g. GBP or £'}),
+        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'e.g. € or GBP'}),
     )
 
 
