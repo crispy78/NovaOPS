@@ -108,6 +108,7 @@ class ContractForm(forms.ModelForm):
         fields = [
             'template', 'organization', 'status',
             'start_date', 'end_date',
+            'tax_rate',
             'quote', 'sales_order', 'asset',
             'notes',
         ]
@@ -117,6 +118,7 @@ class ContractForm(forms.ModelForm):
             'status':       forms.Select(attrs={'class': _SELECT}),
             'start_date':   forms.DateInput(attrs={'class': _INPUT, 'type': 'date'}),
             'end_date':     forms.DateInput(attrs={'class': _INPUT, 'type': 'date'}),
+            'tax_rate':     forms.Select(attrs={'class': _SELECT}),
             'quote':        forms.Select(attrs={'class': _SELECT}),
             'sales_order':  forms.Select(attrs={'class': _SELECT}),
             'asset':        forms.Select(attrs={'class': _SELECT}),
@@ -129,6 +131,7 @@ class ContractForm(forms.ModelForm):
         self.fields['template'].queryset = ContractTemplate.objects.filter(is_active=True)
         self.fields['template'].empty_label = '— select template —'
         self.fields['organization'].empty_label = '— select organisation —'
+        self.fields['tax_rate'].empty_label = '— no VAT —'
         self.fields['quote'].empty_label = '— none —'
         self.fields['sales_order'].empty_label = '— none —'
         self.fields['asset'].empty_label = '— none —'

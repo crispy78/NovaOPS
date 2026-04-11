@@ -71,8 +71,8 @@
 <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
   <div class="grid divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
     <div class="p-4">
-      <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Invoice total</p>
-      <p class="mt-1 text-xl font-semibold text-slate-900">{{ invoice.currency }} {{ invoice_total|floatformat:2 }}</p>
+      <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Total (incl. VAT)</p>
+      <p class="mt-1 text-xl font-semibold text-slate-900">{{ invoice.currency }} {{ grand_total|floatformat:2 }}</p>
     </div>
     <div class="p-4">
       <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Amount paid</p>
@@ -101,7 +101,7 @@
 </div>
 <script>
   (function () {
-    var total = parseFloat('{{ invoice_total|floatformat:2 }}');
+    var total = parseFloat('{{ grand_total|floatformat:2 }}');
     var paid  = parseFloat('{{ invoice_paid|floatformat:2 }}');
     if (total > 0) {
       var pct = Math.min(100, Math.round(paid / total * 100));
@@ -149,17 +149,21 @@
     </tbody>
     <tfoot class="border-t-2 border-slate-200 bg-slate-50">
       <tr>
-        <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. tax)</td>
-        <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ invoice.currency }} {{ invoice_total|floatformat:2 }}</td>
+        <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. VAT)</td>
+        <td class="px-4 py-3 text-sm font-semibold text-slate-700">{{ invoice.currency }} {{ invoice_total|floatformat:2 }}</td>
       </tr>
       {% for row in tax_breakdown %}
         {% if row.rate %}
           <tr>
-            <td colspan="4" class="px-4 py-2 text-right text-xs text-slate-500">BTW {{ row.rate }}%</td>
+            <td colspan="4" class="px-4 py-2 text-right text-xs text-slate-500">VAT {{ row.rate }}%</td>
             <td class="px-4 py-2 text-xs font-medium text-slate-700">{{ invoice.currency }} {{ row.tax|floatformat:2 }}</td>
           </tr>
         {% endif %}
       {% endfor %}
+      <tr class="border-t border-slate-200">
+        <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">Total (incl. VAT)</td>
+        <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ invoice.currency }} {{ grand_total|floatformat:2 }}</td>
+      </tr>
     </tfoot>
   </table>
 </div>

@@ -214,6 +214,14 @@ class Contract(UUIDPrimaryKeyModel):
         related_name='contracts',
         verbose_name='linked asset',
     )
+    tax_rate = models.ForeignKey(
+        'catalog.TaxRate',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='contracts',
+        verbose_name='VAT rate',
+        help_text='VAT rate applied to the computed contract value.',
+    )
     notes = models.TextField(blank=True)
 
     # Cached computation

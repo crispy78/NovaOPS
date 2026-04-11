@@ -66,7 +66,11 @@
         <label for="{{ form.status.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
         {{ form.status }}
       </div>
-      <div></div>
+      <div>
+        <label for="{{ form.tax_rate.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">VAT rate</label>
+        {{ form.tax_rate }}
+        {% if form.tax_rate.errors %}<p class="mt-1 text-xs text-red-600">{{ form.tax_rate.errors|striptags }}</p>{% endif %}
+      </div>
       <div>
         <label for="{{ form.start_date.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Start date</label>
         {{ form.start_date }}

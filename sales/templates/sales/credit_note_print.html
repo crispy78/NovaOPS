@@ -94,14 +94,14 @@
     {% for row in tax_breakdown %}
       <tr>
         <td colspan="5" class="text-right" style="color:#64748b;">
-          BTW {% if row.rate %}{{ row.rate }}%{% else %}0%{% endif %}
+          VAT {% if row.rate %}{{ row.rate }}%{% else %}0%{% endif %}
           <span style="color:#94a3b8;font-size:11px;">(base {{ credit_note.currency }} {{ row.base|floatformat:2 }})</span>
         </td>
         <td class="text-right mono">{{ credit_note.currency }} {{ row.tax|floatformat:2 }}</td>
       </tr>
     {% endfor %}
     <tr>
-      <td colspan="5" class="text-right">Total credit (incl. BTW)</td>
+      <td colspan="5" class="text-right">Total credit (incl. VAT)</td>
       <td class="text-right mono">{{ credit_note.currency }} {{ grand_total|floatformat:2 }}</td>
     </tr>
   </tfoot>

@@ -282,6 +282,9 @@ class QuoteDetailView(LoginRequiredMixin, DetailView):
         ctx['primary_order'] = q.orders.order_by('created_at').first()
         ctx['quote_total'] = q.lines.aggregate(s=Sum('line_total'))['s'] or Decimal('0')
         ctx['tax_breakdown'] = _tax_breakdown(q.main_lines)
+        tax_total = sum(row['tax'] for row in ctx['tax_breakdown'])
+        ctx['tax_total'] = tax_total
+        ctx['grand_total'] = ctx['quote_total'] + tax_total
         ctx['can_accept'] = q.status in (QuoteStatus.DRAFT, QuoteStatus.SENT) and not q.is_locked
         main_line_qs = q.lines.filter(parent_line__isnull=True)
         if q.is_locked:
@@ -816,14 +819,18 @@ class InvoiceDetailView(LoginRequiredMixin, DetailView):
         inv = self.object
         ctx['main_lines'] = inv.main_lines
         inv_total = inv.total()
+        ctx['tax_breakdown'] = _tax_breakdown(inv.main_lines)
+        tax_total = sum(row['tax'] for row in ctx['tax_breakdown'])
+        grand_total = inv_total + tax_total
         inv_paid = inv.amount_paid()
-        inv_balance = inv_total - inv_paid
+        inv_balance = grand_total - inv_paid
         inv_is_paid = inv_balance <= Decimal('0')
-        ctx['invoice_total'] = inv_total
+        ctx['invoice_total'] = inv_total          # subtotal excl. VAT (for line items table)
+        ctx['tax_total'] = tax_total
+        ctx['grand_total'] = grand_total           # total incl. VAT (for widget + payments)
         ctx['invoice_paid'] = inv_paid
         ctx['invoice_balance'] = inv_balance
         ctx['invoice_is_paid'] = inv_is_paid
-        ctx['tax_breakdown'] = _tax_breakdown(inv.main_lines)
         ctx['payment_form'] = InvoicePaymentForm(max_amount=inv_balance if not inv_is_paid else None)
         ctx['can_record_payment'] = inv.status != InvoiceStatus.CANCELLED and not inv_is_paid
         ctx['credit_notes'] = inv.credit_notes.order_by('created_at')
@@ -833,9 +840,7 @@ class InvoiceDetailView(LoginRequiredMixin, DetailView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         inv = self.object
-        inv_total = inv.total()
-        inv_paid = inv.amount_paid()
-        if inv.status == InvoiceStatus.CANCELLED or inv_total - inv_paid <= Decimal('0'):
+        if inv.status == InvoiceStatus.CANCELLED or inv.balance_due() <= Decimal('0'):
             messages.error(request, 'No further payments can be recorded for this invoice.')
             return redirect(inv)
         form = InvoicePaymentForm(request.POST)
@@ -1040,13 +1045,13 @@ class InvoicePrintView(LoginRequiredMixin, DetailView):
         main_lines = list(inv.lines.filter(parent_line__isnull=True).select_related('product').prefetch_related('option_lines'))
         ctx['main_lines'] = main_lines
         ctx['invoice_total'] = inv.total()
-        ctx['invoice_paid'] = inv.amount_paid()
-        ctx['invoice_balance'] = inv.total() - inv.amount_paid()
-        ctx['invoice_is_paid'] = ctx['invoice_balance'] <= Decimal('0')
         ctx['tax_breakdown'] = _tax_breakdown(main_lines)
         tax_total = sum(row['tax'] for row in ctx['tax_breakdown'])
         ctx['tax_total'] = tax_total
         ctx['grand_total'] = ctx['invoice_total'] + tax_total
+        ctx['invoice_paid'] = inv.amount_paid()
+        ctx['invoice_balance'] = ctx['grand_total'] - ctx['invoice_paid']
+        ctx['invoice_is_paid'] = ctx['invoice_balance'] <= Decimal('0')
         return ctx
 
 

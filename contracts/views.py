@@ -224,7 +224,24 @@ class ContractDetailView(LoginRequiredMixin, DetailView):
             ctx['computed_result'] = result
             ctx['compute_error'] = error
 
+        # VAT breakdown on computed result
+        self._add_vat_context(ctx, contract)
         return ctx
+
+    @staticmethod
+    def _add_vat_context(ctx, contract):
+        from decimal import Decimal
+        result = ctx.get('computed_result')
+        if result is not None and contract.tax_rate_id:
+            rate = contract.tax_rate.rate
+            vat_amount = (result * rate / 100).quantize(Decimal('0.01'))
+            ctx['contract_vat_rate'] = rate
+            ctx['contract_vat_amount'] = vat_amount
+            ctx['contract_grand_total'] = result + vat_amount
+        else:
+            ctx['contract_vat_rate'] = None
+            ctx['contract_vat_amount'] = None
+            ctx['contract_grand_total'] = result
 
 
 class ContractCreateView(LoginRequiredMixin, CreateView):
@@ -281,6 +298,7 @@ class ContractPrintView(LoginRequiredMixin, DetailView):
             from .services import compute_contract
             result, _error = compute_contract(contract)
             ctx['computed_result'] = result
+        ContractDetailView._add_vat_context(ctx, contract)
         return ctx
 
 

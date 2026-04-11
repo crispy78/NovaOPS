@@ -125,7 +125,7 @@
     {% for row in tax_breakdown %}
       {% if row.rate %}
         <div class="totals-row">
-          <span>BTW {{ row.rate }}%</span>
+          <span>VAT {{ row.rate }}%</span>
           <span>{{ invoice.currency }} {{ row.tax|floatformat:2 }}</span>
         </div>
       {% endif %}

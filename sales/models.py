@@ -320,10 +320,29 @@ class Invoice(UUIDPrimaryKeyModel):
         return reverse('sales:invoice_detail', kwargs={'pk': self.pk})
 
     def total(self) -> Decimal:
+        """Subtotal excluding VAT."""
         from django.db.models import Sum
 
         agg = self.lines.aggregate(s=Sum('line_total'))
         return agg['s'] if agg['s'] is not None else Decimal('0')
+
+    def tax_total(self) -> Decimal:
+        """Total VAT amount across all lines."""
+        from collections import defaultdict
+        buckets: dict = defaultdict(Decimal)
+        for line in self.lines.all():
+            if line.tax_rate_pct:
+                buckets[line.tax_rate_pct] += line.line_total
+        if not buckets:
+            return Decimal('0')
+        return sum(
+            (base * rate / 100).quantize(Decimal('0.01'))
+            for rate, base in buckets.items()
+        )
+
+    def grand_total(self) -> Decimal:
+        """Total including VAT — the amount the customer pays."""
+        return self.total() + self.tax_total()
 
     def amount_paid(self) -> Decimal:
         from django.db.models import Sum
@@ -332,7 +351,7 @@ class Invoice(UUIDPrimaryKeyModel):
         return agg['s'] if agg['s'] is not None else Decimal('0')
 
     def balance_due(self) -> Decimal:
-        return self.total() - self.amount_paid()
+        return self.grand_total() - self.amount_paid()
 
     def is_paid_in_full(self) -> bool:
         return self.balance_due() <= Decimal('0')

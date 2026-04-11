@@ -84,8 +84,22 @@
 
 {% if computed_result is not None %}
   <div class="result-box">
-    <div class="result-label">Computed contract value</div>
-    <div class="result-value">{{ computed_result }}</div>
+    <div class="result-label">{{ contract.template.result_label }}</div>
+    {% if contract_vat_rate %}
+      <div style="margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:#166534;padding:4px 0;border-bottom:1px solid #bbf7d0;">
+          <span>Subtotal (excl. VAT)</span><span style="font-family:monospace;">{{ computed_result|floatformat:2 }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:#166534;padding:4px 0;border-bottom:1px solid #bbf7d0;">
+          <span>VAT {{ contract_vat_rate }}%</span><span style="font-family:monospace;">{{ contract_vat_amount|floatformat:2 }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:700;color:#14532d;padding:6px 0 0;">
+          <span>Total (incl. VAT)</span><span style="font-family:monospace;">{{ contract_grand_total|floatformat:2 }}</span>
+        </div>
+      </div>
+    {% else %}
+      <div class="result-value">{{ computed_result|floatformat:2 }}</div>
+    {% endif %}
     {% if contract.template.formula %}
       <p style="margin-top:8px;font-size:11px;color:#166534;font-family:monospace;">{{ contract.template.formula }}</p>
     {% endif %}

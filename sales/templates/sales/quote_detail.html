@@ -121,17 +121,21 @@
       </tbody>
       <tfoot class="border-t-2 border-slate-200 bg-slate-50">
         <tr>
-          <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. tax)</td>
-          <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ quote_total|floatformat:2 }}</td>
+          <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. VAT)</td>
+          <td class="px-4 py-3 text-sm font-semibold text-slate-700">{{ quote_total|floatformat:2 }}</td>
         </tr>
         {% for row in tax_breakdown %}
           {% if row.rate %}
             <tr class="bg-slate-50">
-              <td colspan="5" class="px-4 py-2 text-right text-xs text-slate-500">BTW {{ row.rate }}%</td>
+              <td colspan="5" class="px-4 py-2 text-right text-xs text-slate-500">VAT {{ row.rate }}%</td>
               <td class="px-4 py-2 text-xs text-slate-700">{{ row.tax|floatformat:2 }}</td>
             </tr>
           {% endif %}
         {% endfor %}
+        <tr class="border-t border-slate-200">
+          <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">Total (incl. VAT)</td>
+          <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ grand_total|floatformat:2 }}</td>
+        </tr>
       </tfoot>
     </table>
   </div>
@@ -225,17 +229,21 @@
         </tbody>
         <tfoot class="border-t-2 border-slate-200 bg-slate-50">
           <tr>
-            <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. tax)</td>
-            <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ quote_total|floatformat:2 }}</td>
+            <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. VAT)</td>
+            <td class="px-4 py-3 text-sm font-semibold text-slate-700">{{ quote_total|floatformat:2 }}</td>
           </tr>
           {% for row in tax_breakdown %}
             {% if row.rate %}
               <tr class="bg-slate-50">
-                <td colspan="5" class="px-4 py-2 text-right text-xs text-slate-500">BTW {{ row.rate }}%</td>
+                <td colspan="5" class="px-4 py-2 text-right text-xs text-slate-500">VAT {{ row.rate }}%</td>
                 <td class="px-4 py-2 text-xs text-slate-700">{{ row.tax|floatformat:2 }}</td>
               </tr>
             {% endif %}
           {% endfor %}
+          <tr class="border-t border-slate-200">
+            <td colspan="5" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">Total (incl. VAT)</td>
+            <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ grand_total|floatformat:2 }}</td>
+          </tr>
         </tfoot>
       </table>
     </div>

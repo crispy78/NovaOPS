@@ -73,6 +73,12 @@
             <dd class="font-medium text-slate-900">{{ contract.duration_years|floatformat:1 }} years</dd>
           </div>
         {% endif %}
+        {% if contract.tax_rate %}
+          <div class="flex justify-between gap-4 py-2.5">
+            <dt class="text-slate-500">VAT rate</dt>
+            <dd class="font-medium text-slate-900">{{ contract.tax_rate.name }} ({{ contract.tax_rate.rate }}%)</dd>
+          </div>
+        {% endif %}
         {% if contract.quote %}
           <div class="flex justify-between gap-4 py-2.5">
             <dt class="text-slate-500">Quote</dt>
@@ -124,9 +130,27 @@
     {% else %}
       <div class="rounded-xl border border-nova-200 bg-nova-50 p-5">
         <p class="text-sm font-medium text-nova-700">{{ contract.template.result_label }}</p>
-        <p class="mt-1 text-4xl font-bold tracking-tight text-nova-700">
-          {{ computed_result|floatformat:2 }}
-        </p>
+        {% if contract_vat_rate %}
+          <p class="mt-1 text-2xl font-semibold text-nova-600">{{ computed_result|floatformat:2 }}</p>
+          <div class="mt-2 space-y-1 border-t border-nova-200 pt-2 text-sm text-nova-700">
+            <div class="flex justify-between">
+              <span>Subtotal (excl. VAT)</span>
+              <span class="font-mono">{{ computed_result|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>VAT {{ contract_vat_rate }}%</span>
+              <span class="font-mono">{{ contract_vat_amount|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between border-t border-nova-200 pt-1 font-bold">
+              <span>Total (incl. VAT)</span>
+              <span class="font-mono text-lg">{{ contract_grand_total|floatformat:2 }}</span>
+            </div>
+          </div>
+        {% else %}
+          <p class="mt-1 text-4xl font-bold tracking-tight text-nova-700">
+            {{ computed_result|floatformat:2 }}
+          </p>
+        {% endif %}
         {% if contract.computed_at %}
           <p class="mt-1 text-xs text-nova-500">Computed {{ contract.computed_at|date:"d M Y, H:i" }}</p>
         {% endif %}
