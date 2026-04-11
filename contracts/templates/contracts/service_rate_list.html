@@ -34,7 +34,7 @@
             <td class="px-5 py-3 font-medium text-slate-900">{{ rate.name }}</td>
             <td class="px-5 py-3 font-mono text-xs text-slate-600">{{ rate.code }}</td>
             <td class="px-5 py-3 text-right font-mono font-semibold text-nova-700">
-              {{ rate.currency }} {{ rate.rate_per_hour|floatformat:2 }}
+              {{ SITE_CURRENCY }} {{ rate.rate_per_hour|floatformat:2 }}
             </td>
             <td class="px-5 py-3 text-slate-500 hidden md:table-cell max-w-xs truncate">
               {{ rate.description|default:"-" }}

@@ -100,7 +100,7 @@
                 <td class="px-5 py-3 text-right font-mono text-xs text-slate-600">
                   {% if var.variable_type == 'service_rate' and var.service_rate %}
                     {{ var.service_rate.name }}<br>
-                    <span class="text-nova-700">{{ var.service_rate.currency }} {{ var.service_rate.rate_per_hour|floatformat:2 }}/h</span>
+                    <span class="text-nova-700">{{ SITE_CURRENCY }} {{ var.service_rate.rate_per_hour|floatformat:2 }}/h</span>
                   {% elif var.variable_type == 'constant' %}
                     {{ var.constant_value }}
                   {% elif var.default_value is not None %}

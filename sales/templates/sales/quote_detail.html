@@ -102,7 +102,7 @@
             <td class="px-4 py-3 font-mono text-xs">{{ line.sku }}</td>
             <td class="px-4 py-3">{{ line.quantity }}</td>
             <td class="px-4 py-3">{{ line.unit_price|floatformat:2 }}</td>
-            <td class="px-4 py-3">{{ line.currency }}</td>
+            <td class="px-4 py-3">{{ SITE_CURRENCY }}</td>
             <td class="px-4 py-3 font-medium">{{ line.line_total|floatformat:2 }}</td>
           </tr>
           {% for opt in line.option_lines.all %}
@@ -113,7 +113,7 @@
               <td class="px-4 py-2 font-mono text-xs text-slate-400">{{ opt.sku }}</td>
               <td class="px-4 py-2 text-xs text-slate-500">{{ opt.quantity }}</td>
               <td class="px-4 py-2 text-xs text-slate-500">{{ opt.unit_price|floatformat:2 }}</td>
-              <td class="px-4 py-2 text-xs text-slate-400">{{ opt.currency }}</td>
+              <td class="px-4 py-2 text-xs text-slate-400">{{ SITE_CURRENCY }}</td>
               <td class="px-4 py-2 text-xs text-slate-500">{{ opt.line_total|floatformat:2 }}</td>
             </tr>
           {% endfor %}
@@ -222,7 +222,7 @@
               <td class="px-4 py-3 font-mono text-xs">{{ f.instance.sku }}</td>
               <td class="px-4 py-3">{{ f.quantity }}</td>
               <td class="px-4 py-3">{{ f.unit_price }}</td>
-              <td class="px-4 py-3">{{ f.currency }}</td>
+              <td class="px-4 py-3">{{ SITE_CURRENCY }}{{ f.currency.as_hidden }}</td>
               <td class="px-4 py-3 font-medium">{{ f.instance.line_total|floatformat:2 }}</td>
             </tr>
           {% endfor %}

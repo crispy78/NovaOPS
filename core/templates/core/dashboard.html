@@ -173,7 +173,7 @@
           <li class="px-5 py-3 text-sm">
             <div class="flex items-center justify-between gap-2">
               <a href="{{ inv.get_absolute_url }}" class="font-semibold text-nova-700 hover:underline">{{ inv.reference }}</a>
-              <span class="font-mono text-xs font-semibold text-slate-900">{{ inv.currency }} {{ inv.inv_balance|floatformat:2 }}</span>
+              <span class="font-mono text-xs font-semibold text-slate-900">{{ SITE_CURRENCY }} {{ inv.inv_balance|floatformat:2 }}</span>
             </div>
             {% if inv.relation_organization %}
               <p class="mt-0.5 truncate text-slate-500">{{ inv.relation_organization.name }}</p>

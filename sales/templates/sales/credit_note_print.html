@@ -55,7 +55,7 @@
   </div>
   <div class="meta-box">
     <div class="label">Currency</div>
-    <div class="value">{{ credit_note.currency }}</div>
+    <div class="value">{{ SITE_CURRENCY }}</div>
   </div>
 </div>
 
@@ -80,29 +80,29 @@
         <td class="mono" style="font-size:11px;color:#64748b;">{{ line.sku }}</td>
         <td>{{ line.product_name }}</td>
         <td class="text-right">{{ line.quantity }}</td>
-        <td class="text-right mono">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+        <td class="text-right mono">{{ SITE_CURRENCY }} {{ line.unit_price|floatformat:2 }}</td>
         <td class="text-right">{% if line.tax_rate_pct %}{{ line.tax_rate_pct }}%{% else %}-{% endif %}</td>
-        <td class="text-right mono">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+        <td class="text-right mono">{{ SITE_CURRENCY }} {{ line.line_total|floatformat:2 }}</td>
       </tr>
     {% endfor %}
   </tbody>
   <tfoot>
     <tr>
       <td colspan="5" class="text-right" style="color:#64748b;">Subtotal</td>
-      <td class="text-right mono">{{ credit_note.currency }} {{ cn_total|floatformat:2 }}</td>
+      <td class="text-right mono">{{ SITE_CURRENCY }} {{ cn_total|floatformat:2 }}</td>
     </tr>
     {% for row in tax_breakdown %}
       <tr>
         <td colspan="5" class="text-right" style="color:#64748b;">
           VAT {% if row.rate %}{{ row.rate }}%{% else %}0%{% endif %}
-          <span style="color:#94a3b8;font-size:11px;">(base {{ credit_note.currency }} {{ row.base|floatformat:2 }})</span>
+          <span style="color:#94a3b8;font-size:11px;">(base {{ SITE_CURRENCY }} {{ row.base|floatformat:2 }})</span>
         </td>
-        <td class="text-right mono">{{ credit_note.currency }} {{ row.tax|floatformat:2 }}</td>
+        <td class="text-right mono">{{ SITE_CURRENCY }} {{ row.tax|floatformat:2 }}</td>
       </tr>
     {% endfor %}
     <tr>
       <td colspan="5" class="text-right">Total credit (incl. VAT)</td>
-      <td class="text-right mono">{{ credit_note.currency }} {{ grand_total|floatformat:2 }}</td>
+      <td class="text-right mono">{{ SITE_CURRENCY }} {{ grand_total|floatformat:2 }}</td>
     </tr>
   </tfoot>
 </table>

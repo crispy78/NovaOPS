@@ -79,7 +79,7 @@
               <td class="px-4 py-2 text-right {% if inv.age_days > 0 %}text-red-700 font-semibold{% else %}text-slate-400{% endif %}">
                 {% if inv.age_days > 0 %}{{ inv.age_days }}{% else %}-{% endif %}
               </td>
-              <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ inv.currency }} {{ inv.balance|floatformat:2 }}</td>
+              <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ SITE_CURRENCY }} {{ inv.balance|floatformat:2 }}</td>
             </tr>
           {% endfor %}
         </tbody>

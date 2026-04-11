@@ -153,7 +153,7 @@
               <i class="fa-solid fa-circle-check text-xs" aria-hidden="true"></i> Paid in full
             </span>
           {% else %}
-            <span class="text-slate-600">Balance: <strong class="text-slate-900">{{ open_invoice.currency }} {{ open_invoice_balance|floatformat:2 }}</strong></span>
+            <span class="text-slate-600">Balance: <strong class="text-slate-900">{{ SITE_CURRENCY }} {{ open_invoice_balance|floatformat:2 }}</strong></span>
           {% endif %}
         </span>
       </div>
@@ -191,8 +191,8 @@
           <td class="px-4 py-3 font-medium">{{ line.product_name }}</td>
           <td class="px-4 py-3 font-mono text-xs">{{ line.sku }}</td>
           <td class="px-4 py-3">{{ line.quantity }}</td>
-          <td class="px-4 py-3">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
-          <td class="px-4 py-3">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+          <td class="px-4 py-3">{{ SITE_CURRENCY }} {{ line.unit_price|floatformat:2 }}</td>
+          <td class="px-4 py-3">{{ SITE_CURRENCY }} {{ line.line_total|floatformat:2 }}</td>
         </tr>
         {% for opt in line.option_lines.all %}
           <tr class="bg-slate-50/60">
@@ -201,8 +201,8 @@
             </td>
             <td class="px-4 py-2 font-mono text-xs text-slate-400">{{ opt.sku }}</td>
             <td class="px-4 py-2 text-xs text-slate-500">{{ opt.quantity }}</td>
-            <td class="px-4 py-2 text-xs text-slate-500">{{ opt.currency }} {{ opt.unit_price|floatformat:2 }}</td>
-            <td class="px-4 py-2 text-xs text-slate-500">{{ opt.currency }} {{ opt.line_total|floatformat:2 }}</td>
+            <td class="px-4 py-2 text-xs text-slate-500">{{ SITE_CURRENCY }} {{ opt.unit_price|floatformat:2 }}</td>
+            <td class="px-4 py-2 text-xs text-slate-500">{{ SITE_CURRENCY }} {{ opt.line_total|floatformat:2 }}</td>
           </tr>
         {% endfor %}
       {% endfor %}
@@ -211,7 +211,7 @@
       <tr>
         <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Order total</td>
         <td class="px-4 py-3 text-sm font-bold text-slate-900">
-          {% with first_line=order.lines.all.0 %}{{ first_line.currency }}{% endwith %} {{ order_total|floatformat:2 }}
+          {{ SITE_CURRENCY }} {{ order_total|floatformat:2 }}
         </td>
       </tr>
     </tfoot>

@@ -67,28 +67,28 @@
           <td class="px-4 py-2 font-mono text-xs text-slate-500">{{ line.sku }}</td>
           <td class="px-4 py-2 text-slate-800">{{ line.product_name }}</td>
           <td class="px-4 py-2 text-right text-slate-600">{{ line.quantity }}</td>
-          <td class="px-4 py-2 text-right font-mono text-slate-600">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+          <td class="px-4 py-2 text-right font-mono text-slate-600">{{ SITE_CURRENCY }} {{ line.unit_price|floatformat:2 }}</td>
           <td class="px-4 py-2 text-right text-slate-500">{% if line.tax_rate_pct %}{{ line.tax_rate_pct }}%{% else %}-{% endif %}</td>
-          <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+          <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ SITE_CURRENCY }} {{ line.line_total|floatformat:2 }}</td>
         </tr>
       {% endfor %}
     </tbody>
     <tfoot class="border-t border-slate-200 bg-slate-50 text-sm">
       <tr>
         <td colspan="5" class="px-4 py-2 text-right text-slate-500">Subtotal</td>
-        <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ credit_note.currency }} {{ cn_total|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono font-semibold text-slate-900">{{ SITE_CURRENCY }} {{ cn_total|floatformat:2 }}</td>
       </tr>
       {% for row in tax_breakdown %}
         <tr>
           <td colspan="5" class="px-4 py-2 text-right text-slate-500">
             VAT {% if row.rate %}{{ row.rate }}%{% else %}0%{% endif %}
           </td>
-          <td class="px-4 py-2 text-right font-mono text-slate-700">{{ credit_note.currency }} {{ row.tax|floatformat:2 }}</td>
+          <td class="px-4 py-2 text-right font-mono text-slate-700">{{ SITE_CURRENCY }} {{ row.tax|floatformat:2 }}</td>
         </tr>
       {% endfor %}
       <tr class="border-t border-slate-200">
         <td colspan="5" class="px-4 py-2 text-right font-semibold text-slate-700">Total credit (incl. VAT)</td>
-        <td class="px-4 py-2 text-right font-mono font-bold text-slate-900">{{ credit_note.currency }} {{ grand_total|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right font-mono font-bold text-slate-900">{{ SITE_CURRENCY }} {{ grand_total|floatformat:2 }}</td>
       </tr>
     </tfoot>
   </table>

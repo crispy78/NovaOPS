@@ -72,11 +72,11 @@
   <div class="grid divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
     <div class="p-4">
       <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Total (incl. VAT)</p>
-      <p class="mt-1 text-xl font-semibold text-slate-900">{{ invoice.currency }} {{ grand_total|floatformat:2 }}</p>
+      <p class="mt-1 text-xl font-semibold text-slate-900">{{ SITE_CURRENCY }} {{ grand_total|floatformat:2 }}</p>
     </div>
     <div class="p-4">
       <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Amount paid</p>
-      <p class="mt-1 text-xl font-semibold text-slate-900">{{ invoice.currency }} {{ invoice_paid|floatformat:2 }}</p>
+      <p class="mt-1 text-xl font-semibold text-slate-900">{{ SITE_CURRENCY }} {{ invoice_paid|floatformat:2 }}</p>
     </div>
     <div class="p-4">
       <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Balance due</p>
@@ -84,7 +84,7 @@
         {% if invoice_is_paid %}
           <i class="fa-solid fa-circle-check mr-1 text-base text-emerald-500" aria-hidden="true"></i>
         {% endif %}
-        {{ invoice.currency }} {{ invoice_balance|floatformat:2 }}
+        {{ SITE_CURRENCY }} {{ invoice_balance|floatformat:2 }}
       </p>
     </div>
   </div>
@@ -131,8 +131,8 @@
           <td class="px-4 py-3 font-medium">{{ line.product_name }}</td>
           <td class="px-4 py-3 font-mono text-xs">{{ line.sku }}</td>
           <td class="px-4 py-3">{{ line.quantity }}</td>
-          <td class="px-4 py-3">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
-          <td class="px-4 py-3">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+          <td class="px-4 py-3">{{ SITE_CURRENCY }} {{ line.unit_price|floatformat:2 }}</td>
+          <td class="px-4 py-3">{{ SITE_CURRENCY }} {{ line.line_total|floatformat:2 }}</td>
         </tr>
         {% for opt in line.option_lines.all %}
           <tr class="bg-slate-50/60">
@@ -141,8 +141,8 @@
             </td>
             <td class="px-4 py-2 font-mono text-xs text-slate-400">{{ opt.sku }}</td>
             <td class="px-4 py-2 text-xs text-slate-500">{{ opt.quantity }}</td>
-            <td class="px-4 py-2 text-xs text-slate-500">{{ opt.currency }} {{ opt.unit_price|floatformat:2 }}</td>
-            <td class="px-4 py-2 text-xs text-slate-500">{{ opt.currency }} {{ opt.line_total|floatformat:2 }}</td>
+            <td class="px-4 py-2 text-xs text-slate-500">{{ SITE_CURRENCY }} {{ opt.unit_price|floatformat:2 }}</td>
+            <td class="px-4 py-2 text-xs text-slate-500">{{ SITE_CURRENCY }} {{ opt.line_total|floatformat:2 }}</td>
           </tr>
         {% endfor %}
       {% endfor %}
@@ -150,19 +150,19 @@
     <tfoot class="border-t-2 border-slate-200 bg-slate-50">
       <tr>
         <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Subtotal (excl. VAT)</td>
-        <td class="px-4 py-3 text-sm font-semibold text-slate-700">{{ invoice.currency }} {{ invoice_total|floatformat:2 }}</td>
+        <td class="px-4 py-3 text-sm font-semibold text-slate-700">{{ SITE_CURRENCY }} {{ invoice_total|floatformat:2 }}</td>
       </tr>
       {% for row in tax_breakdown %}
         {% if row.rate %}
           <tr>
             <td colspan="4" class="px-4 py-2 text-right text-xs text-slate-500">VAT {{ row.rate }}%</td>
-            <td class="px-4 py-2 text-xs font-medium text-slate-700">{{ invoice.currency }} {{ row.tax|floatformat:2 }}</td>
+            <td class="px-4 py-2 text-xs font-medium text-slate-700">{{ SITE_CURRENCY }} {{ row.tax|floatformat:2 }}</td>
           </tr>
         {% endif %}
       {% endfor %}
       <tr class="border-t border-slate-200">
         <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">Total (incl. VAT)</td>
-        <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ invoice.currency }} {{ grand_total|floatformat:2 }}</td>
+        <td class="px-4 py-3 text-sm font-bold text-slate-900">{{ SITE_CURRENCY }} {{ grand_total|floatformat:2 }}</td>
       </tr>
     </tfoot>
   </table>
@@ -212,14 +212,14 @@
               </td>
               <td class="px-4 py-3 text-slate-600">{{ cn.created_at|date:"Y-m-d" }}</td>
               <td class="px-4 py-3 text-slate-600">{{ cn.reason|default:"-" }}</td>
-              <td class="px-4 py-3 text-right font-mono font-semibold text-red-700">−{{ invoice.currency }} {{ cn.total|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono font-semibold text-red-700">−{{ SITE_CURRENCY }} {{ cn.total|floatformat:2 }}</td>
             </tr>
           {% endfor %}
         </tbody>
         <tfoot class="border-t border-slate-200 bg-slate-50">
           <tr>
             <td colspan="3" class="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Total credited</td>
-            <td class="px-4 py-2 text-right font-mono font-bold text-red-700">−{{ invoice.currency }} {{ credit_notes_total|floatformat:2 }}</td>
+            <td class="px-4 py-2 text-right font-mono font-bold text-red-700">−{{ SITE_CURRENCY }} {{ credit_notes_total|floatformat:2 }}</td>
           </tr>
         </tfoot>
       </table>
@@ -244,7 +244,7 @@
           {% for p in invoice.payments.all %}
             <tr>
               <td class="px-4 py-3 text-slate-600">{{ p.created_at|date:"Y-m-d H:i" }}</td>
-              <td class="px-4 py-3 font-medium">{{ invoice.currency }} {{ p.amount|floatformat:2 }}</td>
+              <td class="px-4 py-3 font-medium">{{ SITE_CURRENCY }} {{ p.amount|floatformat:2 }}</td>
               <td class="px-4 py-3 text-slate-600">{{ p.reference_note|default:"-" }}</td>
               <td class="px-4 py-3 text-slate-600">{{ p.created_by.get_username }}</td>
             </tr>

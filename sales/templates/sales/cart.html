@@ -54,7 +54,7 @@
                     <span class="font-medium text-slate-600">{{ opt.option_name|default:opt.product.name }}</span>
                     <span class="font-mono text-slate-400">{{ opt.option_sku|default:opt.product.sku }}</span>
                     {% if opt.product_id %}
-                      <span class="text-slate-400">{{ opt.product.currency }} {{ opt.product.list_price|floatformat:2 }}</span>
+                      <span class="text-slate-400">{{ SITE_CURRENCY }} {{ opt.product.list_price|floatformat:2 }}</span>
                     {% elif opt.option_price_delta %}
                       <span class="text-slate-400">+ {{ opt.option_price_delta|floatformat:2 }}</span>
                     {% endif %}
@@ -89,7 +89,7 @@
               {# Unit price #}
               <td class="px-4 py-3 text-right text-slate-700">
                 {% if line.product.list_price is not None %}
-                  {{ line.product.currency }} {{ line.product.list_price|floatformat:2 }}
+                  {{ SITE_CURRENCY }} {{ line.product.list_price|floatformat:2 }}
                 {% else %}
                   <span class="text-slate-400">On request</span>
                 {% endif %}
@@ -98,7 +98,7 @@
               {# Line total (including options) #}
               <td class="px-4 py-3 text-right font-semibold text-slate-900">
                 {% if line.product.list_price is not None %}
-                  {{ line.product.currency }} {{ line.line_total_with_options|floatformat:2 }}
+                  {{ SITE_CURRENCY }} {{ line.line_total_with_options|floatformat:2 }}
                 {% else %}
                   <span class="font-normal text-slate-400">-</span>
                 {% endif %}

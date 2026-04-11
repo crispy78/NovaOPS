@@ -59,14 +59,14 @@
               {{ inv.get_status_display }}
             </span>
           </td>
-          <td class="px-4 py-3 font-medium text-slate-900">{{ inv.currency }} {{ inv.inv_total|floatformat:2 }}</td>
+          <td class="px-4 py-3 font-medium text-slate-900">{{ SITE_CURRENCY }} {{ inv.inv_total|floatformat:2 }}</td>
           <td class="px-4 py-3">
             {% if inv.inv_balance <= 0 %}
               <span class="inline-flex items-center gap-1 font-semibold text-emerald-700">
                 <i class="fa-solid fa-circle-check text-xs" aria-hidden="true"></i> Paid
               </span>
             {% else %}
-              <span class="font-medium text-slate-900">{{ inv.currency }} {{ inv.inv_balance|floatformat:2 }}</span>
+              <span class="font-medium text-slate-900">{{ SITE_CURRENCY }} {{ inv.inv_balance|floatformat:2 }}</span>
             {% endif %}
           </td>
           <td class="px-4 py-3 text-slate-600">{{ inv.created_at|date:"Y-m-d" }}</td>

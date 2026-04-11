@@ -89,16 +89,16 @@
           <td>{{ line.product_name }}</td>
           <td class="text-mono">{{ line.sku }}</td>
           <td class="text-right">{{ line.quantity }}</td>
-          <td class="text-right">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
-          <td class="text-right">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+          <td class="text-right">{{ SITE_CURRENCY }} {{ line.unit_price|floatformat:2 }}</td>
+          <td class="text-right">{{ SITE_CURRENCY }} {{ line.line_total|floatformat:2 }}</td>
         </tr>
         {% for opt in line.option_lines.all %}
           <tr class="opt-row">
             <td>+ {{ opt.product_name }}</td>
             <td class="text-mono">{{ opt.sku }}</td>
             <td class="text-right">{{ opt.quantity }}</td>
-            <td class="text-right">{{ opt.currency }} {{ opt.unit_price|floatformat:2 }}</td>
-            <td class="text-right">{{ opt.currency }} {{ opt.line_total|floatformat:2 }}</td>
+            <td class="text-right">{{ SITE_CURRENCY }} {{ opt.unit_price|floatformat:2 }}</td>
+            <td class="text-right">{{ SITE_CURRENCY }} {{ opt.line_total|floatformat:2 }}</td>
           </tr>
         {% endfor %}
       {% endfor %}
@@ -108,19 +108,19 @@
   <div class="totals-block">
     <div class="totals-row">
       <span>Subtotal (excl. tax)</span>
-      <span>{{ quote.currency|default:"EUR" }} {{ quote_total|floatformat:2 }}</span>
+      <span>{{ SITE_CURRENCY }} {{ quote_total|floatformat:2 }}</span>
     </div>
     {% for row in tax_breakdown %}
       {% if row.rate %}
         <div class="totals-row">
           <span>VAT {{ row.rate }}%</span>
-          <span>{{ quote.currency|default:"EUR" }} {{ row.tax|floatformat:2 }}</span>
+          <span>{{ SITE_CURRENCY }} {{ row.tax|floatformat:2 }}</span>
         </div>
       {% endif %}
     {% endfor %}
     <div class="totals-row grand-total">
       <span>Total incl. tax</span>
-      <span>{{ quote.currency|default:"EUR" }} {{ grand_total|floatformat:2 }}</span>
+      <span>{{ SITE_CURRENCY }} {{ grand_total|floatformat:2 }}</span>
     </div>
   </div>
 

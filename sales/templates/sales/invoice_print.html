@@ -99,18 +99,18 @@
           <td>{{ line.product_name }}</td>
           <td class="text-mono">{{ line.sku }}</td>
           <td class="text-right">{{ line.quantity }}</td>
-          <td class="text-right">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+          <td class="text-right">{{ SITE_CURRENCY }} {{ line.unit_price|floatformat:2 }}</td>
           <td class="text-right">{% if line.tax_rate_pct %}{{ line.tax_rate_pct }}%{% else %}-{% endif %}</td>
-          <td class="text-right">{{ line.currency }} {{ line.line_total|floatformat:2 }}</td>
+          <td class="text-right">{{ SITE_CURRENCY }} {{ line.line_total|floatformat:2 }}</td>
         </tr>
         {% for opt in line.option_lines.all %}
           <tr class="opt-row">
             <td>+ {{ opt.product_name }}</td>
             <td class="text-mono">{{ opt.sku }}</td>
             <td class="text-right">{{ opt.quantity }}</td>
-            <td class="text-right">{{ opt.currency }} {{ opt.unit_price|floatformat:2 }}</td>
+            <td class="text-right">{{ SITE_CURRENCY }} {{ opt.unit_price|floatformat:2 }}</td>
             <td class="text-right">{% if opt.tax_rate_pct %}{{ opt.tax_rate_pct }}%{% else %}-{% endif %}</td>
-            <td class="text-right">{{ opt.currency }} {{ opt.line_total|floatformat:2 }}</td>
+            <td class="text-right">{{ SITE_CURRENCY }} {{ opt.line_total|floatformat:2 }}</td>
           </tr>
         {% endfor %}
       {% endfor %}
@@ -120,28 +120,28 @@
   <div class="totals-block">
     <div class="totals-row">
       <span>Subtotal (excl. tax)</span>
-      <span>{{ invoice.currency }} {{ invoice_total|floatformat:2 }}</span>
+      <span>{{ SITE_CURRENCY }} {{ invoice_total|floatformat:2 }}</span>
     </div>
     {% for row in tax_breakdown %}
       {% if row.rate %}
         <div class="totals-row">
           <span>VAT {{ row.rate }}%</span>
-          <span>{{ invoice.currency }} {{ row.tax|floatformat:2 }}</span>
+          <span>{{ SITE_CURRENCY }} {{ row.tax|floatformat:2 }}</span>
         </div>
       {% endif %}
     {% endfor %}
     <div class="totals-row grand-total">
       <span>Total incl. tax</span>
-      <span>{{ invoice.currency }} {{ grand_total|floatformat:2 }}</span>
+      <span>{{ SITE_CURRENCY }} {{ grand_total|floatformat:2 }}</span>
     </div>
     {% if invoice_paid %}
       <div class="totals-row paid-row">
         <span>Amount paid</span>
-        <span>- {{ invoice.currency }} {{ invoice_paid|floatformat:2 }}</span>
+        <span>- {{ SITE_CURRENCY }} {{ invoice_paid|floatformat:2 }}</span>
       </div>
       <div class="totals-row balance-row">
         <span>Balance due</span>
-        <span>{{ invoice.currency }} {{ invoice_balance|floatformat:2 }}</span>
+        <span>{{ SITE_CURRENCY }} {{ invoice_balance|floatformat:2 }}</span>
       </div>
     {% endif %}
   </div>
@@ -160,7 +160,7 @@
         {% for p in invoice.payments.all %}
           <tr>
             <td>{{ p.created_at|date:"Y-m-d" }}</td>
-            <td>{{ invoice.currency }} {{ p.amount|floatformat:2 }}</td>
+            <td>{{ SITE_CURRENCY }} {{ p.amount|floatformat:2 }}</td>
             <td>{{ p.reference_note|default:"-" }}</td>
           </tr>
         {% endfor %}

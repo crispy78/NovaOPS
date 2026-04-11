@@ -54,7 +54,7 @@
             <td class="px-4 py-2 font-mono text-xs text-slate-500">{{ line.sku }}</td>
             <td class="px-4 py-2 text-slate-800">{{ line.product_name }}</td>
             <td class="px-4 py-2 text-right text-slate-600">{{ line.quantity }}</td>
-            <td class="px-4 py-2 text-right font-mono text-slate-600">{{ line.currency }} {{ line.unit_price|floatformat:2 }}</td>
+            <td class="px-4 py-2 text-right font-mono text-slate-600">{{ SITE_CURRENCY }} {{ line.unit_price|floatformat:2 }}</td>
             <td class="px-4 py-2 text-right">
               <input type="number" name="qty_{{ line.pk }}"
                      value="{% if posted %}{{ posted|default_if_none:'' }}{% else %}{{ line.quantity }}{% endif %}"
