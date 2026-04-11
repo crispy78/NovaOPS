@@ -439,10 +439,8 @@ class ProductCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return kwargs
 
     def form_valid(self, form):
-        # Default to site currency only if the field was left blank
-        if not form.instance.currency:
-            from core.models import SiteSettings
-            form.instance.currency = SiteSettings.get().currency
+        from core.models import SiteSettings
+        form.instance.currency = SiteSettings.get().currency
         response = super().form_valid(form)
         from audit.services import log_event
         log_event(

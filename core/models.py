@@ -2,19 +2,6 @@ import uuid
 
 from django.db import models, transaction
 
-# Common ISO 4217 currency choices shown in the site-settings picker
-CURRENCY_CHOICES = [
-    ('GBP', 'GBP — British Pound'),
-    ('EUR', 'EUR — Euro'),
-    ('USD', 'USD — US Dollar'),
-    ('CHF', 'CHF — Swiss Franc'),
-    ('SEK', 'SEK — Swedish Krona'),
-    ('NOK', 'NOK — Norwegian Krone'),
-    ('DKK', 'DKK — Danish Krone'),
-    ('PLN', 'PLN — Polish Zloty'),
-    ('AUD', 'AUD — Australian Dollar'),
-    ('CAD', 'CAD — Canadian Dollar'),
-]
 
 
 class UUIDPrimaryKeyModel(models.Model):
@@ -48,11 +35,10 @@ class SiteSettings(models.Model):
     """Singleton table that stores site-wide configuration (always pk=1)."""
 
     currency = models.CharField(
-        max_length=3,
+        max_length=10,
         default='GBP',
-        choices=CURRENCY_CHOICES,
         verbose_name='default currency',
-        help_text='ISO 4217 code used across all products and documents.',
+        help_text='Currency code or symbol, e.g. GBP, €, $, ₿.',
     )
 
     class Meta:
