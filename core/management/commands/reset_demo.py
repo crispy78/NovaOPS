@@ -112,6 +112,7 @@ def _reset_demo_users() -> None:
         user, created = User.objects.get_or_create(
             email=spec['email'],
             defaults={
+                'username': spec['email'],
                 'first_name': spec['first_name'],
                 'last_name': spec['last_name'],
                 'is_staff': spec['is_staff'],
@@ -120,6 +121,7 @@ def _reset_demo_users() -> None:
             },
         )
         if not created:
+            user.username = spec['email']
             user.first_name = spec['first_name']
             user.last_name = spec['last_name']
             user.is_staff = spec['is_staff']
