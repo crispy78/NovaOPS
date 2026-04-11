@@ -43,7 +43,7 @@
 </div>
 
 <div class="mb-3 flex items-center justify-between">
-  <p class="text-sm font-semibold text-slate-700">Total outstanding: <span class="text-slate-900">EUR {{ grand_total|floatformat:2 }}</span></p>
+  <p class="text-sm font-semibold text-slate-700">Total outstanding: <span class="text-slate-900">{{ SITE_CURRENCY }} {{ grand_total|floatformat:2 }}</span></p>
 </div>
 
 {% for bucket_name, invoices in buckets.items %}

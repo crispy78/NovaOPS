@@ -59,7 +59,7 @@
   </div>
   <div class="meta-box">
     <div class="label">Total cost</div>
-    <div class="value mono">{% if po.total_cost is not None %}{{ po.total_cost|floatformat:2 }}{% else %}-{% endif %}</div>
+    <div class="value mono">{% if po.total_cost is not None %}{{ SITE_CURRENCY }} {{ po.total_cost|floatformat:2 }}{% else %}-{% endif %}</div>
   </div>
 </div>
 
@@ -83,15 +83,15 @@
         <td class="text-right">{{ line.qty_ordered }}</td>
         <td class="text-right">{{ line.qty_received }}</td>
         <td class="text-right">{{ line.qty_outstanding }}</td>
-        <td class="text-right mono">{% if line.unit_cost %}{{ line.unit_cost|floatformat:2 }}{% else %}-{% endif %}</td>
-        <td class="text-right mono">{% if line.line_total %}{{ line.line_total|floatformat:2 }}{% else %}-{% endif %}</td>
+        <td class="text-right mono">{% if line.unit_cost %}{{ SITE_CURRENCY }} {{ line.unit_cost|floatformat:2 }}{% else %}-{% endif %}</td>
+        <td class="text-right mono">{% if line.line_total %}{{ SITE_CURRENCY }} {{ line.line_total|floatformat:2 }}{% else %}-{% endif %}</td>
       </tr>
     {% endfor %}
   </tbody>
   <tfoot>
     <tr>
       <td colspan="6" class="text-right" style="color:#64748b;">Total</td>
-      <td class="text-right mono">{% if po.total_cost is not None %}{{ po.total_cost|floatformat:2 }}{% else %}-{% endif %}</td>
+      <td class="text-right mono">{% if po.total_cost is not None %}{{ SITE_CURRENCY }} {{ po.total_cost|floatformat:2 }}{% else %}-{% endif %}</td>
     </tr>
   </tfoot>
 </table>

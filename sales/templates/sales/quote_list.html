@@ -61,7 +61,7 @@
             </span>
           </td>
           <td class="px-4 py-3 text-right text-slate-600">{{ q.line_count }}</td>
-          <td class="px-4 py-3 text-right font-semibold text-slate-900">EUR {{ q.lines_total|floatformat:2 }}</td>
+          <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ SITE_CURRENCY }} {{ q.lines_total|floatformat:2 }}</td>
           <td class="px-4 py-3 text-slate-500">
             <span>{{ q.created_at|date:"Y-m-d" }}</span>
             <span class="text-slate-400">{{ q.created_at|date:"H:i" }}</span>

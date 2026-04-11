@@ -78,7 +78,7 @@
   <div>
     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total cost</p>
     <p class="mt-1 font-medium text-slate-900">
-      {% if po.total_cost is not None %}{{ po.total_cost|floatformat:2 }}{% else %}-{% endif %}
+      {% if po.total_cost is not None %}{{ SITE_CURRENCY }} {{ po.total_cost|floatformat:2 }}{% else %}-{% endif %}
     </p>
   </div>
 </div>
@@ -123,10 +123,10 @@
                 {{ line.qty_outstanding|floatformat:"-3" }}
               </td>
               <td class="px-6 py-3 text-right text-slate-700">
-                {% if line.unit_cost %}{{ line.unit_cost|floatformat:2 }}{% else %}-{% endif %}
+                {% if line.unit_cost %}{{ SITE_CURRENCY }} {{ line.unit_cost|floatformat:2 }}{% else %}-{% endif %}
               </td>
               <td class="px-6 py-3 text-right font-medium text-slate-900">
-                {% if line.line_total %}{{ line.line_total|floatformat:2 }}{% else %}-{% endif %}
+                {% if line.line_total %}{{ SITE_CURRENCY }} {{ line.line_total|floatformat:2 }}{% else %}-{% endif %}
               </td>
             </tr>
           {% endfor %}
@@ -135,7 +135,7 @@
           <tfoot>
             <tr class="border-t-2 border-slate-200 bg-slate-50">
               <td colspan="6" class="px-6 py-3 text-right text-sm font-semibold text-slate-600">Total</td>
-              <td class="px-6 py-3 text-right text-sm font-bold text-slate-900">{{ po.total_cost|floatformat:2 }}</td>
+              <td class="px-6 py-3 text-right text-sm font-bold text-slate-900">{{ SITE_CURRENCY }} {{ po.total_cost|floatformat:2 }}</td>
             </tr>
           </tfoot>
         {% endif %}

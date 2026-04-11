@@ -125,7 +125,7 @@
             <td colspan="4" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
               Subtotal ({{ cart_item_total }} item{{ cart_item_total|pluralize }})
             </td>
-            <td class="px-4 py-3 text-right text-sm font-bold text-slate-900">EUR {{ cart_total|floatformat:2 }}</td>
+            <td class="px-4 py-3 text-right text-sm font-bold text-slate-900">{{ SITE_CURRENCY }} {{ cart_total|floatformat:2 }}</td>
             <td></td>
           </tr>
         </tfoot>
