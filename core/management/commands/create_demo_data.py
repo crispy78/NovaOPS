@@ -1041,7 +1041,7 @@ class Command(BaseCommand):
             bio='Head of IT & Digital. ERP programme lead.')
         p_it2  = person('p:it:erp', 'Nina', 'Schulz',
             title_prefix='Ms.', date_of_birth=date(1990, 9, 11),
-            bio='ERP systems analyst. Manages NovaCRM/OPS configuration and rollout.')
+            bio='ERP systems analyst. Manages NovaOPS configuration and rollout.')
         p_it3  = person('p:it:infra', 'Bas', 'van Rijn',
             title_prefix='Mr.', date_of_birth=date(1985, 4, 18),
             bio='Infrastructure & security engineer. Cloud, VPN, endpoint management.')
