@@ -1623,9 +1623,14 @@ class Command(BaseCommand):
             obj, _ = FulfillmentOrderLine.objects.update_or_create(
                 pk=_sal_uuid(f'fol:{fo.pk}:{order_line.pk}'),
                 defaults={
-                    'fulfillment_order': fo, 'order_line': order_line,
-                    'quantity': order_line.quantity,
-                    'warehouse_location': loc_code, 'sort_order': sort,
+                    'fulfillment_order': fo,
+                    'product': order_line.product,
+                    'product_name': order_line.product_name,
+                    'sku': order_line.sku,
+                    'brand': order_line.brand or '',
+                    'quantity': int(order_line.quantity),
+                    'warehouse_location': loc_code,
+                    'sort_order': sort,
                 },
             )
             return obj
