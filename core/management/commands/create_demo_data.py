@@ -1348,8 +1348,8 @@ class Command(BaseCommand):
                     id=_prc_uuid(f'po1:{sku}'),
                     defaults={
                         'purchase_order': po1, 'product': product,
-                        'product_name': product.name, 'sku': product.sku,
-                        'quantity_ordered': Decimal(str(qty)),
+                        'description': product.name,
+                        'qty_ordered': Decimal(str(qty)),
                         'qty_received': Decimal(str(qty)),
                         'unit_cost': unit_cost,
                     },
@@ -1379,8 +1379,8 @@ class Command(BaseCommand):
                     id=_prc_uuid(f'po2:{sku}'),
                     defaults={
                         'purchase_order': po2, 'product': product,
-                        'product_name': product.name, 'sku': product.sku,
-                        'quantity_ordered': Decimal(str(qty)),
+                        'description': product.name,
+                        'qty_ordered': Decimal(str(qty)),
                         'qty_received': Decimal(str(qty)),
                         'unit_cost': unit_cost,
                     },
@@ -1409,8 +1409,8 @@ class Command(BaseCommand):
                     id=_prc_uuid(f'po3:{sku}'),
                     defaults={
                         'purchase_order': po3, 'product': product,
-                        'product_name': product.name, 'sku': product.sku,
-                        'quantity_ordered': Decimal(str(qty_ord)),
+                        'description': product.name,
+                        'qty_ordered': Decimal(str(qty_ord)),
                         'qty_received': Decimal(str(qty_rcv)),
                         'unit_cost': unit_cost,
                     },
