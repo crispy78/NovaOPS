@@ -1849,7 +1849,7 @@ class Command(BaseCommand):
             pk=_sal_uuid('inv:bloom-annual-2026'),
             defaults={
                 'reference': _REFS['inv1'], 'order': so1, 'created_by': user,
-                'relation_organization': bloom, 'status': InvoiceStatus.PAID,
+                'relation_organization': bloom, 'status': InvoiceStatus.ISSUED,
                 'currency': 'EUR', 'due_date': date(2026, 4, 5),
             },
         )
